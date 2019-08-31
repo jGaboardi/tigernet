@@ -1,7 +1,7 @@
 # TigerNet
 Network Topology via TIGER/Line Shapefiles
 
-[![DOI](https://zenodo.org/badge/204572461.svg)](https://zenodo.org/badge/latestdoi/204572461)
+[![DOI](https://zenodo.org/badge/204572461.svg)](https://zenodo.org/badge/latestdoi/204572461) [![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)
 
 What is TigerNet and how does it work?
 -----------------
