@@ -32,6 +32,7 @@
          run: conda info --all
        - shell: bash -l {0}
          run: conda list
+       - uses: jpetrucciani/black-check@20.8b1
        - shell: bash -l {0}
          run: py.test -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
        - name: codecov (${{ matrix.os }}, ${{ matrix.environment-file }})
