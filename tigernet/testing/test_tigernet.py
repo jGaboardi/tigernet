@@ -10,8 +10,7 @@ import unittest
 
 
 class TestTigerNet(unittest.TestCase):
-    """
-    """
+    """"""
 
     def setUp(self):
 

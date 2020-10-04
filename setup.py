@@ -23,12 +23,12 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 def _get_requirements_from_files(groups_files):
     """Returns a dictionary of all requirements keyed by type of requirement.
-    
+
     Parameters
     ----------
     groups_files : dict
         k - descriptive name, v - file name (including extension)
-    
+
     Returns
     -------
     groups_reqlist : dict

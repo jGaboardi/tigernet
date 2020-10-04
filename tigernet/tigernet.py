@@ -10,8 +10,7 @@ __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
 class TigerNet:
-    """
-    """
+    """"""
 
     def __init__(self):
 
