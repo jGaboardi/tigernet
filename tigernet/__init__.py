@@ -1,5 +1,7 @@
 __version__ = "v0.1-prealpha"
 
-#
+"""
+`tigernet` --- "Network Topology via TIGER/Line Shapefiles"
+"""
 
 from .tigernet import TigerNet
