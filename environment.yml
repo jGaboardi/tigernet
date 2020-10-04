@@ -1,0 +1,20 @@
+ name: tigernet
+ channels:
+   - conda-forge
+ dependencies:
+   - python=3.8
+   - geopandas
+   - descartes
+   - ipython
+   - jupyter
+   - matplotlib
+   - nb_conda_kernels
+   - numpy
+   - pandas
+   - pip
+   - scipy
+   - shapely
+   - watermark
+   - pip:
+     - git+https://github.com/ipums/nhgisxwalk.git@master
+     - handcalcs

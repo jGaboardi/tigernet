@@ -1,0 +1,6 @@
+black
+geopandas
+numpy
+pandas
+pre-commit
+shapely
