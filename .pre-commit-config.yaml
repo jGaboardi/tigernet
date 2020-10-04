@@ -3,5 +3,5 @@ repos:
     rev: stable
     hooks: 
     - id: black
-      files: ^
+      files: ^tests
       language_version: python3.8
