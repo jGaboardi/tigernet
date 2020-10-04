@@ -7,7 +7,7 @@ Network Topology via TIGER/Line Shapefiles
 -----------------
 
 ### Important
-After some consideration, this repo will serve as a stub for the `tigernet` implementation developed for Gaboardi (2019), which can be cited in future publications through its [DOI](https://zenodo.org/record/3378057#.Xh5oli3MzVo). Currently, some of the concepts are already being incorporated into [`spaghetti`](https://github.com/pysal/spaghetti), with more of the functionality in the original `tigernet` potential (such as network measures pysal/spaghetti#126).
+After some consideration, this repo will serve as a stub for the `tigernet` implementation developed for Gaboardi (2019), which can be cited in future publications through its [DOI](https://zenodo.org/record/3378057#.Xh5oli3MzVo). Currently, some of the concepts are already being incorporated into [`spaghetti`](https://github.com/pysal/spaghetti), with more of the functionality in the original `tigernet` potential (such as network measures [`pysal/spaghetti#126`](https://github.com/pysal/spaghetti/issues/126)).
 
 * **Gaboardi, James D**. 2019. *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
 
