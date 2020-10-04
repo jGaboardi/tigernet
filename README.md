@@ -17,6 +17,18 @@ TigerNet is a Python library that addresses concerns in topology and builds accu
 6. cleansing of the segment data (steps 4 and 5 are repeated until the data is deemed "clean" enough for network instantiation)
 7. building of the network (creation of network topology with the option of further simplification to eliminate all remaining non-articulation points — a pseudo graph-theoretic object — while maintaining spatial accuracy)
 
+## Installation
+
+Currently `tigernet` officially supports Python [3.6](https://docs.python.org/3.6/), [3.7](https://docs.python.org/3.7/), and [3.8](https://docs.python.org/3.8/). Please make sure that you are operating in a Python >= 3.6 environment. Install the most current development version of `tigernet` by running:
+
+```
+$ pip install git+https://github.com/jGaboardi/tigernet
+```
+
+## Support
+
+If you are having issues, please [create an issue](https://github.com/jGaboardi/tigernet/issues).
+
 ## License
 
 The project is licensed under the [BSD 3-Clause license](https://github.com/jGaboardi/tigernet/blob/master/LICENSE.txt).
