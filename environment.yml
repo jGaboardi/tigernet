@@ -3,18 +3,21 @@
    - conda-forge
  dependencies:
    - python=3.8
-   - geopandas
+   - black
    - descartes
+   - geopandas
    - ipython
    - jupyter
+   - libpysal
    - matplotlib
    - nb_conda_kernels
    - numpy
    - pandas
    - pip
+   - pre-commit
    - scipy
    - shapely
    - watermark
    - pip:
-     - git+https://github.com/ipums/nhgisxwalk.git@master
+     - git+https://github.com/jGaboardi/tigernet.git@master
      - handcalcs
