@@ -27,6 +27,8 @@
             environment-file: ${{ matrix.environment-file }}
             activate-environment: test
        - shell: bash -l {0}
+         run: conda update -n base -c defaults conda
+       - shell: bash -l {0}
          run: conda info --all
        - shell: bash -l {0}
          run: conda list
