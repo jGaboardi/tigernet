@@ -10,18 +10,14 @@ import unittest
 
 
 class TestTigerNet(unittest.TestCase):
-    """"""
-
     def setUp(self):
+        pass
 
-        self.filler = "1"
-
-    def test_filler(self):
-
-        observed = self.filler
-        known = "1"
-
-        self.assertEqual(observed, known)
+    def test_generate_sine_lines(self):
+        sine = tigernet.generate_sine_lines()
+        observed_length = sine.loc[(sine["SegID"] == 0), "geometry"].squeeze().length
+        known_length = 11.774626215766602
+        self.assertAlmostEqual(observed_length, known_length, 10)
 
 
 if __name__ == "__main__":
