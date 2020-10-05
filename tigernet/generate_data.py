@@ -92,7 +92,7 @@ def generate_lattice(
     wbox=False,
 ):
     """Generate a graph theoretic lattice.
-     
+
     Parameters
     ----------
     sid_name : str
@@ -109,7 +109,7 @@ def generate_lattice(
         Count of vertical lines. Default is ``None``.
     wbox : bool
         Include outer bounding box segments. Default is ``False``.
-    
+
     Returns
     -------
     lat_arcs : geopandas.GeoDataFrame

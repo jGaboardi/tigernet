@@ -23,7 +23,7 @@ def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
     hori : bool
         Generate horizontal line segments.
         Default is ``True``. ``False`` generates vertical segments.
-    
+
     Returns
     -------
     lines : list
