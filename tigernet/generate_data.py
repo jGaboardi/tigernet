@@ -5,6 +5,7 @@ import geopandas
 import numpy
 from shapely.geometry import Point, LineString
 
+from .utils import _get_lat_lines
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
@@ -20,12 +21,12 @@ def generate_sine_lines(sid_name="SegID", mtfcc="MTFCC", mtfcc_label="S1400"):
         MTFCC dataframe column name. Default is ``'MTFCC'``.
     mtfcc_label : str
         Feature class code. Default is ``'S1400'``.
-    
+
     Returns
     -------
     sine_arcs : geopandas.GeoDataFrame
         The segments comprising the example sine data.
-    
+
     """
 
     # create sin arcs
@@ -59,10 +60,10 @@ def generate_sine_lines(sid_name="SegID", mtfcc="MTFCC", mtfcc_label="S1400"):
     l5 = LineString((Point(l2.coords[0]), Point(l2.coords[0][0], 2.5)))
     l6 = LineString((Point(l4.coords[0]), Point(l4.coords[0][0], 2.5)))
     l7 = LineString((Point(l5.coords[-1]), Point(l6.coords[-1])))
-    l8 = LineString(
-        [Point(p) for p in [l1.coords[0], (1, -2), (14, -2), l2.coords[-1]]]
-    )
-    l9 = LineString([Point(p) for p in [l3.coords[0], (1, 7), (14, 7), l4.coords[-1]]])
+    l1xy, l2xy = l1.coords[0], l2.coords[-1]
+    l8 = LineString([Point(p) for p in [l1xy, (1, -2), (14, -2), l2xy]])
+    l3xy, l4xy = l3.coords[0], l4.coords[-1]
+    l9 = LineString([Point(p) for p in [l3xy, (1, 7), (14, 7), l4xy]])
     l10 = LineString((Point(l8.coords[0]), Point(l9.coords[0])))
     l11 = LineString((Point(l8.coords[-1]), Point(l9.coords[-1])))
 
@@ -79,3 +80,74 @@ def generate_sine_lines(sid_name="SegID", mtfcc="MTFCC", mtfcc_label="S1400"):
     sine_arcs[mtfcc] = [mtfcc_label] * sine_arcs.shape[0]
 
     return sine_arcs
+
+
+def generate_lattice(
+    sid_name="SegID",
+    mtfcc="MTFCC",
+    mtfcc_label="S1400",
+    bounds=None,
+    n_hori_lines=None,
+    n_vert_lines=None,
+    wbox=False,
+):
+    """Generate a graph theoretic lattice.
+     
+    Parameters
+    ----------
+    sid_name : str
+        Segment column name. Default is ``'SegID'``.
+    mtfcc : str
+        MTFCC dataframe column name. Default is ``'MTFCC'``.
+    mtfcc_label : str
+        Feature class code. Default is ``'S1400'``.
+    bounds : list
+        Area bounds in the form of ``[x1,y1,x2,y2]``.
+    n_hori_lines : int
+        Count of horizontal lines. Default is ``None``.
+    n_vert_lines : int
+        Count of vertical lines. Default is ``None``.
+    wbox : bool
+        Include outer bounding box segments. Default is ``False``.
+    
+    Returns
+    -------
+    lat_arcs : geopandas.GeoDataFrame
+        The segments comprising the example lattice data.
+    """
+
+    # set grid parameters if not declared
+    if not bounds:
+        bounds = [0, 0, 9, 9]
+    if not n_hori_lines:
+        n_hori_lines = 2
+    if not n_vert_lines:
+        n_vert_lines = 2
+
+    # bounding box line lengths
+    h_length, v_length = bounds[2] - bounds[0], bounds[3] - bounds[1]
+
+    # horizontal and vertical increments
+    h_incr, v_incr = (
+        h_length / float(n_hori_lines + 1),
+        v_length / float(n_vert_lines + 1),
+    )
+
+    # define the horizontal and vertical space
+    hspace = [h_incr * slot for slot in range(n_vert_lines + 2)]
+    vspace = [v_incr * slot for slot in range(n_hori_lines + 2)]
+
+    # get vertical and horizontal lines
+    horis = _get_lat_lines(hspace, vspace, wbox, bounds)
+    verts = _get_lat_lines(hspace, vspace, wbox, bounds, hori=False)
+
+    # combine into one list
+    geoms = verts + horis
+
+    # instantiate dataframe
+    lat_arcs = geopandas.GeoDataFrame(geometry=geoms)
+
+    lat_arcs[sid_name] = lat_arcs.index + 1
+    lat_arcs[mtfcc] = [mtfcc_label] * lat_arcs.shape[0]
+
+    return lat_arcs

@@ -19,6 +19,18 @@ class TestTigerNet(unittest.TestCase):
         known_length = 11.774626215766602
         self.assertAlmostEqual(observed_length, known_length, 10)
 
+    def test_generate_lattice(self):
+        lat = tigernet.generate_lattice()
+        observed_length = lat.length.sum()
+        known_length = 36.0
+        self.assertEqual(observed_length, known_length)
+
+    def test_generate_lattice_wbox(self):
+        lat = tigernet.generate_lattice(wbox=True)
+        observed_length = lat.length.sum()
+        known_length = 72.0
+        self.assertEqual(observed_length, known_length)
+
 
 if __name__ == "__main__":
     unittest.main()
