@@ -205,7 +205,7 @@ class TigerNet:
         remove_gdfs : bool
             remove dataframes from network object following  network
             simplification. Default is False.
-        
+
         Methods : Attributes
         --------------------
         __init__ : segmdata, census_data
@@ -236,18 +236,18 @@ class TigerNet:
         sauce.geom_assoc : segm2geom, node2geom
         sauce.coords_assoc : segm2coords, node2coords
         sauce.get_stats_frame : network_stats
-        
+
         Examples
         --------
-        
+
         >>> import tigernet
         >>> #net = tigernet.TigerNetwork()
         >>> #print(net.network_stats)
-        
+
         >>> lat = tigernet.generate_lattice(wbox=True)
         >>> lat.length.sum()
         72.0
-        
+
         """
 
         if network_instance:
