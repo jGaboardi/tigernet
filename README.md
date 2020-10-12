@@ -47,11 +47,11 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
 
 ```tex
 @misc{tigernet_gaboardi_2019,
-  author       = {James David Gaboardi},
-  title        = {jGaboardi/tigernet},
-  month        = {aug},
-  year         = {2019},
-  doi          = {10.5281/zenodo.204572461},
-  url          = {https://github.com/jGaboardi/tigernet}
+  author  = {James David Gaboardi},
+  title   = {jGaboardi/tigernet},
+  month   = {aug},
+  year    = {2019},
+  doi     = {10.5281/zenodo.204572461},
+  url     = {https://github.com/jGaboardi/tigernet}
   }
 ```
