@@ -1,9 +1,19 @@
-def get_mtfcc_types():
-    """Read in dictionary of MTFCC road type descriptions
-    https://www.census.gov/geo/reference/mtfcc.html
+def get_discard_mtfcc_by_desc() -> list:
+    """Discard these road types from the mtfcc categories."""
 
-    ******* Ranks are subjective *******
+    return [
+        "Bike Path or Trail",
+        "Parking Lot Road",
+        "Alley",
+        "Vehicular Trail (4WD)",
+        "Walkway/Pedestrian Trail",
+        "Private Road for service vehicles (logging, oil fields, ranches, etc.)",
+    ]
 
+
+def get_mtfcc_types() -> dict:
+    """Return a dictionary of MTFCC road type descriptions.
+    See [https://www.census.gov/geo/reference/mtfcc.html] for reference.
     """
 
     mtfcc_types = {

@@ -5,9 +5,14 @@ import tigernet
 import unittest
 
 
-class TestDataGeneration(unittest.TestCase):
+class TestInformationRetrieval(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_get_discard_mtfcc_by_desc(self):
+        observed_discard_mtfcc_types = tigernet.get_discard_mtfcc_by_desc()
+        walkways = "Walkway/Pedestrian Trail"
+        self.assertEqual(observed_discard_mtfcc_types[-2], walkways)
 
     def test_get_mtfcc_types(self):
         mtfcc_types = tigernet.get_mtfcc_types()

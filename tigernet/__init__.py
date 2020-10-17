@@ -8,4 +8,4 @@ from .tigernet import TigerNet
 
 from .generate_data import generate_sine_lines, generate_lattice
 
-from .info import get_mtfcc_types
+from .info import get_mtfcc_types, get_discard_mtfcc_by_desc
