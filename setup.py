@@ -59,7 +59,7 @@ def setup_package():
         description=description,
         long_description=long_description,
         long_description_content_type="text/markdown",
-        url="https://github.com/ipums/" + package,
+        url="https://github.com/jGaboardi/" + package,
         download_url="https://pypi.org/project/" + package,
         maintainer="James D. Gaboardi",
         maintainer_email="jgaboardi@gmail.com",
