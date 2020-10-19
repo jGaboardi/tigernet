@@ -5,7 +5,16 @@
 
 version: 2
 updates:
-  - package-ecosystem: "tigernet"
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "daily"
+    reviewers:
+      - "jGaboardi"
+  
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "jGaboardi"
