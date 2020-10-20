@@ -1,1 +1,1 @@
-include LICENSE.txt MANIFEST.in requirements_conda.txt
+include LICENSE.txt MANIFEST.in requirements_conda.txt requirements_testing.txt
