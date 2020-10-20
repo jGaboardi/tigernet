@@ -19,25 +19,25 @@ class TigerNet:
         network_instance=None,
         segmdata=None,
         nodedata=None,
-        sid_name=None,
-        nid_name=None,
-        proj_init=None,
-        proj_trans=None,
-        proj_units=None,
-        inter=None,
+        sid_name="SegID",
+        nid_name="NodeID",
+        # proj_init=None,
+        # proj_trans=None,
+        # proj_units=None,
+        # inter=None,
         attr1=None,
         attr2=None,
-        study_area=None,
-        county=None,
-        state=None,
-        year=None,
-        place_time=None,
+        # study_area=None,
+        # county=None,
+        # state=None,
+        # year=None,
+        # place_time=None,
         mtfcc_types=None,
         mtfcc_discard=None,
         discard_segs=None,
-        xyid=None,
-        len_col=None,
-        tiger_edges=False,
+        xyid="xyid",
+        len_col="length",
+        tiger_edges=True,
         edge_subsets=None,
         mtfcc_split=None,
         mtfcc_intrst=None,
@@ -46,7 +46,6 @@ class TigerNet:
         mtfcc_split_by=None,
         mtfcc_split_grp=None,
         skip_restr=False,
-        tiger_roads=False,
         calc_len=False,
         record_components=False,
         record_geom=False,
@@ -73,63 +72,63 @@ class TigerNet:
         Parameters
         ----------
         file_type : str
-            file extension. Default is '.shp'.
+            file extension. Default is ``'.shp'``.
         tnid : str
             TIGER/Line node ID variable used for working with
-            TIGER/Line edges. Default is 'TNID'.
+            TIGER/Line edges. Default is ``'TNID'``.
         tnidf : str
             TIGER/Line 'From Node' variable used for building topology
-            in TIGER/Line edges. Default is 'TNIDF'.
+            in TIGER/Line edges. Default is ``'TNIDF'``.
         tnidt : str
              TIGER/Line 'To Node' variable used for building topology in
-             TIGER/Line edges. Default is 'TNIDT'.
+             TIGER/Line edges. Default is ``'TNIDT'``.
         segmdata : str **OR** geopandas.GeoDataFrame
-            path to segments data or a dataframe itself.
+            Path to segments data or a dataframe itself.
         nodedata : str **OR** geopandas.GeoDataFrame
-            nodes data. Default is None.
+            Nodes data. Default is ``None``.
         sid_name : str
-            segment column name. Default is None.
+            Segment column name. Default is ``'SegID'``.
         nid_name : str
-            node column name. Default is None.
-        proj_init : int
-            initial projection. Default is None.
-        proj_trans : int
-            transformed projection. Default is None.
-        proj_units : str
-            unit of transformed projection. Default is None.
+            Node column name. Default is ``'NodeID'``.
+        #proj_init : int
+        #    initial projection. Default is None.
+        #proj_trans : int
+        #    transformed projection. Default is None.
+        #proj_units : str
+        #    unit of transformed projection. Default is None.
         attr1 : str
-            auxillary variable being used. Default is None.
+            Auxillary variable being used. Default is ``None``.
         attr2 : str
-            auxillary variable being used. Either 'TLID' for tiger edges
-            or 'LINEARID' for tiger roads. Default is None.
-        inter : str
-            file path to intermediary data. Default is None.
-        study_area : str
-            study area within county. Default is None.
-        county : str
-            county of interest. Default is None.
-        state : str
-            state of interest. Default is None.
-        year : str
-            data collection year. Default is None.
-        place_time : str
-            place and time descriptor. Default is None. e.g.
-            '_Leon_FL_2010'
+            Auxillary variable being used. Either ``'TLID'`` for tiger edges
+            or ``'LINEARID'`` for tiger roads. Default is ``None``.
+        #inter : str
+        #    file path to intermediary data. Default is None.
+        #study_area : str
+        #    study area within county. Default is None.
+        #county : str
+        #    county of interest. Default is None.
+        #state : str
+        #    state of interest. Default is None.
+        #year : str
+        #    data collection year. Default is None.
+        #place_time : str
+        #    place and time descriptor. Default is None. e.g.
+        #    '_Leon_FL_2010'
         mtfcc_types : dict
-            MTFCC road type descriptions. Default is None.
+            MTFCC road type descriptions. Default is ``None``.
             from [utils.get_mtfcc_types()]
         mtfcc_discard : list
-            MTFCC types (by code) to discard. Default is None.
+            MTFCC types (by code) to discard. Default is ``None``.
             from [utils.get_discard_mtfcc_by_desc()]
         discard_segs : list
-            specifc segment ids to discard. Default is None.
+            specifc segment ids to discard. Default is ``None``.
             from [utils.discard_troublemakers()]
         xyid : str
-            combined x-coord + y-coords string ID. Default is None.
+            Combined x-coord + y-coords string ID. Default is ``'xyid'``.
         len_col : str
-            length column name. Default is None.
+            Length column name. Default is ``'length'``.
         tiger_edges : bool
-            using TIGER/Line edges file. Default is False.
+            Using TIGER/Line edges file. Default is ``True``.
         edge_subsets : list
             {type:{'col':column, 'oper':operator, 'val':value}}
             i.e. -- {'edge': {'col':'ROADFLG', 'val':'Y'}}
@@ -151,8 +150,6 @@ class TigerNet:
         skip_restr : bool
             skip re-welding restricted segments. Used when woring with
             TIGER/Lines. Default is False.
-        tiger_roads : bool
-            using TIGER/Line roads file. Default is False.
         calc_len : bool
             calculated length and add column. Default is False.
         record_components : bool
@@ -256,17 +253,17 @@ class TigerNet:
             self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
             self.sid_name, self.nid_name = sid_name, nid_name
             self.len_col = len_col
-            self.proj_init, self.proj_trans = proj_init, proj_trans
-            self.proj_units = proj_units
+            # self.proj_init, self.proj_trans = proj_init, proj_trans
+            # self.proj_units = proj_units
             self.xyid = xyid
-            self.inter = inter
-            self.file_type = file_type
+            # self.inter = inter
+            # self.file_type = file_type
             self.mtfcc_types = mtfcc_types
             self.mtfcc_discard = mtfcc_discard
             self.tiger_edges = tiger_edges
-            self.tiger_roads = tiger_roads
+            # self.tiger_roads = tiger_roads
             self.discard_segs = discard_segs
-            if self.tiger_edges or self.tiger_roads:
+            if self.tiger_edges:
                 self.census_data = True
             else:
                 self.census_data = False
@@ -275,11 +272,11 @@ class TigerNet:
                 # TIGER variable attributes
                 self.attr1 = attr1
                 self.attr2 = attr2
-                self.study_area = study_area
-                self.county = county
-                self.state = state
-                self.year = year
-                self.place_time = place_time
+                # self.study_area = study_area
+                # self.county = county
+                # self.state = state
+                # self.year = year
+                # self.place_time = place_time
                 self.segmdata = segmdata
                 if self.tiger_edges:
                     self.tlid = self.attr2
@@ -295,13 +292,12 @@ class TigerNet:
                     self.mtfcc_split_grp = mtfcc_split_grp
                     self.mtfcc_split_by = mtfcc_split_by
                     self.skip_restr = skip_restr
-
                     # fetch path to raw tiger edge data is available
                     # of local machine, otherwise download from
                     # https://www2.census.gov/
-                    raw_file = sauce.get_raw_tiger_edges(self)
-                elif self.tiger_roads:
-                    pass
+                    # raw_file = sauce.get_raw_tiger_edges(self)
+                else:
+                    raise RuntimeError("Unknown line data.")
 
                 # freshly cleaned segments geodataframe
                 segmdata = sauce.tiger_netprep(
