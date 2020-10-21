@@ -82,6 +82,130 @@ def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
     return lines
 
 
+def add_ids(frame, id_name=None):
+    """add an idx column to a dataframe
+    
+    Parameters
+    ----------
+    frame : geopandas.GeoDataFrame
+        dataframe of geometries
+    id_name : str
+        name of id column. Default is None.
+    
+    Returns
+    -------
+    frame : geopandas.GeoDataFrame
+        updated dataframe of geometries
+    """
+
+    frame[id_name] = [idx for idx in range(frame.shape[0])]
+    frame[id_name] = frame[id_name].astype(int)
+
+    return frame
+
+
+def generate_xyid(df=None, geom_type="node"):
+    """Create a string xy id.
+    
+    Parameters
+    ----------
+    df : geopandas.GeoDataFrame
+        Geometry dataframe. Default is ``None``.
+    geom_type : str
+        Either ``'node'`` of ``'segm'``. Default is ``'node'``.
+    
+    Returns
+    -------
+    xyid : list
+        List of combined x-coord + y-coords strings.
+    
+    """
+
+    xyid = []
+
+    for idx, geom in enumerate(df.geometry):
+
+        if geom_type == "segm":
+            xys = ["x" + str(x) + "y" + str(y) for (x, y) in geom.coords[:]]
+            xyid.append([idx, xys])
+
+        # try to make the xyid from a polygon
+        if geom_type == "node":
+            try:
+                xy = "x" + str(geom.centroid.x) + "y" + str(geom.centroid.y)
+
+            # if the geometry is not polygon, but already point
+            except AttributeError:
+                try:
+                    xy = "x" + str(geom.x) + "y" + str(geom.y)
+                except:
+                    print("geom:", type(geom))
+                    print(dir(geom))
+                    raise AttributeError(
+                        "geom has neither attribute:\n"
+                        + "\t\t- `.centroid.[coord]`\n"
+                        + "\t\t- `.[coord]`"
+                    )
+
+            xyid.append([idx, [xy]])
+
+    return xyid
+
+
+def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0):
+    """Fill a dataframe with a column of data.
+    
+    Parameters
+    ----------
+    frame : geopandas.GeoDataFrame
+        Geometry dataframe.
+    full : bool
+        Create a new column (``False``) or a new frame (``True``).
+        Default is ``False``.
+    idx : str
+        Index column name. Default is ``'index'``.
+    col : str or list
+         New column name(s). Default is ``None``.
+    data : list *OR* dict
+        List of data to fill the column. Default is ``None``.
+        *OR*
+        dict of data to fill the records. Default is ``None``.
+    add_factor : int
+        Used when dataframe index does not start at ``0``.
+        Default is ``0``.
+    
+    Returns
+    -------
+    frame : geopandas.GeoDataFrame
+        The updated geometry dataframe.
+    
+    """
+
+    # create a full geopandas.GeoDataFrame
+    if full:
+        frame = geopandas.GeoDataFrame.from_dict(data, orient="index")
+
+    # write a single column in a geopandas.GeoDataFrame
+    else:
+        frame[col] = numpy.nan
+        for (k, v) in data:
+            k += add_factor
+
+            if col == "CC":
+                frame.loc[frame[idx].isin(v), col] = k
+
+            elif idx == "index":
+                frame.loc[k, col] = str(v)
+
+            else:
+                frame.loc[(frame[idx] == k), col] = str(v)
+
+        if col == "CC":
+            frame[col] = frame[col].astype("category").astype(int)
+
+    return frame
+
+
 '''
 def record_filter(df, column=None, sval=None, mval=None, oper=None):
     """used in phase 2 with incidents
@@ -196,106 +320,6 @@ def geom_to_float(df, xval=None, yval=None, geom_type=None):
     return df
 
 
-def generate_xyid(df=None, geom_type='node'):
-    """create a string xy id
-    
-    Parameters
-    ----------
-    df : geopandas.GeoDataFrame
-        geometry dataframe. Default is None.
-    geom_type : str
-        either node of segm. Default is 'node'.
-    
-    Returns
-    -------
-    xyid : list
-        list of combined x-coord + y-coords strings
-    """
-    
-    xyid = []
-    
-    for idx, geom in enumerate(df.geometry):
-        
-        if geom_type == 'segm':
-            xys = ['x'+str(x)+'y'+str(y) for (x,y) in geom.coords[:]]
-            xyid.append([idx, xys])
-        
-        # try to make the xyid from a polygon
-        if geom_type == 'node':
-            try:
-                xy = 'x'+str(geom.centroid.x)+'y'+str(geom.centroid.y)
-            
-            # if the geometry is not polygon, but already point
-            except AttributeError:
-                try:
-                    xy = 'x'+str(geom.x)+'y'+str(geom.y)
-                except:
-                    print('geom:', type(geom))
-                    print(dir(geom))
-                    raise AttributeError('geom has neither attribute:\n'\
-                                         +'\t\t- `.centroid.[coord]`\n'\
-                                         +'\t\t- `.[coord]`')
-            
-            xyid.append([idx,[xy]])
-    
-    return xyid
-
-
-def fill_frame(frame, full=False, idx='index',
-               col=None, data=None, add_factor=0):
-    """fill a dataframe with a column of data
-    
-    Parameters
-    ----------
-    frame : geopandas.GeoDataFrame
-        geometry dataframe
-    full : bool
-        create a new column (False) or a new frame (True).
-        Default is False.
-    idx : str
-        index column name. Default is 'index'.
-    col : str or list
-         New column name(s). Default is None.
-    data : list *OR* dict
-        list of data to fill the column. Default is None. OR
-        dict of data to fill the records. Default is None.
-    add_factor : int
-        used when dataframe index does not start at zero.
-        Default is zero.
-    
-    Returns
-    -------
-    frame : geopandas.GeoDataFrame
-        updated geometry dataframe
-    """
-    
-    # create a full geopandas.GeoDataFrame
-    if full:
-        out_frame = gpd.GeoDataFrame.from_dict(data, orient='index')
-        
-        return out_frame
-    
-    # write a single column in a geopandas.GeoDataFrame
-    else:
-        frame[col] = np.nan
-        for (k,v) in data:
-            k += add_factor
-            
-            if col == 'CC':
-                frame.loc[frame[idx].isin(v), col] = k
-            
-            elif idx == 'index':
-                frame.loc[k, col] = str(v)
-            
-            else:
-                frame.loc[(frame[idx] == k), col] = str(v)
-        
-        if col == 'CC':
-            frame[col] = frame[col].astype('category').astype(int)
-        
-        return frame
-
-
 def get_fips(st, ct):
     """return cenus FIPS codes for states and counties
     
@@ -327,15 +351,6 @@ def get_fips(st, ct):
     
     return sf, cf
 
-
-def get_discard_mtfcc_by_desc():
-    """discard these road types from the mtfcc categories
-    """
-    
-    return ['Bike Path or Trail', 'Parking Lot Road',  'Alley',\
-            'Vehicular Trail (4WD)', 'Walkway/Pedestrian Trail',\
-            'Private Road for service vehicles (logging, oil fields, '\
-            +'ranches, etc.)']
 
 
 '''

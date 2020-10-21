@@ -3,8 +3,10 @@
 
 import geopandas
 import numpy
-from libpysal import cg
 
+# from libpysal import cg
+
+from . import utils
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
@@ -247,6 +249,13 @@ class TigerNet:
 
         """
 
+        IS_GDF = hasattr(segmdata, "geometry")
+
+        if not IS_GDF and not segmdata:
+            msg = "The 'segmdata' parameters must be set, "
+            msg += "either as a 'str' or 'geopandas.GeoDataFrame'."
+            raise ValueError(msg)
+
         if network_instance:
             self = network_instance
         else:
@@ -299,12 +308,94 @@ class TigerNet:
                 else:
                     raise RuntimeError("Unknown line data.")
 
+                ######################################################################### do after work out `build_network`
                 # freshly cleaned segments geodataframe
-                segmdata = sauce.tiger_netprep(
-                    self, in_file=raw_file, calc_len=calc_len
-                )
+                # segmdata = sauce.tiger_netprep(
+                #    self, in_file=raw_file, calc_len=calc_len
+                # )
+                #########################################################################
 
             # build a network object from segments
-            # self.build_network(segmdata, record_components=record_components,
-            #                   largest_component=largest_component,
-            #                   record_geom=record_geom)
+            self.build_network(
+                segmdata,
+                record_components=record_components,
+                largest_component=largest_component,
+                record_geom=record_geom,
+            )
+
+    ###########################################################################
+    ########################    end __init__    ###############################
+    ###########################################################################
+
+    def build_network(
+        self,
+        sdata,
+        record_components=False,
+        record_geom=False,
+        largest_component=False,
+        def_graph_elems=False,
+    ):
+        """Top-level method for full network object creation from a
+        geopandas.GeoDataFrame of lines.
+        
+        Parameters
+        ----------
+        sdata : geopandas.GeoDataFrame
+            Segments data.
+        record_components : bool
+            Find rooted connected components in the network (``True``),
+            or ignore (``False``). Default is ``False``.
+        largest_component : bool
+            Keep only the largest connected compnent of the network
+            (``True``), or keep all components (``False``). Default is ``False``.
+        record_geom : bool
+            Create an id to geometry lookup (``True``), or ignore (``False``).
+            Default is ``False``.
+        def_graph_elems : bool
+            Define each element of the graph as either a branch
+            [connected to two or more other elements], or a leaf
+            [connected to only one other element] (``True``), or ignore
+            (``False``). Default is ``False``.
+        
+        """
+
+        self.build_base(sdata)
+        # self.build_topology()
+        # if record_components:
+        #    self.build_components(largest_cc=largest_component)
+        # self.build_associations(record_geom=record_geom)
+        # if def_graph_elems:
+        #    self.define_graph_elements()
+
+    def build_base(self, sdata):
+        """Extract nodes from segment endpoints and relate
+        segments and nodes to a location ID (``xyid``)
+        
+        Parameters
+        ----------
+        sdata : geopandas.GeoDataFrame
+            Segments data.
+        
+        """
+
+        # Instantiate segments dataframe as part of TigerNetwork class
+        self.s_data = sdata
+        self.s_data.reset_index(drop=True, inplace=True)
+        self.s_data = utils.add_ids(self.s_data, id_name=self.sid_name)
+
+        # create segment xyid
+        self.segm2xyid = utils.generate_xyid(df=self.s_data, geom_type="segm")
+        self.s_data = utils.fill_frame(
+            self.s_data, idx=self.sid_name, col=self.xyid, data=self.segm2xyid
+        )
+
+        """
+        # Instantiate nodes dataframe as part of NetworkClass
+        self.n_data = sauce.extract_nodes(self)
+        self.n_data.reset_index(drop=True, inplace=True)
+        
+        # create permanent node xyid
+        self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type='node')
+        self.n_data = utils.fill_frame(self.n_data, idx=self.nid_name,
+                                       col=self.xyid, data=self.node2xyid)
+        """
