@@ -6,6 +6,9 @@ import numpy
 import pandas
 from shapely.geometry import Point, LineString
 
+# used to supress warning in addIDX()
+geopandas.pd.set_option("mode.chained_assignment", None)
+
 
 def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
     """Generate line segments for a lattice.
@@ -84,14 +87,14 @@ def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
 
 def add_ids(frame, id_name=None):
     """add an idx column to a dataframe
-    
+
     Parameters
     ----------
     frame : geopandas.GeoDataFrame
         dataframe of geometries
     id_name : str
         name of id column. Default is None.
-    
+
     Returns
     -------
     frame : geopandas.GeoDataFrame
@@ -106,19 +109,19 @@ def add_ids(frame, id_name=None):
 
 def generate_xyid(df=None, geom_type="node"):
     """Create a string xy id.
-    
+
     Parameters
     ----------
     df : geopandas.GeoDataFrame
         Geometry dataframe. Default is ``None``.
     geom_type : str
         Either ``'node'`` of ``'segm'``. Default is ``'node'``.
-    
+
     Returns
     -------
     xyid : list
         List of combined x-coord + y-coords strings.
-    
+
     """
 
     xyid = []
@@ -154,7 +157,7 @@ def generate_xyid(df=None, geom_type="node"):
 
 def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0):
     """Fill a dataframe with a column of data.
-    
+
     Parameters
     ----------
     frame : geopandas.GeoDataFrame
@@ -173,12 +176,12 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
     add_factor : int
         Used when dataframe index does not start at ``0``.
         Default is ``0``.
-    
+
     Returns
     -------
     frame : geopandas.GeoDataFrame
         The updated geometry dataframe.
-    
+
     """
 
     # create a full geopandas.GeoDataFrame
@@ -204,6 +207,118 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
             frame[col] = frame[col].astype("category").astype(int)
 
     return frame
+
+
+def _drop_geoms(net, gdf, geoms, series=False):
+    """Drop a subset of geometries from a geopandas dataframe.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    gdf : geopandas.GeoDataFrame
+        Dataframe of geometries to search.
+    geoms : list
+        Either a list or a list of lists.
+    series : bool
+        Search a geoseries. Default is ``False``.
+
+    Returns
+    -------
+    gdf : geopandas.GeoDataFrame
+        Retained geometries in a dataframe.
+
+    """
+
+    if series:
+        drop_geoms = geoms
+    else:
+        drop_geoms = set([item for sublist in geoms for item in sublist])
+
+    if None in drop_geoms:
+        drop_geoms.remove(None)
+
+    gdf = gdf[~gdf.index.isin(drop_geoms)]
+
+    return gdf
+
+
+def extract_nodes(net):
+    """Extract ``n_ids`` from line segments and return them in a geodataframe.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+
+    Returns
+    -------
+    nodedf : geopandas.GeoDataFrame
+        Node dataframe.
+
+    """
+
+    def _drop_covered_nodes(net, ndf):
+        """Keep only the top node in stack of overlapping nodes.
+
+        Parameters
+        ----------
+        net : tigernet.TigerNet
+        ndf : geopandas.GeoDataFrame
+            Node dataframe.
+
+        Returns
+        -------
+        nodedf : geopandas.GeoDataFrame
+            Updated node dataframe.
+
+        """
+
+        scanned, drop = set(), set()
+
+        # keep only the top node in a node stack.
+        for n in ndf.index:
+            if n not in scanned:
+                unscanned = ndf[~ndf.index.isin(scanned)]
+                xyid = unscanned[net.xyid][n]
+
+                # intersecting node idxs
+                iidxs = list(unscanned[unscanned[net.xyid] == xyid].index)
+                iidxs.remove(n)
+                if iidxs:
+                    drop.update(iidxs)
+                    scanned.update(drop)
+                scanned.add(n)
+        ndf = _drop_geoms(net, ndf, drop, series=True)
+        ndf = add_ids(ndf, id_name=net.nid_name)
+
+        return ndf
+
+    sdf, nodes = net.s_data, []
+    sdf_ring_flag = hasattr(sdf, "ring")
+
+    # create n_ids and give the segment attribute data
+    for seg in sdf.index:
+        seggeom = sdf.loc[seg, "geometry"]
+        if sdf_ring_flag and sdf["ring"][seg]:
+            xs, ys = seggeom.coords.xy
+            nodes.append(create_node(xs, ys))
+        else:
+            b1, b2 = seggeom.boundary[0], seggeom.boundary[1]
+            nodes.extend([b1, b2])
+    nodedf = geopandas.GeoDataFrame(geometry=nodes)
+    nodedf = add_ids(nodedf, id_name=net.nid_name)
+
+    if sdf.crs:
+        nodedf.crs = sdf.crs
+
+    # Give an initial string 'xy' ID
+    prelim_xy_id = generate_xyid(df=nodedf, geom_type="node")
+    nodedf = fill_frame(nodedf, idx=net.nid_name, col=net.xyid, data=prelim_xy_id)
+
+    # drop all node but the top in the stack
+    nodedf = _drop_covered_nodes(net, nodedf)
+    nodedf.reset_index(drop=True, inplace=True)
+
+    return nodedf
 
 
 '''

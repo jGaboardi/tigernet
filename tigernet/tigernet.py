@@ -1,11 +1,6 @@
 """
 """
 
-import geopandas
-import numpy
-
-# from libpysal import cg
-
 from . import utils
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
@@ -19,8 +14,8 @@ class TigerNet:
         tnidf="TNIDF",
         tnidt="TNIDT",
         network_instance=None,
-        segmdata=None,
-        nodedata=None,
+        s_data=None,
+        n_data=None,
         sid_name="SegID",
         nid_name="NodeID",
         # proj_init=None,
@@ -84,9 +79,9 @@ class TigerNet:
         tnidt : str
              TIGER/Line 'To Node' variable used for building topology in
              TIGER/Line edges. Default is ``'TNIDT'``.
-        segmdata : str **OR** geopandas.GeoDataFrame
+        s_data : str **OR** geopandas.GeoDataFrame
             Path to segments data or a dataframe itself.
-        nodedata : str **OR** geopandas.GeoDataFrame
+        n_data : str **OR** geopandas.GeoDataFrame
             Nodes data. Default is ``None``.
         sid_name : str
             Segment column name. Default is ``'SegID'``.
@@ -227,31 +222,44 @@ class TigerNet:
             min_node_degree, mean_node_degree, std_node_degree, alpha,
             beta, gamma, eta, entropies_mtfcc, entropy_mtfcc,
             actual_object_sizes, actual_total_size
-        sauce.setup_raw : raw_data_info
-        sauce.ring_correction : corrected_rings
-        sauce.line_splitter : lines_split
-        sauce.seg_welder : welded_mls
-        sauce.cleanse_supercycle : cleanse_cycles, scrubbed
-        sauce.geom_assoc : segm2geom, node2geom
-        sauce.coords_assoc : segm2coords, node2coords
-        sauce.get_stats_frame : network_stats
+        ############### sauce.setup_raw : raw_data_info
+        ############### sauce.ring_correction : corrected_rings
+        ############### sauce.line_splitter : lines_split
+        ############### sauce.seg_welder : welded_mls
+        ############### sauce.cleanse_supercycle : cleanse_cycles, scrubbed
+        ############### sauce.geom_assoc : segm2geom, node2geom
+        ############### sauce.coords_assoc : segm2coords, node2coords
+        ############### sauce.get_stats_frame : network_stats
 
         Examples
         --------
 
         >>> import tigernet
-        >>> #net = tigernet.TigerNetwork()
-        >>> #print(net.network_stats)
+        >>> lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        >>> net = tigernet.TigerNet(s_data=lat)
+        >>> net.s_data
+                                                geometry  SegID  MTFCC                      xyid
+        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400  ['x4.5y0.0', 'x4.5y4.5']
+        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400  ['x4.5y4.5', 'x4.5y9.0']
+        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400  ['x0.0y4.5', 'x4.5y4.5']
+        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400  ['x4.5y4.5', 'x9.0y4.5']
 
-        >>> lat = tigernet.generate_lattice(wbox=True)
-        >>> lat.length.sum()
-        72.0
+        >>> net.n_data
+                          geometry  NodeID          xyid
+        0  POINT (4.50000 0.00000)       0  ['x4.5y0.0']
+        1  POINT (4.50000 4.50000)       1  ['x4.5y4.5']
+        2  POINT (4.50000 9.00000)       2  ['x4.5y9.0']
+        3  POINT (0.00000 4.50000)       3  ['x0.0y4.5']
+        4  POINT (9.00000 4.50000)       4  ['x9.0y4.5']
+
+        >>> net.segm2xyid[0]
+        [0, ['x4.5y0.0', 'x4.5y4.5']]
 
         """
 
-        IS_GDF = hasattr(segmdata, "geometry")
+        IS_GDF = hasattr(s_data, "geometry")
 
-        if not IS_GDF and not segmdata:
+        if not IS_GDF and not s_data:
             msg = "The 'segmdata' parameters must be set, "
             msg += "either as a 'str' or 'geopandas.GeoDataFrame'."
             raise ValueError(msg)
@@ -286,12 +294,12 @@ class TigerNet:
                 # self.state = state
                 # self.year = year
                 # self.place_time = place_time
-                self.segmdata = segmdata
+                self.s_data = s_data
                 if self.tiger_edges:
                     self.tlid = self.attr2
 
             # This reads in and prepares/cleans a segments geodataframe
-            if not hasattr(segmdata, "geometry") and self.census_data:
+            if not hasattr(s_data, "geometry") and self.census_data:
                 if self.tiger_edges:
                     self.edge_subsets = edge_subsets
                     self.mtfcc_split = mtfcc_split
@@ -317,7 +325,7 @@ class TigerNet:
 
             # build a network object from segments
             self.build_network(
-                segmdata,
+                s_data,
                 record_components=record_components,
                 largest_component=largest_component,
                 record_geom=record_geom,
@@ -329,7 +337,7 @@ class TigerNet:
 
     def build_network(
         self,
-        sdata,
+        s_data,
         record_components=False,
         record_geom=False,
         largest_component=False,
@@ -337,10 +345,10 @@ class TigerNet:
     ):
         """Top-level method for full network object creation from a
         geopandas.GeoDataFrame of lines.
-        
+
         Parameters
         ----------
-        sdata : geopandas.GeoDataFrame
+        s_data : geopandas.GeoDataFrame
             Segments data.
         record_components : bool
             Find rooted connected components in the network (``True``),
@@ -356,10 +364,10 @@ class TigerNet:
             [connected to two or more other elements], or a leaf
             [connected to only one other element] (``True``), or ignore
             (``False``). Default is ``False``.
-        
+
         """
 
-        self.build_base(sdata)
+        self.build_base(s_data)
         # self.build_topology()
         # if record_components:
         #    self.build_components(largest_cc=largest_component)
@@ -367,19 +375,20 @@ class TigerNet:
         # if def_graph_elems:
         #    self.define_graph_elements()
 
-    def build_base(self, sdata):
+    def build_base(self, s_data):
         """Extract nodes from segment endpoints and relate
         segments and nodes to a location ID (``xyid``)
-        
+
         Parameters
         ----------
-        sdata : geopandas.GeoDataFrame
+        s_data : geopandas.GeoDataFrame
             Segments data.
-        
+
         """
 
         # Instantiate segments dataframe as part of TigerNetwork class
-        self.s_data = sdata
+        self.s_data = s_data
+        del s_data
         self.s_data.reset_index(drop=True, inplace=True)
         self.s_data = utils.add_ids(self.s_data, id_name=self.sid_name)
 
@@ -389,13 +398,12 @@ class TigerNet:
             self.s_data, idx=self.sid_name, col=self.xyid, data=self.segm2xyid
         )
 
-        """
         # Instantiate nodes dataframe as part of NetworkClass
-        self.n_data = sauce.extract_nodes(self)
+        self.n_data = utils.extract_nodes(self)
         self.n_data.reset_index(drop=True, inplace=True)
-        
+
         # create permanent node xyid
-        self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type='node')
-        self.n_data = utils.fill_frame(self.n_data, idx=self.nid_name,
-                                       col=self.xyid, data=self.node2xyid)
-        """
+        self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type="node")
+        self.n_data = utils.fill_frame(
+            self.n_data, idx=self.nid_name, col=self.xyid, data=self.node2xyid
+        )
