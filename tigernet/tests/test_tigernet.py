@@ -2,23 +2,11 @@
 """
 
 import tigernet
-import geopandas
-import numpy
-from libpysal import cg
 
 import unittest
 
 
-class TestTigerNetNoData(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_no_segmdata(self):
-        with self.assertRaises(ValueError):
-            tigernet.TigerNet(s_data=None)
-
-
-class TestTigerNetLattice1x1(unittest.TestCase):
+class TestTigerNetBuildLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
@@ -70,7 +58,43 @@ class TestTigerNetLattice1x1(unittest.TestCase):
         self.assertEqual(observed_xyid, known_xyid)
 
 
-class TestTigerNetEmpirical(unittest.TestCase):
+class TestTigerNetTopologyLattice1x1(unittest.TestCase):
+    def setUp(self):
+        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
+
+    def test_lattice_network_segm2node(self):
+        known_segm2node = [[0, [0, 1]], [1, [1, 2]], [2, [1, 3]], [3, [1, 4]]]
+        observed_segm2node = self.lattice_network.segm2node
+        self.assertEqual(observed_segm2node, known_segm2node)
+
+    def test_lattice_network_node2segm(self):
+        known_node2segm = [[0, [0]], [1, [0, 1, 2, 3]], [2, [1]], [3, [2]], [4, [3]]]
+        observed_node2segm = self.lattice_network.node2segm
+        self.assertEqual(observed_node2segm, known_node2segm)
+
+    def test_lattice_network_segm2segm(self):
+        known_segm2segm = [
+            [0, [1, 2, 3]],
+            [1, [0, 2, 3]],
+            [2, [0, 1, 3]],
+            [3, [0, 1, 2]],
+        ]
+        observed_segm2segm = self.lattice_network.segm2segm
+        self.assertEqual(observed_segm2segm, known_segm2segm)
+
+    def test_lattice_network_node2node(self):
+        known_node2node = [[0, [1]], [1, [0, 2, 3, 4]], [2, [1]], [3, [1]], [4, [1]]]
+        observed_node2node = self.lattice_network.node2node
+        self.assertEqual(observed_node2node, known_node2node)
+
+
+class TestTigerNetBuildEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestTigerNetTopologyEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

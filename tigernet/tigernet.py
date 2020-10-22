@@ -238,22 +238,37 @@ class TigerNet:
         >>> lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         >>> net = tigernet.TigerNet(s_data=lat)
         >>> net.s_data
-                                                geometry  SegID  MTFCC                      xyid
-        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400  ['x4.5y0.0', 'x4.5y4.5']
-        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400  ['x4.5y4.5', 'x4.5y9.0']
-        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400  ['x0.0y4.5', 'x4.5y4.5']
-        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400  ['x4.5y4.5', 'x9.0y4.5']
+                                                geometry  SegID  MTFCC                      xyid    s_neigh n_neigh
+        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
+        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400  ['x4.5y4.5', 'x4.5y9.0']  [0, 2, 3]  [1, 2]
+        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400  ['x0.0y4.5', 'x4.5y4.5']  [0, 1, 3]  [1, 3]
+        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400  ['x4.5y4.5', 'x9.0y4.5']  [0, 1, 2]  [1, 4]
 
         >>> net.n_data
-                          geometry  NodeID          xyid
-        0  POINT (4.50000 0.00000)       0  ['x4.5y0.0']
-        1  POINT (4.50000 4.50000)       1  ['x4.5y4.5']
-        2  POINT (4.50000 9.00000)       2  ['x4.5y9.0']
-        3  POINT (0.00000 4.50000)       3  ['x0.0y4.5']
-        4  POINT (9.00000 4.50000)       4  ['x9.0y4.5']
+                          geometry  NodeID          xyid       s_neigh       n_neigh
+        0  POINT (4.50000 0.00000)       0  ['x4.5y0.0']           [0]           [1]
+        1  POINT (4.50000 4.50000)       1  ['x4.5y4.5']  [0, 1, 2, 3]  [0, 2, 3, 4]
+        2  POINT (4.50000 9.00000)       2  ['x4.5y9.0']           [1]           [1]
+        3  POINT (0.00000 4.50000)       3  ['x0.0y4.5']           [2]           [1]
+        4  POINT (9.00000 4.50000)       4  ['x9.0y4.5']           [3]           [1]
 
         >>> net.segm2xyid[0]
         [0, ['x4.5y0.0', 'x4.5y4.5']]
+
+        >>> net.node2xyid[0]
+        [0, ['x4.5y0.0']]
+
+        >>> net.segm2node[-1]
+        [3, [1, 4]]
+
+        >>> net.node2segm[-1]
+        [4, [3]]
+
+        >>> net.segm2segm[-1]
+        [3, [0, 1, 2]]
+
+        >>> net.node2node[-1]
+        [4, [1]]
 
         """
 
@@ -368,7 +383,7 @@ class TigerNet:
         """
 
         self.build_base(s_data)
-        # self.build_topology()
+        self.build_topology()
         # if record_components:
         #    self.build_components(largest_cc=largest_component)
         # self.build_associations(record_geom=record_geom)
@@ -406,4 +421,51 @@ class TigerNet:
         self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type="node")
         self.n_data = utils.fill_frame(
             self.n_data, idx=self.nid_name, col=self.xyid, data=self.node2xyid
+        )
+
+    def build_topology(self):
+        """Relate all graph elements."""
+
+        # Associate segments with neighboring nodes
+        self.segm2node = utils.associate(
+            primary=self.segm2xyid, secondary=self.node2xyid, assoc="segm2node"
+        )
+
+        # Associate nodes with neighboring segments
+        self.node2segm = utils.associate(
+            primary=self.node2xyid, secondary=self.segm2xyid, assoc="node2segm"
+        )
+
+        # Associate segments with neighboring segments
+        self.segm2segm = utils.get_neighbors(
+            self.segm2node, self.node2segm, astype=list
+        )
+
+        # Associate nodes with neighboring nodes
+        self.node2node = utils.get_neighbors(
+            self.node2segm, self.segm2node, astype=list
+        )
+
+        # 1. Catch cases w/ >= 3 neighboring nodes for a segment and throw an error.
+        # 2. Catch rings and add start & end node.
+        self = utils.assert_2_neighs(self)
+
+        # fill dataframe with seg2seg
+        self.s_data = utils.fill_frame(
+            self.s_data, idx=self.sid_name, col="s_neigh", data=self.segm2segm
+        )
+
+        # fill dataframe with seg2node
+        self.s_data = utils.fill_frame(
+            self.s_data, idx=self.sid_name, col="n_neigh", data=self.segm2node
+        )
+
+        # fill dataframe with node2seg
+        self.n_data = utils.fill_frame(
+            self.n_data, idx=self.nid_name, col="s_neigh", data=self.node2segm
+        )
+
+        # fill dataframe with node2node
+        self.n_data = utils.fill_frame(
+            self.n_data, idx=self.nid_name, col="n_neigh", data=self.node2node
         )

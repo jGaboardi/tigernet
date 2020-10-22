@@ -321,6 +321,174 @@ def extract_nodes(net):
     return nodedf
 
 
+def associate(
+    primary=None,
+    secondary=None,
+    assoc=None,
+    initial_weld=False,
+    net=None,
+    df=None,
+    ss=None,
+):
+    """Create 2 dictioanries of neighor relationships (``x2y`` and ``y2x``).
+    *OR* create one list of ``x2y`` neighor relationships.
+
+    Parameters
+    ----------
+    primary : list
+        Primary data in the form: ``[idx, [xyID1, xyID2,...]]``.
+        Default is ``None``.
+    secondary : list
+        Secondary data in the form: ``[idx, [xyID1, xyID2,...]]``.
+        Default is ``None``.
+    assoc : str
+        Either ``'node2seg'`` or ``'seg2node'``. Default is ``None``.
+    initial_weld : bool
+        Welding subset of restricted access road segments. Used in
+        ``cleanse_supercycle()``. Default is ``False``.
+    net : tigernet.TigerNet
+    df : geopandas.GeoDataFrame
+        restricted streets susbet dataframe. Default is ``None``.
+    ss : geopandas.GeoDataFrame
+        Subset of restricted streets susbet. Default is ``None``.
+
+    Returns
+    -------
+    segm_dict : dict
+        Neighoring elements in the form: ``{seg1, [node1, node2]}``.
+    node_dict : dict
+        Neighoring elements in the form: ``{node1, [seg1, seg2]}``.
+    topos_list : list
+        Neighoring elements in the form: ``[x1, [y1, y2]]``.
+
+    """
+
+    if initial_weld:
+        segm_dict = {}
+
+        for idx in df.index:
+            neigh = [ss[net.tnidf][idx], ss[net.tnidt][idx]]
+            segm_dict[ss[net.attr2][idx]] = neigh
+
+        # get nodes
+        ss_nodes = set()
+
+        for sidx, nidx in list(segm_dict.items()):
+            for nx in nidx:
+                ss_nodes.add(nx)
+        node_dict = {}
+
+        for node_idx in ss_nodes:
+            node_dict[node_idx] = set()
+            for seg_idx, nodes_idx in list(segm_dict.items()):
+                if node_idx in nodes_idx:
+                    node_dict[node_idx].add(seg_idx)
+
+        return segm_dict, node_dict
+
+    topos_list = []
+
+    for primary_idx, primary_info in enumerate(primary):
+        topos = [primary_idx, []]
+
+        for secondary_idx, secondary_info in enumerate(secondary):
+            secondary_idxs = []
+
+            # first and last point of the segment in string format for primary_info
+            # in 'segm2node' and secondary_info in 'node2segm'
+            if assoc == "segm2node":
+                s10p10 = secondary_info[1][0] == primary_info[1][0]
+                s10p11 = secondary_info[1][0] == primary_info[1][-1]
+                if s10p10 or s10p11:
+                    secondary_idxs.append(secondary_idx)
+
+            if assoc == "node2segm":
+                p10s10 = primary_info[1][0] == secondary_info[1][0]
+                p10s11 = primary_info[1][0] == secondary_info[1][-1]
+                if p10s10 or p10s11:
+                    secondary_idxs.append(secondary_idx)
+
+            topos[1].extend(secondary_idxs)
+
+        topos_list.extend([topos])
+
+    return topos_list
+
+
+def get_neighbors(x2y, y2x, astype=None):
+    """Get all neighboring graph elements of the same type.
+
+    Parameters
+    ----------
+    x2y : list or dict
+        Element type1 to element type2 crosswalk.
+    y2x : list or dict
+        Element type2 to element type1 crosswalk.
+    astype : list or dict
+        Return the lookup as either type. Default is ``None``.
+
+    Returns
+    -------
+    x2x : list or dict
+        Element type1 to element type1 crosswalk *OR* element type2 to element
+        type2 crosswalk in the form: ``{x1, [x2,x3]}`` *OR* ``[x1, [x2,x3]]``.
+    """
+
+    if not astype:
+        raise ValueError("The `astype` parameter must be set.")
+
+    elif astype == dict:
+        x2x = {}
+        for k, vn in list(x2y.items()):
+            x2x[k] = set()
+            for v in vn:
+                x2x[k].update(y2x[v])
+                x2x[k].discard(k)
+
+    elif astype == list:
+        x2x = []
+        for (k, vn) in x2y:
+            x2x.append([k, set()])
+            for v in vn:
+                x2x[k][1].update(y2x[v][1])
+                x2x[k][1].discard(k)
+        x2x = [[k, list(v)] for (k, v) in x2x]
+
+    else:
+        raise TypeError(str(type), "not a valid type for `astype` parameter.")
+
+    return x2x
+
+
+def assert_2_neighs(net):
+    """
+    1. Raise an error if a segment has more that 2 neighbor nodes.
+    2. If the road has one neighbor node then it is a ring road.
+        In this case give the ring road a copy of the one nighbor.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+
+    """
+
+    more_2_neighs = [k for (k, v) in net.segm2node if len(v) > 2]
+
+    if more_2_neighs:
+        msg = "Adjacency value corruption. The segments listed below are incident with "
+        msg += " more than two nodes.\n\nProblem segment IDs: %s" % str(more_2_neighs)
+        raise AssertionError(msg)
+
+    rings = [k for (k, v) in net.segm2node if len(v) < 2]
+
+    if rings:
+        for ring in rings:
+            n1 = net.segm2node[ring][1][0]
+            net.segm2node[ring][1] = [n1, n1]
+
+    return net
+
+
 '''
 def record_filter(df, column=None, sval=None, mval=None, oper=None):
     """used in phase 2 with incidents
@@ -359,38 +527,6 @@ def record_filter(df, column=None, sval=None, mval=None, oper=None):
         if oper == 'out':
             return df[~frame_col.isin(mval)].copy()
 
-
-def set_crs(df, proj_init=None, proj_trans=None, crs=None):
-    """Set and transform the coordinate
-    reference system of a geodataframe.
-    
-    Parameters
-    ----------
-    df : geopandas.GeoDataframe
-        geodataframe being transformed
-    proj_init : int
-        intial coordinate reference system. default is None.
-    proj_trans : int
-        transformed coordinate reference system. default is None.
-    crs : dict
-        crs from another geodataframe
-    
-    Returns
-    -------
-    df : geopandas.GeoDataframe
-        transformed geodataframe
-    """
-    
-    if proj_init:
-        df.crs = {'init': 'epsg:'+str(proj_init)}
-    
-    if proj_trans:
-        df = df.to_crs(epsg=int(proj_trans))
-    
-    if crs:
-        df = df.to_crs(crs)
-    
-    return df
 
 
 def geom_to_float(df, xval=None, yval=None, geom_type=None):
