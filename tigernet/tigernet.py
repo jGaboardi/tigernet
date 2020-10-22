@@ -9,7 +9,6 @@ __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 class TigerNet:
     def __init__(
         self,
-        file_type=".shp",
         tnid="TNID",
         tnidf="TNIDF",
         tnidt="TNIDT",
@@ -64,12 +63,11 @@ class TigerNet:
         simp_net_segms=None,
         simp_net_nodes=None,
         remove_gdfs=False,
+        file_type=".shp",
     ):
         """
         Parameters
         ----------
-        file_type : str
-            file extension. Default is ``'.shp'``.
         tnid : str
             TIGER/Line node ID variable used for working with
             TIGER/Line edges. Default is ``'TNID'``.
@@ -79,25 +77,28 @@ class TigerNet:
         tnidt : str
              TIGER/Line 'To Node' variable used for building topology in
              TIGER/Line edges. Default is ``'TNIDT'``.
-        s_data : str **OR** geopandas.GeoDataFrame
+        s_data : {str, geopandas.GeoDataFrame}
             Path to segments data or a dataframe itself.
-        n_data : str **OR** geopandas.GeoDataFrame
+        n_data : {str, geopandas.GeoDataFrame, None}
             Nodes data. Default is ``None``.
         sid_name : str
             Segment column name. Default is ``'SegID'``.
         nid_name : str
             Node column name. Default is ``'NodeID'``.
+
         #proj_init : int
         #    initial projection. Default is None.
         #proj_trans : int
         #    transformed projection. Default is None.
         #proj_units : str
         #    unit of transformed projection. Default is None.
+
         attr1 : str
             Auxillary variable being used. Default is ``None``.
         attr2 : str
             Auxillary variable being used. Either ``'TLID'`` for tiger edges
             or ``'LINEARID'`` for tiger roads. Default is ``None``.
+
         #inter : str
         #    file path to intermediary data. Default is None.
         #study_area : str
@@ -111,6 +112,7 @@ class TigerNet:
         #place_time : str
         #    place and time descriptor. Default is None. e.g.
         #    '_Leon_FL_2010'
+
         mtfcc_types : dict
             MTFCC road type descriptions. Default is ``None``.
             from [utils.get_mtfcc_types()]
@@ -150,12 +152,10 @@ class TigerNet:
         calc_len : bool
             calculated length and add column. Default is False.
         record_components : bool
-            record connected components in graph. This is used for
-            teasing out the largests connected component.
-            Default is False.
+            Record connected components in graph. This is used for teasing out the
+            largest connected component. Default is ``False``.
         largest_component : bool
-            keep only the largest connected component in the graph.
-            Default is False.
+            Keep only the largest connected component in the graph. Default is ``False``.
         record_geom : bool
             create associated between IDs and shapely geometries.
             Default is False.
@@ -200,6 +200,9 @@ class TigerNet:
             remove dataframes from network object following  network
             simplification. Default is False.
 
+        file_type : str
+            file extension. Default is ``'.shp'``.
+
         Methods : Attributes
         --------------------
         __init__ : segmdata, census_data
@@ -222,6 +225,7 @@ class TigerNet:
             min_node_degree, mean_node_degree, std_node_degree, alpha,
             beta, gamma, eta, entropies_mtfcc, entropy_mtfcc,
             actual_object_sizes, actual_total_size
+
         ############### sauce.setup_raw : raw_data_info
         ############### sauce.ring_correction : corrected_rings
         ############### sauce.line_splitter : lines_split
@@ -384,8 +388,8 @@ class TigerNet:
 
         self.build_base(s_data)
         self.build_topology()
-        # if record_components:
-        #    self.build_components(largest_cc=largest_component)
+        if record_components:
+            self.build_components(largest_cc=largest_component)
         # self.build_associations(record_geom=record_geom)
         # if def_graph_elems:
         #    self.define_graph_elements()
@@ -409,9 +413,8 @@ class TigerNet:
 
         # create segment xyid
         self.segm2xyid = utils.generate_xyid(df=self.s_data, geom_type="segm")
-        self.s_data = utils.fill_frame(
-            self.s_data, idx=self.sid_name, col=self.xyid, data=self.segm2xyid
-        )
+        _skws = {"idx": self.sid_name, "col": self.xyid, "data": self.segm2xyid}
+        self.s_data = utils.fill_frame(self.s_data, **_skws)
 
         # Instantiate nodes dataframe as part of NetworkClass
         self.n_data = utils.extract_nodes(self)
@@ -419,53 +422,91 @@ class TigerNet:
 
         # create permanent node xyid
         self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type="node")
-        self.n_data = utils.fill_frame(
-            self.n_data, idx=self.nid_name, col=self.xyid, data=self.node2xyid
-        )
+        _nkws = {"idx": self.nid_name, "col": self.xyid, "data": self.node2xyid}
+        self.n_data = utils.fill_frame(self.n_data, **_nkws)
 
     def build_topology(self):
         """Relate all graph elements."""
 
         # Associate segments with neighboring nodes
-        self.segm2node = utils.associate(
-            primary=self.segm2xyid, secondary=self.node2xyid, assoc="segm2node"
-        )
+        _pri_sec = {"primary": self.segm2xyid, "secondary": self.node2xyid}
+        self.segm2node = utils.associate(assoc="segm2node", **_pri_sec)
 
         # Associate nodes with neighboring segments
-        self.node2segm = utils.associate(
-            primary=self.node2xyid, secondary=self.segm2xyid, assoc="node2segm"
-        )
+        _pri_sec = {"primary": self.node2xyid, "secondary": self.segm2xyid}
+        self.node2segm = utils.associate(assoc="node2segm", **_pri_sec)
 
         # Associate segments with neighboring segments
-        self.segm2segm = utils.get_neighbors(
-            self.segm2node, self.node2segm, astype=list
-        )
+        _args = self.segm2node, self.node2segm
+        self.segm2segm = utils.get_neighbors(*_args, astype=list)
 
         # Associate nodes with neighboring nodes
-        self.node2node = utils.get_neighbors(
-            self.node2segm, self.segm2node, astype=list
-        )
+        _args = self.node2segm, self.segm2node
+        self.node2node = utils.get_neighbors(*_args, astype=list)
 
         # 1. Catch cases w/ >= 3 neighboring nodes for a segment and throw an error.
         # 2. Catch rings and add start & end node.
         self = utils.assert_2_neighs(self)
 
         # fill dataframe with seg2seg
-        self.s_data = utils.fill_frame(
-            self.s_data, idx=self.sid_name, col="s_neigh", data=self.segm2segm
-        )
+        _skws = {"idx": self.sid_name, "col": "s_neigh", "data": self.segm2segm}
+        self.s_data = utils.fill_frame(self.s_data, **_skws)
 
         # fill dataframe with seg2node
-        self.s_data = utils.fill_frame(
-            self.s_data, idx=self.sid_name, col="n_neigh", data=self.segm2node
-        )
+        _skws = {"idx": self.sid_name, "col": "n_neigh", "data": self.segm2node}
+        self.s_data = utils.fill_frame(self.s_data, **_skws)
 
         # fill dataframe with node2seg
-        self.n_data = utils.fill_frame(
-            self.n_data, idx=self.nid_name, col="s_neigh", data=self.node2segm
-        )
+        _nkws = {"idx": self.nid_name, "col": "s_neigh", "data": self.node2segm}
+        self.n_data = utils.fill_frame(self.n_data, **_nkws)
 
         # fill dataframe with node2node
-        self.n_data = utils.fill_frame(
-            self.n_data, idx=self.nid_name, col="n_neigh", data=self.node2node
-        )
+        _nkws = {"idx": self.nid_name, "col": "n_neigh", "data": self.node2node}
+        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+
+    def build_components(self, largest_cc=False):
+        """Find the rooted connected components of the graph (either largest or longest).
+        *** Must choose either largest or longest. If both ``largest_cc`` and
+        ``longest_cc`` are ``True``, ``largest_cc`` will be selected by default. ***
+
+        Parameters
+        ----------
+        largest_cc : bool
+            Keep only the largest connected component (the most
+            edges/nodes) in the graph. Default is ``False``.
+
+        """
+
+        ### Segms -- Connected Components
+        # -- Count
+        self.segm_cc = utils.get_roots(self.segm2segm)
+        _skws = {"idx": self.sid_name, "col": "CC", "data": self.segm_cc}
+        self.s_data = utils.fill_frame(self.s_data, **_skws)
+
+        # -- Length
+        # fill connected component len column in dataframe and return dict
+        self.cc_lens = utils.get_cc_len(self, len_col=self.len_col)
+
+        ### Node -- Connected Components
+        self.node_cc = utils.get_roots(self.node2node)
+        _nkws = {"idx": self.nid_name, "col": "CC", "data": self.node_cc}
+        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+
+        # Extract largest CCs
+        if largest_cc:
+            # largest CC by count (nodes & segments) -- and return small keys
+            self.largest_segm_cc, segm_smallkeys = utils.get_largest_cc(
+                self.segm_cc, smallkeys=True
+            )
+            self.largest_node_cc, node_smallkeys = utils.get_largest_cc(
+                self.node_cc, smallkeys=True
+            )
+
+            # Keep only the largest connected component
+            utils.update_adj(self, segm_smallkeys, node_smallkeys)
+
+            lcck = self.largest_segm_cc[0]
+            self.cc_lens = {k: vs for k, vs in self.cc_lens.items() if k == lcck}
+
+        # Count connected components in network
+        self.n_segm_cc = len(self.segm2segm)

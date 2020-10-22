@@ -12,39 +12,31 @@ class TestTigerNetBuildLattice1x1(unittest.TestCase):
         self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
 
     def test_lattice_network_sdata(self):
-        sdata = self.lattice_network.s_data
-
         known_segments = 4
-        observed_segments = sdata.shape[0]
+        observed_segments = self.lattice_network.s_data.shape[0]
         self.assertEqual(observed_segments, known_segments)
 
         known_length = 18.0
-        observed_length = sdata.length.sum()
+        observed_length = self.lattice_network.s_data.length.sum()
         self.assertEqual(observed_length, known_length)
 
     def test_lattice_network_ndata(self):
-        ndata = self.lattice_network.n_data
-
         known_nodes = 5
-        observed_nodes = ndata.shape[0]
+        observed_nodes = self.lattice_network.n_data.shape[0]
         self.assertEqual(observed_nodes, known_nodes)
 
         known_bounds = [0.0, 0.0, 9.0, 9.0]
-        observed_bounds = list(ndata.total_bounds)
+        observed_bounds = list(self.lattice_network.n_data.total_bounds)
         self.assertEqual(observed_bounds, known_bounds)
 
     def test_lattice_network_sdata_ids(self):
-        sdata = self.lattice_network.s_data
-
         known_ids = [0, 1, 2, 3]
-        observed_ids = list(sdata["SegID"])
+        observed_ids = list(self.lattice_network.s_data["SegID"])
         self.assertEqual(observed_ids, known_ids)
 
     def test_lattice_network_ndata_ids(self):
-        ndata = self.lattice_network.n_data
-
         known_ids = [0, 1, 2, 3, 4]
-        observed_ids = list(ndata["NodeID"])
+        observed_ids = list(self.lattice_network.n_data["NodeID"])
         self.assertEqual(observed_ids, known_ids)
 
     def test_lattice_network_segm2xyid(self):
@@ -89,12 +81,101 @@ class TestTigerNetTopologyLattice1x1(unittest.TestCase):
         self.assertEqual(observed_node2node, known_node2node)
 
 
+class TestTigerNetComponentsLattice1x1(unittest.TestCase):
+    def setUp(self):
+        lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        lat2 = tigernet.generate_lattice(
+            n_hori_lines=1, n_vert_lines=1, bounds=[6, 6, 8, 8]
+        )
+        self.lattice = lat1.append(lat2)
+        self.lattice.reset_index(drop=True, inplace=True)
+
+        # full network
+        self.lattice_network = tigernet.TigerNet(
+            s_data=self.lattice, record_components=True
+        )
+        # largest component network
+        self.lattice_network_largest_cc = tigernet.TigerNet(
+            s_data=self.lattice, record_components=True, largest_component=True
+        )
+
+    def test_lattice_network_segm_components(self):
+        known_ccs = [[1, [0, 1, 2, 3]], [5, [4, 5, 6, 7]]]
+        observed_ccs = self.lattice_network.segm_cc
+        self.assertEqual(observed_ccs, known_ccs)
+
+        known_cc_lens = {1: [18.0, [0, 1, 2, 3]], 5: [4.0, [4, 5, 6, 7]]}
+        observed_cc_lens = self.lattice_network.cc_lens
+        self.assertEqual(observed_cc_lens, known_cc_lens)
+
+        known_segms_in_ccs = 8
+        observed_segms_in_ccs = self.lattice_network.n_segm_cc
+        self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
+
+    def test_lattice_network_sdata_components(self):
+        known_ccs = [1, 1, 1, 1, 5, 5, 5, 5]
+        observed_ccs = list(self.lattice_network.s_data["CC"])
+        self.assertEqual(observed_ccs, known_ccs)
+
+        known_cc_lens = [18.0, 18.0, 18.0, 18.0, 4.0, 4.0, 4.0, 4.0]
+        observed_cc_lens = list(self.lattice_network.s_data["ccLength"])
+        self.assertEqual(observed_cc_lens, known_cc_lens)
+
+    def test_lattice_network_node_components(self):
+        known_ccs = [[1, [0, 1, 2, 3, 4]], [6, [5, 6, 7, 8, 9]]]
+        observed_ccs = self.lattice_network.node_cc
+        self.assertEqual(observed_ccs, known_ccs)
+
+    def test_lattice_network_ndata_components(self):
+        known_ccs = [1, 1, 1, 1, 1, 6, 6, 6, 6, 6]
+        observed_ccs = list(self.lattice_network.n_data["CC"])
+        self.assertEqual(observed_ccs, known_ccs)
+
+    def test_lattice_network_segm_components_largest(self):
+        known_ccs = [1, [0, 1, 2, 3]]
+        observed_ccs = self.lattice_network_largest_cc.segm_cc
+        self.assertEqual(observed_ccs, known_ccs)
+
+        known_cc_lens = {1: [18.0, [0, 1, 2, 3]]}
+        observed_cc_lens = self.lattice_network_largest_cc.cc_lens
+        self.assertEqual(observed_cc_lens, known_cc_lens)
+
+        known_segms_in_ccs = 4
+        observed_segms_in_ccs = self.lattice_network_largest_cc.n_segm_cc
+        self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
+
+    def test_lattice_network_sdata_components_largest(self):
+        known_ccs = [1, 1, 1, 1]
+        observed_ccs = list(self.lattice_network_largest_cc.s_data["CC"])
+        self.assertEqual(observed_ccs, known_ccs)
+
+        known_cc_lens = [18.0, 18.0, 18.0, 18.0]
+        observed_cc_lens = list(self.lattice_network_largest_cc.s_data["ccLength"])
+        self.assertEqual(observed_cc_lens, known_cc_lens)
+
+    def test_lattice_network_node_components_largest(self):
+        known_ccs = [1, [0, 1, 2, 3, 4]]
+        observed_ccs = self.lattice_network_largest_cc.node_cc
+        self.assertEqual(observed_ccs, known_ccs)
+
+    def test_lattice_network_ndata_components_largest(self):
+        known_ccs = [1, 1, 1, 1, 1]
+        observed_ccs = list(self.lattice_network_largest_cc.n_data["CC"])
+
+    # def test_lattice_network_...(self):
+
+
 class TestTigerNetBuildEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
 class TestTigerNetTopologyEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestTigerNetComponentsEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

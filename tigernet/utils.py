@@ -489,6 +489,180 @@ def assert_2_neighs(net):
     return net
 
 
+def get_roots(adj):
+    """Create a rooted object that stores connected components.
+
+    Parameters
+    ----------
+    adj : list
+        Record of adjacency.
+
+    Returns
+    -------
+    ccs : list
+        Rooted connected components
+
+    """
+
+    def _find_root_depth(obj: int, root: list) -> tuple:
+        """Find the root and it's depth."""
+        while obj != root[obj][0]:
+            obj = root[obj][0]
+        # (int, int)
+        obj_rootdepth = obj, root[obj][1]
+        return obj_rootdepth
+
+    if type(adj) == dict:
+        adj = [[idx, list(cc)] for idx, cc in list(adj.items())]
+
+    # 1. set all objects within the root lookup to zero
+    root = {i: (i, 0) for (i, neighs) in adj}
+
+    # 2. iterate through each combination of neighbors
+    for (i, neighs) in adj:
+        for j in neighs:
+
+            # 2-A. find the root of i and its depth
+            root_of_i, depth_of_i = _find_root_depth(i, root)
+
+            # 2-B. find the root of j and its depth
+            root_of_j, depth_of_j = _find_root_depth(j, root)
+
+            # 2-C. set each object as either root or non root
+            if root_of_i != root_of_j:
+                _min, _max = root_of_i, root_of_j
+                if depth_of_i > depth_of_j:
+                    _min, _max = root_of_j, root_of_i
+                root[_max] = _max, max(root[_min][1] + 1, root[_max][1])
+                root[_min] = (root[_max][0], -1)
+
+    # 3. create empty list entry for each rooted connected component
+    ccs = {i: [] for (i, neighs) in adj if root[i][0] == i}
+
+    # 4. fill each list with the components
+    [ccs[_find_root_depth(i, root)[0]].append(i) for (i, neighs) in adj]
+    ccs = [list(cc) for cc in list(ccs.items())]
+
+    return ccs
+
+
+def get_cc_len(net, len_col=None):
+    """return the geodataframe with the length of each associated
+    connected component in a new column.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    len_col : str
+        The name of the length column. Default is ``None``.
+
+    Returns
+    -------
+    cc_lens : dict
+        ``{ID:length}`` for each connected component in graph.
+
+    """
+
+    net.s_data["ccLength"] = numpy.nan
+    cc_lens = {}
+
+    for (k, v) in net.segm_cc:
+        new_v, segment_ids = v, v
+        new_v = net.s_data[net.s_data[net.sid_name].isin(new_v)]
+        new_v = getattr(
+            new_v, len_col
+        ).sum()  ##################################### issue
+        net.s_data.loc[net.s_data[net.sid_name].isin(v), "ccLength"] = new_v
+        cc_lens[k] = [new_v, segment_ids]
+
+    return cc_lens
+
+
+def get_largest_cc(ccs, smallkeys=True):
+    """Return the largest component object.
+
+    Parameters
+    ----------
+    ccs : list
+        A list of connected components.
+    smallkeys : bool
+        Return the keys of the smaller components. Default is ``True``.
+
+    Returns
+    -------
+    results : list, tuple
+        Either ``[largestKey, largestValues]`` if ``smallkeys=False`` or
+        ``[largestKey, largestValues], non_largest`` if ``smallkeys=True``.
+
+    """
+
+    largest = max(ccs, key=lambda k: len(k[1]))
+    largest_key = largest[0]
+    largest_values = largest[1]
+
+    results = [largest_key, largest_values]
+
+    if smallkeys:
+        non_largest = []
+        for (cck, ccvs) in ccs:
+            if cck is not largest_key:
+                non_largest.extend(ccvs)
+        results = [largest_key, largest_values], non_largest
+
+    return results
+
+
+def update_adj(net, seg_keys, node_keys):
+    """Update adjacency relationships between segments and nodes.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    seg_keys : list
+        Segment keys to remove from adjacency.
+    node_keys : list
+        Node keys to remove from adjacency.
+
+    """
+
+    # update all crosswalk dictionaries
+    net.segm2segm = remove_adj(net.segm2segm, seg_keys)
+    net.segm2node = remove_adj(net.segm2node, seg_keys)
+    net.node2node = remove_adj(net.node2node, node_keys)
+    net.node2segm = remove_adj(net.node2segm, node_keys)
+
+    # Keep only the largest connected component
+    net.segm_cc = net.largest_segm_cc
+    net.node_cc = net.largest_node_cc
+
+    # Set component ID to dataframe
+    net.s_data = net.s_data[net.s_data[net.sid_name].isin(net.segm_cc[1])]
+    net.s_data.reset_index(drop=True, inplace=True)
+    net.n_data = net.n_data[net.n_data[net.nid_name].isin(net.node_cc[1])]
+    net.n_data.reset_index(drop=True, inplace=True)
+
+
+def remove_adj(e2e, remove):
+    """Remove adjacent elements from list of IDs.
+
+    Parameters
+    ----------
+    e2e : list
+        The element-to-element relationship list. This is either an
+        'x2x' relationship or 'x2y' relationship.
+    remove : list
+        The keys to remove from list.
+
+    Returns
+    -------
+    e2e : list
+        The updated e2e relationship list.
+
+    """
+    e2e = [[k, vs] for (k, vs) in e2e if k not in set(remove)]
+    return e2e
+
+
 '''
 def record_filter(df, column=None, sval=None, mval=None, oper=None):
     """used in phase 2 with incidents
