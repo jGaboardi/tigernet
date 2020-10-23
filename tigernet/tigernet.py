@@ -242,19 +242,19 @@ class TigerNet:
         >>> lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         >>> net = tigernet.TigerNet(s_data=lat)
         >>> net.s_data
-                                                geometry  SegID  MTFCC                      xyid    s_neigh n_neigh
-        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
-        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400  ['x4.5y4.5', 'x4.5y9.0']  [0, 2, 3]  [1, 2]
-        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400  ['x0.0y4.5', 'x4.5y4.5']  [0, 1, 3]  [1, 3]
-        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400  ['x4.5y4.5', 'x9.0y4.5']  [0, 1, 2]  [1, 4]
+                                                geometry  SegID  MTFCC  length                      xyid    s_neigh n_neigh
+        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400     4.5  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
+        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400     4.5  ['x4.5y4.5', 'x4.5y9.0']  [0, 2, 3]  [1, 2]
+        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400     4.5  ['x0.0y4.5', 'x4.5y4.5']  [0, 1, 3]  [1, 3]
+        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400     4.5  ['x4.5y4.5', 'x9.0y4.5']  [0, 1, 2]  [1, 4]
 
         >>> net.n_data
-                          geometry  NodeID          xyid       s_neigh       n_neigh
-        0  POINT (4.50000 0.00000)       0  ['x4.5y0.0']           [0]           [1]
-        1  POINT (4.50000 4.50000)       1  ['x4.5y4.5']  [0, 1, 2, 3]  [0, 2, 3, 4]
-        2  POINT (4.50000 9.00000)       2  ['x4.5y9.0']           [1]           [1]
-        3  POINT (0.00000 4.50000)       3  ['x0.0y4.5']           [2]           [1]
-        4  POINT (9.00000 4.50000)       4  ['x9.0y4.5']           [3]           [1]
+                          geometry  NodeID          xyid       s_neigh       n_neigh  degree
+        0  POINT (4.50000 0.00000)       0  ['x4.5y0.0']           [0]           [1]       1
+        1  POINT (4.50000 4.50000)       1  ['x4.5y4.5']  [0, 1, 2, 3]  [0, 2, 3, 4]       4
+        2  POINT (4.50000 9.00000)       2  ['x4.5y9.0']           [1]           [1]       1
+        3  POINT (0.00000 4.50000)       3  ['x0.0y4.5']           [2]           [1]       1
+        4  POINT (9.00000 4.50000)       4  ['x9.0y4.5']           [3]           [1]       1
 
         >>> net.segm2xyid[0]
         [0, ['x4.5y0.0', 'x4.5y4.5']]
@@ -390,7 +390,7 @@ class TigerNet:
         self.build_topology()
         if record_components:
             self.build_components(largest_cc=largest_component)
-        # self.build_associations(record_geom=record_geom)
+        self.build_associations(record_geom=record_geom)
         # if def_graph_elems:
         #    self.define_graph_elements()
 
@@ -410,6 +410,8 @@ class TigerNet:
         del s_data
         self.s_data.reset_index(drop=True, inplace=True)
         self.s_data = utils.add_ids(self.s_data, id_name=self.sid_name)
+        if not self.len_col in self.s_data.columns:
+            self.s_data[self.len_col] = getattr(self.s_data, self.len_col)
 
         # create segment xyid
         self.segm2xyid = utils.generate_xyid(df=self.s_data, geom_type="segm")
@@ -510,3 +512,42 @@ class TigerNet:
 
         # Count connected components in network
         self.n_segm_cc = len(self.segm2segm)
+
+    def build_associations(self, record_geom=False):
+        """Associate graph elements with geometries, coordinates,
+        segment lengths, node degrees, and other information.
+
+        Parameters
+        ----------
+        record_geom : bool
+            Create an ID-to-geometry lookup (``True``). Default is ``False``.
+
+        """
+
+        if record_geom:
+            utils.geom_assoc(self)
+        utils.geom_assoc(self, coords=True)
+
+        # id lists
+        self.s_ids = list(self.s_data[self.sid_name])
+        self.n_ids = list(self.n_data[self.nid_name])
+
+        # permanent segment count & node count
+        self.n_segm, self.n_node = len(self.s_ids), len(self.n_ids)
+
+        # Associate segments with length
+        self.segm2len = utils.xwalk(self.s_data, c1=self.sid_name, c2=self.len_col)
+
+        # total length
+        self.network_length = sum([v for (k, v) in self.segm2len])
+
+        # Calculate degree for n_ids -- incident segs +1; incident loops +2
+        self.node2degree = utils.calc_valency(self, col="n_neigh")
+        self.n_data["degree"] = [n2d[1][0] for n2d in self.node2degree]
+        try:
+            if self.tiger_edges:
+                self.segm2tlid = utils.xwalk(
+                    self.s_data, c1=self.sid_name, c2=self.tlid
+                )
+        except KeyError:
+            pass

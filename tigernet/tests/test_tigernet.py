@@ -162,6 +162,83 @@ class TestTigerNetComponentsLattice1x1(unittest.TestCase):
         known_ccs = [1, 1, 1, 1, 1]
         observed_ccs = list(self.lattice_network_largest_cc.n_data["CC"])
 
+
+class TestTigerNetAssociationsLattice1x1(unittest.TestCase):
+    def setUp(self):
+        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        self.lattice_network = tigernet.TigerNet(s_data=self.lattice, record_geom=True)
+
+    def test_lattice_network_segm2geom(self):
+        known_type = "LineString"
+        observed_type = self.lattice_network.segm2geom[0][1].geom_type
+        self.assertEqual(observed_type, known_type)
+
+        known_wkt = "LINESTRING (4.5 0, 4.5 4.5)"
+        observed_wkt = self.lattice_network.segm2geom[0][1].wkt
+        self.assertEqual(observed_wkt, known_wkt)
+
+    def test_lattice_network_segm2coords(self):
+        known_lookup = [
+            [0, [(4.5, 0.0), (4.5, 4.5)]],
+            [1, [(4.5, 4.5), (4.5, 9.0)]],
+            [2, [(0.0, 4.5), (4.5, 4.5)]],
+            [3, [(4.5, 4.5), (9.0, 4.5)]],
+        ]
+        observed_lookup = self.lattice_network.segm2coords
+        self.assertEqual(observed_lookup, known_lookup)
+
+    def test_lattice_network_node2geom(self):
+        known_type = "Point"
+        observed_type = self.lattice_network.node2geom[0][1].geom_type
+        self.assertEqual(observed_type, known_type)
+
+        known_wkt = "POINT (4.5 0)"
+        observed_wkt = self.lattice_network.node2geom[0][1].wkt
+        self.assertEqual(observed_wkt, known_wkt)
+
+    def test_lattice_network_node2coords(self):
+        known_lookup = [
+            [0, [(4.5, 0.0)]],
+            [1, [(4.5, 4.5)]],
+            [2, [(4.5, 9.0)]],
+            [3, [(0.0, 4.5)]],
+            [4, [(9.0, 4.5)]],
+        ]
+        observed_lookup = self.lattice_network.node2coords
+        self.assertEqual(observed_lookup, known_lookup)
+
+    def test_lattice_network_s_ids(self):
+        known_ids = [0, 1, 2, 3]
+        observed_ids = self.lattice_network.s_ids
+        self.assertEqual(observed_ids, known_ids)
+
+    def test_lattice_network_n_ids(self):
+        known_ids = [0, 1, 2, 3, 4]
+        observed_ids = self.lattice_network.n_ids
+        self.assertEqual(observed_ids, known_ids)
+
+    def test_lattice_network_n_segm(self):
+        known_segm_count, observed_segm_count = 4, self.lattice_network.n_segm
+        self.assertEqual(observed_segm_count, known_segm_count)
+
+    def test_lattice_network_n_node(self):
+        known_node_count, observed_node_count = 5, self.lattice_network.n_node
+        self.assertEqual(observed_node_count, known_node_count)
+
+    def test_lattice_network_length(self):
+        known_length, observed_length = 18.0, self.lattice_network.network_length
+        self.assertEqual(observed_length, known_length)
+
+    def test_lattice_node2degree(self):
+        known_node2degree = [[0, [1]], [1, [4]], [2, [1]], [3, [1]], [4, [1]]]
+        observed_node2degree = self.lattice_network.node2degree
+        self.assertEqual(observed_node2degree, known_node2degree)
+
+    def test_lattice_ndata_degree(self):
+        known_degree = [1, 4, 1, 1, 1]
+        observed_degree = list(self.lattice_network.n_data["degree"])
+        self.assertEqual(observed_degree, known_degree)
+
     # def test_lattice_network_...(self):
 
 
@@ -176,6 +253,11 @@ class TestTigerNetTopologyEmpirical(unittest.TestCase):
 
 
 class TestTigerNetComponentsEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestTigerNetAssociationsEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

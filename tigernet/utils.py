@@ -1,6 +1,8 @@
 """
 """
 
+from ast import literal_eval
+
 import geopandas
 import numpy
 import pandas
@@ -460,6 +462,44 @@ def get_neighbors(x2y, y2x, astype=None):
     return x2x
 
 
+def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
+    """Create adjacency crosswalks as lists.
+
+    Parameters
+    ----------
+    df : geopandas.GeoDataFrame
+        The geometry dataframe.
+    c1 : str
+        The column name. Default is ``None``.
+    c2 : str
+        The column name. Default is ``None``.
+    stipulation : str
+        Default is ``None``.
+    geo_col : str
+        The name of the geometry column. Default is ``None``.
+
+    Returns
+    -------
+    xw : list
+        The adjacency crosswalk.
+
+    """
+
+    if c2 in ["nodeNeighs", "segmNeighs"]:
+        xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
+
+    if c2 in ["degree", "length", "TLID"]:
+        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+
+    if c2 == geo_col and not stipulation:
+        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+
+    if c2 == geo_col and stipulation == "coords":
+        xw = [[df[c1][ix], df[c2][ix].coords[:]] for ix in df.index]
+
+    return xw
+
+
 def assert_2_neighs(net):
     """
     1. Raise an error if a segment has more that 2 neighbor nodes.
@@ -569,9 +609,7 @@ def get_cc_len(net, len_col=None):
     for (k, v) in net.segm_cc:
         new_v, segment_ids = v, v
         new_v = net.s_data[net.s_data[net.sid_name].isin(new_v)]
-        new_v = getattr(
-            new_v, len_col
-        ).sum()  ##################################### issue
+        new_v = new_v[len_col].sum()
         net.s_data.loc[net.s_data[net.sid_name].isin(v), "ccLength"] = new_v
         cc_lens[k] = [new_v, segment_ids]
 
@@ -661,6 +699,60 @@ def remove_adj(e2e, remove):
     """
     e2e = [[k, vs] for (k, vs) in e2e if k not in set(remove)]
     return e2e
+
+
+def geom_assoc(net, coords=False):
+    """Associate nodes and segments with geometry or coordinates.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    coords : bool
+        Associate with coordinates (``True``). Default is ``False``.
+
+    """
+
+    geo_col = "geometry"
+    _kws = {"c2": geo_col, "geo_col": geo_col}
+    if not coords:
+        net.segm2geom = xwalk(net.s_data, c1=net.sid_name, **_kws)
+        net.node2geom = xwalk(net.n_data, c1=net.nid_name, **_kws)
+    else:
+        _kws.update({"stipulation": "coords"})
+        net.segm2coords = xwalk(net.s_data, c1=net.sid_name, **_kws)
+        net.node2coords = xwalk(net.n_data, c1=net.nid_name, **_kws)
+
+
+def calc_valency(net, col=None):
+    """Calculate the valency of each node and return a lookup.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    col : str
+        The node neighbors column. Default is ``None``.
+
+    Returns
+    -------
+    n2d : list
+        The node-to-degree lookup.
+
+    """
+
+    n2d = []
+    for (node, segs) in net.node2segm:
+        loops = 0
+        for s in segs:
+            segv = net.s_data[net.sid_name] == s
+            neighs = literal_eval(net.s_data.loc[segv, col].values[0])
+            if neighs[0] != neighs[1]:
+                continue
+            if neighs[0] == neighs[1]:
+                loops += 1
+        degree = len(segs) + loops
+        n2d.append([node, [degree]])
+
+    return n2d
 
 
 '''
