@@ -239,6 +239,40 @@ class TestTigerNetAssociationsLattice1x1(unittest.TestCase):
         observed_degree = list(self.lattice_network.n_data["degree"])
         self.assertEqual(observed_degree, known_degree)
 
+
+class TestTigerNetDefineGraphElementsLattice1x1(unittest.TestCase):
+    def setUp(self):
+        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        self.lattice_network = tigernet.TigerNet(
+            s_data=self.lattice, record_geom=True, def_graph_elems=True
+        )
+
+    def test_lattice_network_segm2elem(self):
+        known_elements = [[0, "leaf"], [1, "leaf"], [2, "leaf"], [3, "leaf"]]
+        observed_elements = self.lattice_network.segm2elem
+        self.assertEqual(observed_elements, known_elements)
+
+    def test_lattice_network_sdata_segm2elem(self):
+        known_elements = ["leaf", "leaf", "leaf", "leaf"]
+        observed_elements = list(self.lattice_network.s_data["graph_elem"])
+        self.assertEqual(observed_elements, known_elements)
+
+    def test_lattice_network_node2elem(self):
+        known_elements = [
+            [0, "leaf"],
+            [1, "branch"],
+            [2, "leaf"],
+            [3, "leaf"],
+            [4, "leaf"],
+        ]
+        observed_elements = self.lattice_network.node2elem
+        self.assertEqual(observed_elements, known_elements)
+
+    def test_lattice_network_ndata_segm2elem(self):
+        known_elements = ["leaf", "branch", "leaf", "leaf", "leaf"]
+        observed_elements = list(self.lattice_network.n_data["graph_elem"])
+        self.assertEqual(observed_elements, known_elements)
+
     # def test_lattice_network_...(self):
 
 

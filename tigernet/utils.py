@@ -755,6 +755,59 @@ def calc_valency(net, col=None):
     return n2d
 
 
+def branch_or_leaf(net, geom_type=None):
+    """Define each graph element (either segment or node) as either
+    branch or leaf. Branches are nodes with degree 2 or higher, or
+    segments with both incident nodes of degree 2 or higher
+    (a.k.a. internal elements). Leaves are nodes with degree 1 or
+    less, or segments with one incident node of degree 1 (a.k.a 
+    external elements). Branches are 'core' elements, while leaves
+    can be thought of as 'dead-ends'.
+    
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    geom_type : str
+        ``'segm'`` or ``'node'``.
+    
+    Returns
+    -------
+    geom2ge : list
+        Geometry ID-to-graph element type crosswalk.
+    
+    """
+
+    if geom_type == "segm":
+        id_list = net.s_ids
+    elif geom_type == "node":
+        id_list = net.n_ids
+    else:
+        msg = "'geom_type' of %s not valid." % geom_type
+        raise ValueError(msg)
+
+    geom2ge = []
+    for idx in id_list:
+        if geom_type == "segm":
+            n1 = net.segm2node[idx][1][0]
+            n2 = net.segm2node[idx][1][1]
+            n1d = net.node2degree[n1][1][0]
+            n2d = net.node2degree[n2][1][0]
+
+            if n1d == 1 or n2d == 1:
+                graph_element = "leaf"
+            else:
+                graph_element = "branch"
+        if geom_type == "node":
+            nd = net.node2degree[idx][1][0]
+            if nd == 1:
+                graph_element = "leaf"
+            else:
+                graph_element = "branch"
+        geom2ge.append([idx, graph_element])
+
+    return geom2ge
+
+
 '''
 def record_filter(df, column=None, sval=None, mval=None, oper=None):
     """used in phase 2 with incidents

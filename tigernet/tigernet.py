@@ -33,7 +33,7 @@ class TigerNet:
         discard_segs=None,
         xyid="xyid",
         len_col="length",
-        tiger_edges=True,
+        tiger_edges=True,  ######################################################
         edge_subsets=None,
         mtfcc_split=None,
         mtfcc_intrst=None,
@@ -299,7 +299,7 @@ class TigerNet:
             self.tiger_edges = tiger_edges
             # self.tiger_roads = tiger_roads
             self.discard_segs = discard_segs
-            if self.tiger_edges:
+            if self.tiger_edges:  #############################################
                 self.census_data = True
             else:
                 self.census_data = False
@@ -348,7 +348,45 @@ class TigerNet:
                 record_components=record_components,
                 largest_component=largest_component,
                 record_geom=record_geom,
+                def_graph_elems=def_graph_elems,
             )
+
+        """
+        # simplify the network
+        if simplify:
+            # create simplified segments geodataframe
+            simplified_segms = self.simplify_network(self)
+            # build a network object from simplified segments
+            self.build_network(simplified_segms, record_geom=record_geom,
+                               record_components=record_components,
+                               largest_component=largest_component,
+                               def_graph_elems=def_graph_elems)
+            
+            if save_simplified:
+                self.s_data.to_file(simp_net_segms+self.file_type)
+                self.n_data.to_file(simp_net_nodes+self.file_type)
+        
+        # create node to node adjacency matrix
+        if gen_adjmtx:
+            self.adjacency_matrix(adjmtx_to_csv)
+        
+        # Create and save out an all to all network node cost matrix
+        if gen_matrix:
+            
+            if not algo:
+                raise Exception('Set algorithm for cost matrix calculation.')
+            
+            self.n2n_algo = algo
+            self.network_cost_matrix(mtx_to_csv=mtx_to_csv, gpths=gen_paths,
+                                     paths_to_csv=paths_to_csv,
+                                     calc_stats=calc_stats)
+        # calculate descriptive network stats
+        if calc_stats:
+            self.calc_net_stats()
+        
+        if remove_gdfs:
+            self.remove_frames()
+        """
 
     ###########################################################################
     ########################    end __init__    ###############################
@@ -391,8 +429,8 @@ class TigerNet:
         if record_components:
             self.build_components(largest_cc=largest_component)
         self.build_associations(record_geom=record_geom)
-        # if def_graph_elems:
-        #    self.define_graph_elements()
+        if def_graph_elems:
+            self.define_graph_elements()
 
     def build_base(self, s_data):
         """Extract nodes from segment endpoints and relate
@@ -551,3 +589,17 @@ class TigerNet:
                 )
         except KeyError:
             pass
+
+    def define_graph_elements(self):
+        """Define all segments and nodes as either a leaf (incident with
+        one other element) or a branch (incident with more than one
+        other grpah elemet).
+        """
+
+        self.segm2elem = utils.branch_or_leaf(self, geom_type="segm")
+        _kws = {"idx": self.sid_name, "col": "graph_elem", "data": self.segm2elem}
+        self.s_data = utils.fill_frame(self.s_data, **_kws)
+
+        self.node2elem = utils.branch_or_leaf(self, geom_type="node")
+        _kws = {"idx": self.nid_name, "col": "graph_elem", "data": self.node2elem}
+        self.n_data = utils.fill_frame(self.n_data, **_kws)
