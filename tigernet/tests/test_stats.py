@@ -77,6 +77,70 @@ class TestTigerNetStatsBarb(unittest.TestCase):
         self.assertEqual(observed_std, known_std)
 
 
+class TestTigerNetStatsSineLine(unittest.TestCase):
+    def setUp(self):
+        sine = tigernet.generate_sine_lines()
+        sine = tigernet.generate_sine_lines()
+        sine = sine[sine["SegID"].isin([0, 1, 2, 3])]
+
+        # full network
+        self.network = tigernet.TigerNet(s_data=sine.copy())
+        self.network.calc_net_stats()
+
+        # simplified network
+        self.graph = self.network.simplify_network()
+        self.graph.calc_net_stats()
+
+    def test_sine_network_sinuosity(self):
+        known_sinuosity = [
+            1.1913994275103448,
+            1.0377484765201541,
+            1.0714252226602858,
+            1.1885699897294775,
+        ]
+        observed_sinuosity = list(self.network.s_data["sinuosity"])
+        self.assertEqual(observed_sinuosity, known_sinuosity)
+
+    def test_sine_network_sinuosity_stats(self):
+        known_max = 1.1913994275103448
+        observed_max = self.network.max_sinuosity
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1.0377484765201541
+        observed_min = self.network.min_sinuosity
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 1.1222857791050656
+        observed_mean = self.network.mean_sinuosity
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 0.07938019212245889
+        observed_std = self.network.std_sinuosity
+        self.assertEqual(observed_std, known_std)
+
+    def test_sine_graph_sinuosity(self):
+        known_sinuosity = [1.2105497715794307, 1.2105497715794304]
+        observed_sinuosity = list(self.graph.s_data["sinuosity"])
+        self.assertEqual(observed_sinuosity, known_sinuosity)
+
+    def test_sine_graph_sinuosity_stats(self):
+        known_max = 1.2105497715794307
+        observed_max = self.graph.max_sinuosity
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1.2105497715794304
+        observed_min = self.graph.min_sinuosity
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 1.2105497715794304
+        observed_mean = self.graph.mean_sinuosity
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 2.220446049250313e-16
+        observed_std = self.graph.std_sinuosity
+        self.assertEqual(observed_std, known_std)
+
+
 ##########################################################################################
 # Empirical testing
 ##########################################################################################

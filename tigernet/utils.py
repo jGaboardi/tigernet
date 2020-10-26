@@ -966,9 +966,15 @@ def _get_hacky_index(net, ni):
     # inherit attributes from the longest segment (SegIDX)
     inherit_attrs_from = _df.loc[(_df[lc] == max_len), sid].squeeze()
     try:
-        if inherit_attrs_from.shape[0] > 1:
-            inherit_attrs_from = inherit_attrs_from[:1].index[0]
+        try:
+            if inherit_attrs_from.shape[0] > 1:
+                # inherit_attrs_from is: geopandas.GeoDataFrame
+                inherit_attrs_from = inherit_attrs_from[:1].index[0]
+        except IndexError:
+            # inherit_attrs_from is: numpy.int64
+            pass
     except AttributeError:
+        # inherit_attrs_from is: int
         pass
 
     # get the df index of 'SegIDX == inherit_attrs_from' and maxLen
