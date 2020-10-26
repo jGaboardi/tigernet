@@ -3,6 +3,10 @@
 
 from . import utils
 
+import copy
+
+import numpy
+
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
@@ -17,6 +21,7 @@ class TigerNet:
         n_data=None,
         sid_name="SegID",
         nid_name="NodeID",
+        geo_col="geometry",
         # proj_init=None,
         # proj_trans=None,
         # proj_units=None,
@@ -85,6 +90,9 @@ class TigerNet:
             Segment column name. Default is ``'SegID'``.
         nid_name : str
             Node column name. Default is ``'NodeID'``.
+
+        geo_col
+
 
         #proj_init : int
         #    initial projection. Default is None.
@@ -288,7 +296,7 @@ class TigerNet:
         else:
             self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
             self.sid_name, self.nid_name = sid_name, nid_name
-            self.len_col = len_col
+            self.geo_col, self.len_col = geo_col, len_col
             # self.proj_init, self.proj_trans = proj_init, proj_trans
             # self.proj_units = proj_units
             self.xyid = xyid
@@ -318,7 +326,7 @@ class TigerNet:
                     self.tlid = self.attr2
 
             # This reads in and prepares/cleans a segments geodataframe
-            if not hasattr(s_data, "geometry") and self.census_data:
+            if not hasattr(s_data, self.geo_col) and self.census_data:
                 if self.tiger_edges:
                     self.edge_subsets = edge_subsets
                     self.mtfcc_split = mtfcc_split
@@ -352,19 +360,19 @@ class TigerNet:
             )
 
         """
-        # simplify the network
-        if simplify:
-            # create simplified segments geodataframe
-            simplified_segms = self.simplify_network(self)
-            # build a network object from simplified segments
-            self.build_network(simplified_segms, record_geom=record_geom,
-                               record_components=record_components,
-                               largest_component=largest_component,
-                               def_graph_elems=def_graph_elems)
-            
-            if save_simplified:
-                self.s_data.to_file(simp_net_segms+self.file_type)
-                self.n_data.to_file(simp_net_nodes+self.file_type)
+        ################# simplify the network
+        ################if simplify:
+        ################    # create simplified segments geodataframe
+        ################    simplified_segms = self.simplify_network(self)
+        ################    # build a network object from simplified segments
+        ################    self.build_network(simplified_segms, record_geom=record_geom,
+        ################                       record_components=record_components,
+        ################                       largest_component=largest_component,
+        ################                       def_graph_elems=def_graph_elems)
+        ################    
+        ################    if save_simplified:
+        ################        self.s_data.to_file(simp_net_segms+self.file_type)
+        ################        self.n_data.to_file(simp_net_nodes+self.file_type)
         
         # create node to node adjacency matrix
         if gen_adjmtx:
@@ -452,7 +460,9 @@ class TigerNet:
             self.s_data[self.len_col] = getattr(self.s_data, self.len_col)
 
         # create segment xyid
-        self.segm2xyid = utils.generate_xyid(df=self.s_data, geom_type="segm")
+        self.segm2xyid = utils.generate_xyid(
+            df=self.s_data, geom_type="segm", geo_col=self.geo_col
+        )
         _skws = {"idx": self.sid_name, "col": self.xyid, "data": self.segm2xyid}
         self.s_data = utils.fill_frame(self.s_data, **_skws)
 
@@ -461,7 +471,9 @@ class TigerNet:
         self.n_data.reset_index(drop=True, inplace=True)
 
         # create permanent node xyid
-        self.node2xyid = utils.generate_xyid(df=self.n_data, geom_type="node")
+        self.node2xyid = utils.generate_xyid(
+            df=self.n_data, geom_type="node", geo_col=self.geo_col
+        )
         _nkws = {"idx": self.nid_name, "col": self.xyid, "data": self.node2xyid}
         self.n_data = utils.fill_frame(self.n_data, **_nkws)
 
@@ -603,3 +615,114 @@ class TigerNet:
         self.node2elem = utils.branch_or_leaf(self, geom_type="node")
         _kws = {"idx": self.nid_name, "col": "graph_elem", "data": self.node2elem}
         self.n_data = utils.fill_frame(self.n_data, **_kws)
+
+    def simplify_network(
+        self,
+        record_components=False,
+        largest_component=False,
+        record_geom=False,
+        def_graph_elems=False,
+        inplace=False,
+    ):
+        """Remove all non-articulation points in the network.
+
+        Parameters
+        ----------
+        record_components : bool
+            Record connected components in graph. This is used for teasing out the
+            largest connected component. Default is ``False``.
+        largest_component : bool
+            Keep only the largest connected component in the graph. Default is ``False``.
+        record_geom : bool
+            Create associated between IDs and shapely geometries. Default is ``False``.
+        def_graph_elems : bool
+            Define graph elements. Default is ``False``.
+        inplace : bool
+            Overwrite the original network with the simplified. Default is ``False``.
+
+        Returns
+        -------
+        simp_net : geopandas.GeoDataFrame
+            The simplified network (if ``inplace`` is set to ``False``).
+
+        """
+
+        if not inplace:
+            simp_net = copy.deepcopy(self)
+        else:
+            simp_net = self
+
+        # Create simplified road segments (remove non-articulation points)
+        simp_segms = utils.simplify(simp_net)
+
+        # Reset index and SegIDX to match
+        simp_segms.reset_index(drop=True, inplace=True)
+        simp_segms = utils.add_ids(simp_segms, id_name=simp_net.sid_name)
+        simp_segms = utils.label_rings(simp_segms, geo_col=simp_net.geo_col)
+        simp_segms = utils.ring_correction(simp_net, simp_segms)
+
+        # add xyid
+        segm2xyid = utils.generate_xyid(
+            df=simp_segms, geom_type="segm", geo_col=simp_net.geo_col
+        )
+        simp_segms = utils.fill_frame(simp_segms, col=simp_net.xyid, data=segm2xyid)
+
+        # build a network object from simplified segments
+        simp_net.build_network(
+            simp_segms,
+            record_geom=record_geom,
+            record_components=record_components,
+            largest_component=largest_component,
+            def_graph_elems=def_graph_elems,
+        )
+
+        if not inplace:
+            return simp_net
+
+    def calc_net_stats(self):
+        """Calculate network analyis descriptive statistics."""
+
+        # Calculate absolute shortest path along segments
+        # Euclidean distance from vertex1 to vertex2
+        self.s_data = utils.euc_calc(self, col="euclid")
+
+        # Calculate sinuosity for segments
+        # curvilinear length / Euclidean Distance
+        self.s_data["sinuosity"] = self.s_data[self.len_col] / self.s_data["euclid"]
+
+        # networkSinuosity
+        # set loop sinuosity (inf) to max nonloop sinuosity in dataset
+        sinuosity = self.s_data["sinuosity"].copy()
+        max_sin = sinuosity[sinuosity != numpy.inf].max()
+        sinuosity = sinuosity.replace(to_replace=numpy.inf, value=max_sin)
+        self.max_sinuosity = max_sin
+        self.min_sinuosity = sinuosity.min()
+        self.mean_sinuosity = sinuosity.mean()
+        self.std_sinuosity = sinuosity.std()
+
+        """
+        
+        # node degree stats
+        self.max_node_degree = self.n_data['degree'].max()
+        self.min_node_degree = self.n_data['degree'].min()
+        self.mean_node_degree = self.n_data['degree'].mean()
+        self.std_node_degree = self.n_data['degree'].std()
+        
+        # network connectivity stats
+        self.alpha = sauce.connectivity(self, measure='alpha')
+        self.beta = sauce.connectivity(self, measure='beta')
+        self.gamma = sauce.connectivity(self, measure='gamma')
+        self.eta = sauce.connectivity(self, measure='eta')
+        self.entropies_mtfcc = sauce.entropy(self) #return dict
+        entropy = [v for k,v in list(self.entropies_mtfcc.items())]
+        self.entropy_mtfcc = sum(entropy)*-1.
+        
+        # report object size
+        ### self.actual_object_sizes = utils.ObjectSize(self)
+        ### self.actual_total_size = self.actual_object_sizes.size_tot_all
+        
+        # create dataframe of descriptive network stats
+        if hasattr(self, 'n2n_matrix'):
+            sauce.get_stats_frame(self)
+        
+        """

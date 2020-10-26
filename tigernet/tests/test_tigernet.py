@@ -6,6 +6,11 @@ import tigernet
 import unittest
 
 
+##########################################################################################
+# Synthetic testing
+##########################################################################################
+
+
 class TestTigerNetBuildLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
@@ -273,7 +278,26 @@ class TestTigerNetDefineGraphElementsLattice1x1(unittest.TestCase):
         observed_elements = list(self.lattice_network.n_data["graph_elem"])
         self.assertEqual(observed_elements, known_elements)
 
-    # def test_lattice_network_...(self):
+
+class TestTigerNetSimplifyBarb(unittest.TestCase):
+    def setUp(self):
+        lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
+        self.barb = lattice[~lattice["SegID"].isin([1, 2, 5, 7, 9, 10])]
+        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
+        self.network = tigernet.TigerNet(s_data=self.barb, **kws)
+        # copy testing
+        self.graph = self.network.simplify_network(**kws)
+        # inplace
+        self.network.simplify_network(inplace=True, **kws)
+
+    # def test_..._copy(self):
+
+    # def test_..._inplace(self):
+
+
+##########################################################################################
+# Empirical testing
+##########################################################################################
 
 
 class TestTigerNetBuildEmpirical(unittest.TestCase):
@@ -292,6 +316,16 @@ class TestTigerNetComponentsEmpirical(unittest.TestCase):
 
 
 class TestTigerNetAssociationsEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestTigerNetDefineGraphElementsEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestTigerNetSimplifyEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

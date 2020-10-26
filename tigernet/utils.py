@@ -6,7 +6,9 @@ from ast import literal_eval
 import geopandas
 import numpy
 import pandas
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point, LineString, MultiLineString
+from shapely.ops import linemerge
+
 
 # used to supress warning in addIDX()
 geopandas.pd.set_option("mode.chained_assignment", None)
@@ -109,7 +111,7 @@ def add_ids(frame, id_name=None):
     return frame
 
 
-def generate_xyid(df=None, geom_type="node"):
+def generate_xyid(df=None, geom_type="node", geo_col=None):
     """Create a string xy id.
 
     Parameters
@@ -118,6 +120,8 @@ def generate_xyid(df=None, geom_type="node"):
         Geometry dataframe. Default is ``None``.
     geom_type : str
         Either ``'node'`` of ``'segm'``. Default is ``'node'``.
+    geo_col : str
+        Geometry column name. Default is ``None``.
 
     Returns
     -------
@@ -128,7 +132,7 @@ def generate_xyid(df=None, geom_type="node"):
 
     xyid = []
 
-    for idx, geom in enumerate(df.geometry):
+    for idx, geom in enumerate(df[geo_col]):
 
         if geom_type == "segm":
             xys = ["x" + str(x) + "y" + str(y) for (x, y) in geom.coords[:]]
@@ -289,6 +293,7 @@ def extract_nodes(net):
                     drop.update(iidxs)
                     scanned.update(drop)
                 scanned.add(n)
+
         ndf = _drop_geoms(net, ndf, drop, series=True)
         ndf = add_ids(ndf, id_name=net.nid_name)
 
@@ -299,13 +304,13 @@ def extract_nodes(net):
 
     # create n_ids and give the segment attribute data
     for seg in sdf.index:
-        seggeom = sdf.loc[seg, "geometry"]
-        if sdf_ring_flag and sdf["ring"][seg]:
-            xs, ys = seggeom.coords.xy
-            nodes.append(create_node(xs, ys))
+        seggeom = sdf.loc[seg, net.geo_col]
+        if sdf_ring_flag and sdf["ring"][seg] == "True":
+            x, y = seggeom.coords.xy
+            nodes.append(create_node(x, y))
         else:
-            b1, b2 = seggeom.boundary[0], seggeom.boundary[1]
-            nodes.extend([b1, b2])
+            xy1, xy2 = seggeom.boundary[0], seggeom.boundary[1]
+            nodes.extend([xy1, xy2])
     nodedf = geopandas.GeoDataFrame(geometry=nodes)
     nodedf = add_ids(nodedf, id_name=net.nid_name)
 
@@ -313,7 +318,7 @@ def extract_nodes(net):
         nodedf.crs = sdf.crs
 
     # Give an initial string 'xy' ID
-    prelim_xy_id = generate_xyid(df=nodedf, geom_type="node")
+    prelim_xy_id = generate_xyid(df=nodedf, geom_type="node", geo_col=net.geo_col)
     nodedf = fill_frame(nodedf, idx=net.nid_name, col=net.xyid, data=prelim_xy_id)
 
     # drop all node but the top in the stack
@@ -712,8 +717,7 @@ def geom_assoc(net, coords=False):
 
     """
 
-    geo_col = "geometry"
-    _kws = {"c2": geo_col, "geo_col": geo_col}
+    _kws = {"c2": net.geo_col, "geo_col": net.geo_col}
     if not coords:
         net.segm2geom = xwalk(net.s_data, c1=net.sid_name, **_kws)
         net.node2geom = xwalk(net.n_data, c1=net.nid_name, **_kws)
@@ -760,21 +764,21 @@ def branch_or_leaf(net, geom_type=None):
     branch or leaf. Branches are nodes with degree 2 or higher, or
     segments with both incident nodes of degree 2 or higher
     (a.k.a. internal elements). Leaves are nodes with degree 1 or
-    less, or segments with one incident node of degree 1 (a.k.a 
+    less, or segments with one incident node of degree 1 (a.k.a
     external elements). Branches are 'core' elements, while leaves
     can be thought of as 'dead-ends'.
-    
+
     Parameters
     ----------
     net : tigernet.TigerNet
     geom_type : str
         ``'segm'`` or ``'node'``.
-    
+
     Returns
     -------
     geom2ge : list
         Geometry ID-to-graph element type crosswalk.
-    
+
     """
 
     if geom_type == "segm":
@@ -788,10 +792,8 @@ def branch_or_leaf(net, geom_type=None):
     geom2ge = []
     for idx in id_list:
         if geom_type == "segm":
-            n1 = net.segm2node[idx][1][0]
-            n2 = net.segm2node[idx][1][1]
-            n1d = net.node2degree[n1][1][0]
-            n2d = net.node2degree[n2][1][0]
+            n1, n2 = net.segm2node[idx][1][0], net.segm2node[idx][1][1]
+            n1d, n2d = net.node2degree[n1][1][0], net.node2degree[n2][1][0]
 
             if n1d == 1 or n2d == 1:
                 graph_element = "leaf"
@@ -806,6 +808,479 @@ def branch_or_leaf(net, geom_type=None):
         geom2ge.append([idx, graph_element])
 
     return geom2ge
+
+
+def simplify(net):
+    """Remove all non-articulation objects.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+
+    Returns
+    -------
+    segs : geopandas.GeoDataFrame
+        Simplified segments dataframe.
+
+    """
+
+    # locate all non-articulation points
+    na_objs = _locate_naps(net)
+
+    # remove all non-articulation points
+    segs = _simplifysegs(net, na_objs)
+
+    return segs
+
+
+def _locate_naps(net):
+    """Locate all non-articulation points in order to simplfy graph.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+
+    Returns
+    -------
+    napts : dict
+        Dictionary of non-articulation points and segments.
+
+    """
+
+    # subset only degree-2 nodes
+    degree_two_nodes = set([n for (n, d) in net.node2degree if 2 in d])
+
+    # recreate n2n xwalk
+    new_n2n = {k: v for (k, v) in net.node2node}
+    two2two = {k: new_n2n[k] for k in degree_two_nodes}
+
+    # get set intersection of degree-2 node neighbors
+    for k, vs in list(two2two.items()):
+        two2two[k] = list(degree_two_nodes.intersection(set(vs)))
+
+    # convert back to list
+    two2two = [[k, vs] for k, vs in list(two2two.items())]
+
+    # created rooted non-articulation nodes object
+    rooted_napts, napts, napts_count = get_roots(two2two), {}, 0
+    for (k, v) in rooted_napts:
+        napts_count += 1
+        napts[napts_count] = {net.nid_name: v}
+
+    # add segment info to rooted non-articulation point object
+    for napt_count, napt_info in list(napts.items()):
+        napt = []
+        for napt_node in napt_info[net.nid_name]:
+            napt.extend([i[1] for i in net.node2segm if i[0] == napt_node])
+
+        # if more than one pair of segments in napt
+        napt = set([seg for segs in napt for seg in segs])
+        napts[napt_count].update({net.sid_name: napt})
+
+    return napts
+
+
+def _simplifysegs(net, na_objs):
+    """Drop nodes and weld bridge segments.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    na_objs : dict
+        Non-articulation point information.
+
+    Returns
+    -------
+    net.s_data : geopandas.GeoDataFrame
+        Simplified segments dataframe.
+    """
+
+    nsn = net.sid_name
+
+    # for each bridge
+    for na_objs_sidx, na_objs_info in list(na_objs.items()):
+
+        # get the dominant SegIDX and dataframe index
+        inherit_attrs_from, idx = _get_hacky_index(net, na_objs_info)
+
+        # set total length to 0 and instantiate an empty segments list
+        total_length, geoms = 0.0, []
+
+        # add the length of each segment to total_length and add
+        # the segment to geoms
+        for segm in na_objs_info[nsn]:
+            seg_loc = net.s_data[nsn] == segm
+            total_length += net.s_data.loc[seg_loc, net.len_col].squeeze()
+            geom = net.s_data.loc[seg_loc, net.geo_col].squeeze()
+            geoms.append(geom)
+
+        # take the dominant line segment id out of the `remove` list
+        na_objs_info[nsn].remove(inherit_attrs_from)
+
+        # add new total length cell value
+        net.s_data.loc[idx, net.len_col] = total_length
+
+        # add new welded line segment of dominant and non-dominant lines
+        welded_line = _weld_MultiLineString(geoms)
+        net.s_data.loc[idx, net.geo_col] = welded_line
+
+        # remove all non-dominant line segments from the dataframe
+        net.s_data = net.s_data[~net.s_data[nsn].isin(na_objs_info[nsn])]
+
+    return net.s_data
+
+
+def _get_hacky_index(net, ni):
+    """VERY hacky function to get back dataframe index due to 
+    trouble with using -->
+    df.loc[(df[sidx] == segidx), 'geometry'\
+                                  = _weldMultiLineString(geoms)
+    *** See issue at
+    https://github.com/pandas-dev/pandas/issues/28924
+    
+    *** see also:
+        _weld_MultiLineString()
+        tigernet.TigerNetPoints.snap_to_nearest._record_snapped_points._casc2point
+    
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    ni : dict
+        Non-articulation point information.
+    
+    Returns
+    -------
+    inherit_attrs_from : int
+        Segment ID.
+    idx : int
+        Dataframe index value.
+
+    """
+
+    df, lc, sid = net.s_data, net.len_col, net.sid_name
+
+    # get maximum length
+    _df = df[df[sid].isin(ni[sid])]
+    max_len = max([_df.loc[(_df[sid] == segm), lc].squeeze() for segm in ni[sid]])
+
+    # inherit attributes from the longest segment (SegIDX)
+    inherit_attrs_from = _df.loc[(_df[lc] == max_len), sid].squeeze()
+    try:
+        if inherit_attrs_from.shape[0] > 1:
+            inherit_attrs_from = inherit_attrs_from[:1].index[0]
+    except AttributeError:
+        pass
+
+    # get the df index of 'SegIDX == inherit_attrs_from' and maxLen
+    dominant, longest = (_df[sid] == inherit_attrs_from), (_df[lc] == max_len)
+    idx = _df.loc[dominant & longest].index[0]
+
+    return inherit_attrs_from, idx
+
+
+def _weld_MultiLineString(multilinestring, weld_multi=True, skip_restr=True):
+    """weld a shapely.MultiLineString into a shapely.LineString
+
+    Parameters
+    ----------
+    multilinestring : shapely.geometry.MultiLineString
+        Segment (collection) to weld.
+    weld_multi :bool
+        If welded line is still a multiline segment, then determine if
+        the segments of the multiline are almost equal. Default is ``True``.
+    skip_restr : bool
+        Skip re-welding restricted segments. Default is ``True``.
+
+    Returns
+    -------
+    welded : shapely.geometry.LineString
+        freshly welded segment (collection).
+    """
+
+    welded = linemerge(multilinestring)
+
+    # Due to minute rounding (.00000001 meters) some line vertices can
+    # be off thus creating a MultiLineString where shapely thinks two
+    # LineString objects don't actually touch where, in fact, they do.
+    # The following loop iterates through each pair of LineString
+    # objects sequentially to  determine if their endpoints are
+    # 'almost equal' instead of exactly equal. When the endpoints are
+    # 'almost equal' the starting point of the second line is duplicated
+    # as the ending point of the first line before the lines are
+    # welded together.
+    if type(welded) == MultiLineString and weld_multi and skip_restr:
+        line_count, new_lines = len(welded), {}
+        for line1 in range(line_count):
+            for line2 in range(line1 + 1, line_count):
+
+                # geometries
+                L1, L2 = welded[line1], welded[line2]
+                # starting and endpoints
+                sp1, ep1 = L1.boundary[0], L1.boundary[1]
+                sp2, ep2 = L2.boundary[0], L2.boundary[1]
+
+                # if equal move along
+                if ep1.equals(sp2) or sp1.equals(ep2):
+                    continue
+
+                # if either sets are almost equal pass along the
+                # altered first line and the original second line
+                if ep1.almost_equals(sp2) or sp1.almost_equals(ep2):
+                    if ep1.almost_equals(sp2):
+                        new_line = LineString(L1.coords[:-1] + L2.coords[:1])
+                    if sp1.almost_equals(ep2):
+                        new_line = LineString(L2.coords[-1:] + L1.coords[1:])
+                    new_lines[line1] = new_line
+
+        # convert welded multiline to list
+        welded = list(welded)
+        for idx, line in list(new_lines.items()):
+            welded[idx] = line
+
+        # re-weld
+        welded = linemerge(welded)
+
+    return welded
+
+
+def label_rings(df, geo_col=None):
+    """Label each line segment as ring (``'True'``) or not (``'False'``).
+
+    Parameters
+    ----------
+    df : geopandas.GeoDataFrame
+        Dataframe of geometries.
+    geo_col : str
+        Geometry column name. Default is ``None``.
+
+    Returns
+    -------
+    df : geopandas.GeoDataFrame
+        Updated dataframe of geometries.
+
+    """
+
+    df["ring"] = ["False"] * df.shape[0]
+    for idx in df.index:
+        if df[geo_col][idx].is_ring:
+            df["ring"][idx] = "True"
+
+    return df
+
+
+def ring_correction(net, df):
+    """Ring roads should start and end with the point at which it intersects with
+    another road segment. This algorithm find instances where rings roads are digitized
+    incorrectly, which results in ring roads having their endpoints somewhere in the
+    middle of the line, then corrects the loop by updating the geometry. Length and
+    attributes of the original line segment are not changed.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    df : geopandas.GeoDataFrame
+        Dataframe of road segments.
+
+    Returns
+    -------
+    df : geopandas.GeoDataFrame
+        Updated dataframe of road segments.
+
+    """
+
+    # subset only ring roads
+    rings_df = df[df["ring"] == "True"]
+    ringsidx, corrected_rings = rings_df.index, 0
+
+    for idx in ringsidx:
+        LOI = rings_df[net.geo_col][idx]
+
+        # get idividual ring road - normal road pairs intersection
+        i_geoms = get_intersecting_geoms(net, df1=df, geom1=idx, wbool=False)
+        i_geoms = i_geoms[i_geoms.index != idx]
+
+        # rings that are not connected to the network will be removed
+        if i_geoms.shape[0] < 1:
+            continue
+        node = i_geoms[net.geo_col][:1].intersection(LOI).values[0]
+
+        # if pre cleaned and segments still overlap
+        if type(node) != Point:
+            continue
+
+        node_coords = list(zip(node.xy[0], node.xy[1]))
+        line_coords = list(zip(LOI.coords.xy[0], LOI.coords.xy[1]))
+
+        # if problem ring road
+        # (e.g. the endpoint is not the intersection)
+        if node_coords[0] != line_coords[0]:
+            updated_line = _correct_ring(node_coords, line_coords)
+
+            # update dataframe record
+            df[net.geo_col][idx] = updated_line
+            corrected_rings += 1
+
+    df.reset_index(drop=True, inplace=True)
+    df = add_ids(df, id_name=net.sid_name)
+
+    # add updated xyid
+    segm2xyid = generate_xyid(df=df, geom_type="segm", geo_col=net.geo_col)
+    df = fill_frame(df, col=net.xyid, data=segm2xyid)
+
+    # corrected ring road count
+    net.corrected_rings = corrected_rings
+
+    return df
+
+
+def _correct_ring(node_coords, line_coords, post_check=False):
+    """Helper function for ``ring_correction()``.
+
+    Parameters
+    ----------
+    node_coords : list
+        The ``xy`` tuple for a node.
+    line_coords  : list
+        All ``xy`` tuples for a line.
+    post_check : bool
+        Check following a cleanse cycle. Default is ``False``.
+
+    Returns
+    -------
+    updated_line : shapely.geometry.LineString
+        Ring road updated so that it begins and ends at the intersecting node.
+
+    """
+
+    if post_check:
+        node_coords = [node_coords]
+        if node_coords[0] == line_coords[0]:
+            return line_coords
+
+    for itemidx, coord in enumerate(line_coords):
+        # find the index of the intersecting coord in the line
+        if coord == node_coords[0]:
+            break
+
+    # adjust the line coordinates for the true ring start/end
+    updated_line = line_coords[itemidx:] + line_coords[1 : itemidx + 1]
+    updated_line = LineString(updated_line)
+
+    return updated_line
+
+
+def get_intersecting_geoms(net, df1=None, geom1=None, df2=None, geom2=None, wbool=True):
+    """Return the subset of intersecting geometries from within a geodataframe.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    df1 : geopandas.GeoDataFrame
+        Primary dataframe. Default is ``None``.
+    geom1 : int
+        Geometry index. Default is ``None``.
+    df2 : geopandas.GeoDataFrame
+        Secondary dataframe . Default is ``None``.
+    geom2 : int
+        Geometry index. Default is ``None``.
+    wbool : bool
+        Return a boolean object for intersections. Default is ``True``.
+    geo_col : str
+        Geometry column name. Default is ``None``.
+
+    Returns
+    -------
+    i_geom : geopandas.GeoDataFrame
+        Intersecting geometry subset.
+    i_bool : numpy.array
+        Optional return of booleans for intersecting geoms.
+
+    """
+
+    # if there *IS NO* dataframe 2 in play
+    if not hasattr(df2, net.geo_col):
+        i_bool = df1.intersects(df1[net.geo_col][geom1])
+
+    # if there *IS* dataframe 2 in play
+    else:
+        i_bool = df1.intersects(df2[net.geo_col][geom2])
+    i_geom = df1[i_bool]
+
+    if wbool:
+        return i_bool, i_geom
+
+    else:
+        return i_geom
+
+
+def create_node(x, y):
+    """Create a node along the network.
+
+    Parameters
+    ----------
+    x : {float, int}
+        The x coordinate of a point.
+    y : {float, int}
+        The y coordinate of a point.
+
+    Returns
+    -------
+    _node : shapely.geoemtry.Point
+        Instantiated node.
+
+    """
+
+    _node = Point(list(zip(x, y))[0])
+
+    return _node
+
+
+def euc_calc(net, col=None):
+    """Calculate the euclidean distance between two line endpoints
+    for each line in a set of line segments.
+
+    Parameters
+    ----------
+    net : tigernet.TigerNet
+    col : str
+        new column name. Default is None.
+
+    Returns
+    -------
+    df : geopandas.GeoDataFrame
+        updated segments dataframe
+
+    """
+
+    net.s_data[col] = numpy.nan
+    for (seg_k, (n1, n2)) in net.segm2node:
+        p1, p2 = net.node2coords[n1][1][0], net.node2coords[n2][1][0]
+        ed = _euc_dist(p1, p2)
+        net.s_data.loc[(net.s_data[net.sid_name] == seg_k), col] = ed
+
+    return net.s_data
+
+
+def _euc_dist(p1, p2):
+    """Calculate the euclidean distance between two line endpoints.
+
+    Parameters
+    ----------
+    p1 : {float, int}
+        The start point of a line.
+    p2 : {float, int}
+        The end point of a line.
+
+    Returns
+    -------
+    euc : float
+        The euclidean distance between two line endpoints.
+
+    """
+
+    euc = numpy.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+    return euc
 
 
 '''
