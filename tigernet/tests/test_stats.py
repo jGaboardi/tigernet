@@ -76,6 +76,40 @@ class TestTigerNetStatsBarb(unittest.TestCase):
         observed_std = self.graph.std_sinuosity
         self.assertEqual(observed_std, known_std)
 
+    def test_barb_network_node_degree_stats(self):
+        known_max = 4
+        observed_max = self.network.max_node_degree
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1
+        observed_min = self.network.min_node_degree
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 2.0
+        observed_mean = self.network.mean_node_degree
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 0.816496580927726
+        observed_std = self.network.std_node_degree
+        self.assertEqual(observed_std, known_std)
+
+    def test_barb_graph_node_degree_stats(self):
+        known_max = 4
+        observed_max = self.graph.max_node_degree
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1
+        observed_min = self.graph.min_node_degree
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 2.0
+        observed_mean = self.graph.mean_node_degree
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 1.7320508075688772
+        observed_std = self.graph.std_node_degree
+        self.assertEqual(observed_std, known_std)
+
 
 class TestTigerNetStatsSineLine(unittest.TestCase):
     def setUp(self):
@@ -138,6 +172,40 @@ class TestTigerNetStatsSineLine(unittest.TestCase):
 
         known_std = 2.220446049250313e-16
         observed_std = self.graph.std_sinuosity
+        self.assertEqual(observed_std, known_std)
+
+    def test_sine_network_node_degree_stats(self):
+        known_max = 2
+        observed_max = self.network.max_node_degree
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1
+        observed_min = self.network.min_node_degree
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 1.3333333333333333
+        observed_mean = self.network.mean_node_degree
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 0.5163977794943223
+        observed_std = self.network.std_node_degree
+        self.assertEqual(observed_std, known_std)
+
+    def test_sine_graph_node_degree_stats(self):
+        known_max = 1
+        observed_max = self.graph.max_node_degree
+        self.assertEqual(observed_max, known_max)
+
+        known_min = 1
+        observed_min = self.graph.min_node_degree
+        self.assertEqual(observed_min, known_min)
+
+        known_mean = 1.0
+        observed_mean = self.graph.mean_node_degree
+        self.assertEqual(observed_mean, known_mean)
+
+        known_std = 0.0
+        observed_std = self.graph.std_node_degree
         self.assertEqual(observed_std, known_std)
 
 

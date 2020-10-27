@@ -2,10 +2,10 @@
 """
 
 from . import utils
+from . import stats
 
 import copy
 
-import numpy
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
@@ -682,32 +682,13 @@ class TigerNet:
     def calc_net_stats(self):
         """Calculate network analyis descriptive statistics."""
 
-        # Calculate absolute shortest path along segments
-        # Euclidean distance from vertex1 to vertex2
-        self.s_data = utils.euc_calc(self, col="euclid")
+        # Calculate the sinuosity of network segments and provide descriptive stats
+        stats._calc_sinuosity(self)
 
-        # Calculate sinuosity for segments
-        # curvilinear length / Euclidean Distance
-        self.s_data["sinuosity"] = self.s_data[self.len_col] / self.s_data["euclid"]
-
-        # networkSinuosity
-        # set loop sinuosity (inf) to max nonloop sinuosity in dataset
-        sinuosity = self.s_data["sinuosity"].copy()
-        max_sin = sinuosity[sinuosity != numpy.inf].max()
-        sinuosity = sinuosity.replace(to_replace=numpy.inf, value=max_sin)
-        self.max_sinuosity = max_sin
-        self.min_sinuosity = sinuosity.min()
-        self.mean_sinuosity = sinuosity.mean()
-        self.std_sinuosity = sinuosity.std()
+        # Set node degree attributes
+        stats._set_node_degree(self)
 
         """
-        
-        # node degree stats
-        self.max_node_degree = self.n_data['degree'].max()
-        self.min_node_degree = self.n_data['degree'].min()
-        self.mean_node_degree = self.n_data['degree'].mean()
-        self.std_node_degree = self.n_data['degree'].std()
-        
         # network connectivity stats
         self.alpha = sauce.connectivity(self, measure='alpha')
         self.beta = sauce.connectivity(self, measure='beta')
@@ -716,10 +697,6 @@ class TigerNet:
         self.entropies_mtfcc = sauce.entropy(self) #return dict
         entropy = [v for k,v in list(self.entropies_mtfcc.items())]
         self.entropy_mtfcc = sum(entropy)*-1.
-        
-        # report object size
-        ### self.actual_object_sizes = utils.ObjectSize(self)
-        ### self.actual_total_size = self.actual_object_sizes.size_tot_all
         
         # create dataframe of descriptive network stats
         if hasattr(self, 'n2n_matrix'):
