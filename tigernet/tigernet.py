@@ -218,7 +218,7 @@ class TigerNet:
         build_base : s_data, n_data, segm2xyid, node2xyid
         build_topology : segm2node, node2segment, segm2segm, node2node
         build_components : segm_cc, cc_lens, node_cc, longest_segm_cc,
-            largest_segm_cc, largest_node_cc, n_edge_cc
+            largest_segm_cc, largest_node_cc, n_ccs
         build_associations : s_ids, n_ids, n_segm, n_node, segm2len,
             network_length, node2degree, segm2tlid
         define_graph_elements : segm2elem, node2elem
@@ -561,7 +561,7 @@ class TigerNet:
             self.cc_lens = {k: vs for k, vs in self.cc_lens.items() if k == lcck}
 
         # Count connected components in network
-        self.n_segm_cc = len(self.segm2segm)
+        self.n_ccs = len(self.segm_cc)
 
     def build_associations(self, record_geom=False):
         """Associate graph elements with geometries, coordinates,
@@ -679,14 +679,21 @@ class TigerNet:
         if not inplace:
             return simp_net
 
-    def calc_net_stats(self):
+    def calc_net_stats(self, wconnectivity=False):
         """Calculate network analyis descriptive statistics."""
 
         # Calculate the sinuosity of network segments and provide descriptive stats
-        stats._calc_sinuosity(self)
+        stats.calc_sinuosity(self)
 
         # Set node degree attributes
-        stats._set_node_degree(self)
+        stats.set_node_degree(self)
+
+        # network connectivity stats
+        if wconnectivity:
+            self.alpha = stats.connectivity(self, measure="alpha")
+            self.beta = stats.connectivity(self, measure="beta")
+            self.gamma = stats.connectivity(self, measure="gamma")
+            self.eta = stats.connectivity(self, measure="eta")
 
         """
         # network connectivity stats

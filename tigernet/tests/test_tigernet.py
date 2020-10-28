@@ -113,8 +113,12 @@ class TestTigerNetComponentsLattice1x1(unittest.TestCase):
         observed_cc_lens = self.lattice_network.cc_lens
         self.assertEqual(observed_cc_lens, known_cc_lens)
 
+        known_ccs = 2
+        observed_ccs = self.lattice_network.n_ccs
+        self.assertEqual(observed_ccs, known_ccs)
+
         known_segms_in_ccs = 8
-        observed_segms_in_ccs = self.lattice_network.n_segm_cc
+        observed_segms_in_ccs = self.lattice_network.n_segm
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
     def test_lattice_network_sdata_components(self):
@@ -145,8 +149,12 @@ class TestTigerNetComponentsLattice1x1(unittest.TestCase):
         observed_cc_lens = self.lattice_network_largest_cc.cc_lens
         self.assertEqual(observed_cc_lens, known_cc_lens)
 
+        known_ccs = 2
+        observed_ccs = self.lattice_network_largest_cc.n_ccs
+        self.assertEqual(observed_ccs, known_ccs)
+
         known_segms_in_ccs = 4
-        observed_segms_in_ccs = self.lattice_network_largest_cc.n_segm_cc
+        observed_segms_in_ccs = self.lattice_network_largest_cc.n_segm
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
     def test_lattice_network_sdata_components_largest(self):
