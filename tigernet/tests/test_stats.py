@@ -275,6 +275,37 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
         self.assertEqual(observed_eta, known_eta)
 
 
+class TestNeworkEntropyLattice1x1(unittest.TestCase):
+    def setUp(self):
+        self.lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+
+    def test_lattice_network_entropy_xvariation(self):
+        net = tigernet.Network(s_data=self.lat.copy())
+        net.calc_entropy("MTFCC", "s_data")
+
+        known_entropies = {"S1400": 0.0}
+        observed_entropies = net.mtfcc_entropies
+        self.assertEqual(observed_entropies, known_entropies)
+
+        known_entropy = -0.0
+        observed_entropy = net.network_mtfcc_entropy
+        self.assertEqual(observed_entropy, known_entropy)
+
+    def test_lattice_network_entropy_wvariation(self):
+        _lat = self.lat.copy()
+        _lat["MTFCC"] = ["S1100", "S1200", "S1400", "S1700"]
+        net = tigernet.Network(s_data=_lat)
+        net.calc_entropy("MTFCC", "s_data")
+
+        known_entropies = {"S1100": -0.5, "S1200": -0.5, "S1400": -0.5, "S1700": -0.5}
+        observed_entropies = net.mtfcc_entropies
+        self.assertEqual(observed_entropies, known_entropies)
+
+        known_entropy = 2.0
+        observed_entropy = net.network_mtfcc_entropy
+        self.assertEqual(observed_entropy, known_entropy)
+
+
 ##########################################################################################
 # Empirical testing
 ##########################################################################################
@@ -286,6 +317,11 @@ class TestNeworkStatsEmpirical(unittest.TestCase):
 
 
 class TestNeworkConnectivityEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestNeworkEntropyEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

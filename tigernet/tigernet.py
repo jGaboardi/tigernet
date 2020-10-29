@@ -725,15 +725,40 @@ class Network:
             else:
                 raise ValueError("Connectivity measure '%s' not supported." % _cs)
 
+    def calc_entropy(self, ent_col, frame_name):
+        """Network entropy statistics. For descriptions see ``stats.entropies()``.
+
+        Parameters
+        ----------
+        ent_col : str
+            The column name in ``frame_name`` to calculate entropy on.
+        frame_name : str
+            The name of the network element dataframe.
+
         """
-        # network connectivity stats
-        
-        self.entropies_mtfcc = sauce.entropy(self) #return dict
-        entropy = [v for k,v in list(self.entropies_mtfcc.items())]
-        self.entropy_mtfcc = sum(entropy)*-1.
-        
+
+        frame = getattr(self, frame_name)
+        if frame_name == "s_data":
+            n_elems = self.n_segm
+        else:
+            n_elems = self.n_node
+
+        # calculate local network element entropies
+        indiv_entropies = stats.entropies(ent_col, frame, n_elems)
+        attr_name = "%s_entropies" % ent_col.lower()
+        setattr(self, attr_name, indiv_entropies)
+
+        # calculate global network entropy
+        _entropy = [v for k, v in list(getattr(self, attr_name).items())]
+        network_entropy = sum(_entropy) * -1.0
+        attr_name = "network_%s_entropy" % ent_col.lower()
+        setattr(self, attr_name, network_entropy)
+
+    def stats_frame(self):
+        """
         # create dataframe of descriptive network stats
         if hasattr(self, 'n2n_matrix'):
             sauce.get_stats_frame(self)
-        
+
         """
+        pass

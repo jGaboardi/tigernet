@@ -128,3 +128,45 @@ def connectivity(net, measure="alpha"):
         con = L / e
 
     return con
+
+
+def entropies(ent_col, frame, n_elems):
+    """Entropy.
+
+    Levinson D. (2012) Network Structure and City Size.
+                PLoS ONE 7(1): e29721. doi:10.1371/journal.pone.0029721
+
+    Entropy measure of heterogeneity:
+
+    :math:`H = -sum([pi np.log2 * (pi) for pi in subset_porportions])`
+
+    Parameters
+    ----------
+
+    series :
+
+
+    Returns
+    -------
+    indiv_entropies : dict
+        Individual entropies of MTFCC categories.
+
+    """
+
+    indiv_entropies = {}
+
+    for value in frame[ent_col].unique():
+        subset = frame[frame[ent_col] == value].shape[0]
+        subset_proportion = float(subset) / float(n_elems)
+        entropy = subset_proportion * numpy.log2(subset_proportion)
+        indiv_entropies[value] = entropy
+
+    """
+    for mtfcc in net.s_data.MTFCC.unique():
+        subset = net.s_data[net.s_data.MTFCC == mtfcc].shape[0]
+        subset_proportion = float(subset) / float(net.n_segm)
+        entropy = subset_proportion * numpy.log2(subset_proportion)
+        indiv_entropies[mtfcc] = entropy
+    
+    """
+    return indiv_entropies
