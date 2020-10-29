@@ -10,7 +10,7 @@ import copy
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
-class TigerNet:
+class Network:
     def __init__(
         self,
         tnid="TNID",
@@ -248,7 +248,7 @@ class TigerNet:
 
         >>> import tigernet
         >>> lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        >>> net = tigernet.TigerNet(s_data=lat)
+        >>> net = tigernet.Network(s_data=lat)
         >>> net.s_data
                                                 geometry  SegID  MTFCC  length                      xyid    s_neigh n_neigh
         0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400     4.5  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
@@ -594,6 +594,8 @@ class TigerNet:
         # Calculate degree for n_ids -- incident segs +1; incident loops +2
         self.node2degree = utils.calc_valency(self, col="n_neigh")
         self.n_data["degree"] = [n2d[1][0] for n2d in self.node2degree]
+
+        # Create segment to TIGER/Line ID lookup
         try:
             if self.tiger_edges:
                 self.segm2tlid = utils.xwalk(
@@ -679,8 +681,17 @@ class TigerNet:
         if not inplace:
             return simp_net
 
-    def calc_net_stats(self, wconnectivity=False):
-        """Calculate network analyis descriptive statistics."""
+    def calc_net_stats(self, conn_stat=None):
+        """Calculate network analyis descriptive statistics.
+
+        Parameters
+        ----------
+        conn_stat : {None, str}
+            Either ``'alpha'``, ``'beta'``, ``'gamma'``, ``'eta'``.
+            Set to ``'all'`` toc calculate all available statistics.
+            For descriptions see ``stats.connectivity()``.
+
+        """
 
         # Calculate the sinuosity of network segments and provide descriptive stats
         stats.calc_sinuosity(self)
@@ -689,18 +700,34 @@ class TigerNet:
         stats.set_node_degree(self)
 
         # network connectivity stats
-        if wconnectivity:
-            self.alpha = stats.connectivity(self, measure="alpha")
-            self.beta = stats.connectivity(self, measure="beta")
-            self.gamma = stats.connectivity(self, measure="gamma")
-            self.eta = stats.connectivity(self, measure="eta")
+        if conn_stat:
+            # check if connected components are present
+            if not hasattr(self, "n_ccs"):
+                x_n_ccs = True
+            else:
+                x_n_ccs = False
+            _available_stats = ["alpha", "beta", "gamma", "eta"]
+            _cs = conn_stat.lower()
+            if _cs == "all":
+                for _as in _available_stats:
+                    if _as == "alpha" and not x_n_ccs or _as != "alpha":
+                        setattr(self, _as, stats.connectivity(self, measure=_as))
+                    elif _as == "alpha" and x_n_ccs:
+                        msg = "\nConnected components must be calculated"
+                        msg += " for alpha connectivity.\nCall the"
+                        msg += " 'build_components' method and run again."
+                        raise AttributeError(msg)
+                    else:
+                        msg = "Connectivity measure '%s' not supported." % _cs
+                        raise ValueError(msg)
+            elif _cs in _available_stats:
+                setattr(self, _cs, stats.connectivity(self, measure=_cs))
+            else:
+                raise ValueError("Connectivity measure '%s' not supported." % _cs)
 
         """
         # network connectivity stats
-        self.alpha = sauce.connectivity(self, measure='alpha')
-        self.beta = sauce.connectivity(self, measure='beta')
-        self.gamma = sauce.connectivity(self, measure='gamma')
-        self.eta = sauce.connectivity(self, measure='eta')
+        
         self.entropies_mtfcc = sauce.entropy(self) #return dict
         entropy = [v for k,v in list(self.entropies_mtfcc.items())]
         self.entropy_mtfcc = sum(entropy)*-1.

@@ -7,11 +7,11 @@ import numpy
 
 def calc_sinuosity(net):
     """Calculate segment sinuosity and network-level descriptive statistics.
-    See tigernet.TigerNet.calc_net_stats() for top-level method.
+    See tigernet.Network.calc_net_stats() for top-level method.
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     """
 
@@ -36,11 +36,11 @@ def calc_sinuosity(net):
 
 def set_node_degree(net):
     """Set descriptive node degree statistics as attributes.
-    See tigernet.TigerNet.calc_net_stats() for top-level method.
+    See tigernet.Network.calc_net_stats() for top-level method.
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     """
 
@@ -56,7 +56,7 @@ def connectivity(net, measure="alpha"):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     measure : str
         Statistic to calculate.
 

@@ -11,10 +11,10 @@ import unittest
 ##########################################################################################
 
 
-class TestTigerNetBuildLattice1x1(unittest.TestCase):
+class TestNetworkBuildLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
+        self.lattice_network = tigernet.Network(s_data=self.lattice)
 
     def test_lattice_network_sdata(self):
         known_segments = 4
@@ -55,10 +55,10 @@ class TestTigerNetBuildLattice1x1(unittest.TestCase):
         self.assertEqual(observed_xyid, known_xyid)
 
 
-class TestTigerNetTopologyLattice1x1(unittest.TestCase):
+class TestNeworkTopologyLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
+        self.lattice_network = tigernet.Network(s_data=self.lattice)
 
     def test_lattice_network_segm2node(self):
         known_segm2node = [[0, [0, 1]], [1, [1, 2]], [2, [1, 3]], [3, [1, 4]]]
@@ -86,7 +86,7 @@ class TestTigerNetTopologyLattice1x1(unittest.TestCase):
         self.assertEqual(observed_node2node, known_node2node)
 
 
-class TestTigerNetComponentsLattice1x1(unittest.TestCase):
+class TestNeworkComponentsLattice1x1(unittest.TestCase):
     def setUp(self):
         lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         lat2 = tigernet.generate_lattice(
@@ -96,11 +96,11 @@ class TestTigerNetComponentsLattice1x1(unittest.TestCase):
         self.lattice.reset_index(drop=True, inplace=True)
 
         # full network
-        self.lattice_network = tigernet.TigerNet(
+        self.lattice_network = tigernet.Network(
             s_data=self.lattice, record_components=True
         )
         # largest component network
-        self.lattice_network_largest_cc = tigernet.TigerNet(
+        self.lattice_network_largest_cc = tigernet.Network(
             s_data=self.lattice, record_components=True, largest_component=True
         )
 
@@ -176,10 +176,10 @@ class TestTigerNetComponentsLattice1x1(unittest.TestCase):
         observed_ccs = list(self.lattice_network_largest_cc.n_data["CC"])
 
 
-class TestTigerNetAssociationsLattice1x1(unittest.TestCase):
+class TestNetworkAssociationsLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.TigerNet(s_data=self.lattice, record_geom=True)
+        self.lattice_network = tigernet.Network(s_data=self.lattice, record_geom=True)
 
     def test_lattice_network_segm2geom(self):
         known_type = "LineString"
@@ -253,10 +253,10 @@ class TestTigerNetAssociationsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_degree, known_degree)
 
 
-class TestTigerNetDefineGraphElementsLattice1x1(unittest.TestCase):
+class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.TigerNet(
+        self.lattice_network = tigernet.Network(
             s_data=self.lattice, record_geom=True, def_graph_elems=True
         )
 
@@ -287,12 +287,12 @@ class TestTigerNetDefineGraphElementsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_elements, known_elements)
 
 
-class TestTigerNetSimplifyBarb(unittest.TestCase):
+class TestNetworkSimplifyBarb(unittest.TestCase):
     def setUp(self):
         lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
         self.barb = lattice[~lattice["SegID"].isin([1, 2, 5, 7, 9, 10])]
         kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network = tigernet.TigerNet(s_data=self.barb, **kws)
+        self.network = tigernet.Network(s_data=self.barb, **kws)
         # copy testing
         self.graph = self.network.simplify_network(**kws)
         # inplace
@@ -308,32 +308,32 @@ class TestTigerNetSimplifyBarb(unittest.TestCase):
 ##########################################################################################
 
 
-class TestTigerNetBuildEmpirical(unittest.TestCase):
+class TestNetworkBuildEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
-class TestTigerNetTopologyEmpirical(unittest.TestCase):
+class TestNetworkTopologyEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
-class TestTigerNetComponentsEmpirical(unittest.TestCase):
+class TestNetworkComponentsEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
-class TestTigerNetAssociationsEmpirical(unittest.TestCase):
+class TestNetworkAssociationsEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
-class TestTigerNetDefineGraphElementsEmpirical(unittest.TestCase):
+class TestNetworkDefineGraphElementsEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 
 
-class TestTigerNetSimplifyEmpirical(unittest.TestCase):
+class TestNetworkSimplifyEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

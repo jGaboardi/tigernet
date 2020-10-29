@@ -8,19 +8,34 @@ import copy
 import unittest
 
 
-class TestTigerNetErrors(unittest.TestCase):
+class TestNeworkErrors(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_no_segmdata(self):
         with self.assertRaises(ValueError):
-            tigernet.TigerNet(s_data=None)
+            tigernet.Network(s_data=None)
+
+
+class TestStatsErrors(unittest.TestCase):
+    def setUp(self):
+        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+
+    def test_bad_alpha(self):
+        with self.assertRaises(AttributeError):
+            lattice_network = tigernet.Network(s_data=self.lattice.copy())
+            lattice_network.calc_net_stats(conn_stat="alpha")
+
+    def test_bad_alpha(self):
+        with self.assertRaises(ValueError):
+            lattice_network = tigernet.Network(s_data=self.lattice.copy())
+            lattice_network.calc_net_stats(conn_stat="omega")
 
 
 class TestUtilsErrors(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.TigerNet(s_data=self.lattice)
+        self.lattice_network = tigernet.Network(s_data=self.lattice)
 
     def test_get_neighbors(self):
         with self.assertRaises(ValueError):

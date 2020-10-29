@@ -13,7 +13,7 @@ from shapely.geometry import LineString
 ##########################################################################################
 
 
-class TestTigerNetStatsBarb(unittest.TestCase):
+class TestNeworkStatsBarb(unittest.TestCase):
     def setUp(self):
         lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
         lat = lat[~lat["SegID"].isin([3, 5, 8])]
@@ -25,7 +25,7 @@ class TestTigerNetStatsBarb(unittest.TestCase):
         barb = lat.append(rec, ignore_index=True)
 
         # full network
-        self.network = tigernet.TigerNet(s_data=barb.copy())
+        self.network = tigernet.Network(s_data=barb.copy())
         self.network.calc_net_stats()
 
         # simplified network
@@ -111,14 +111,14 @@ class TestTigerNetStatsBarb(unittest.TestCase):
         self.assertEqual(observed_std, known_std)
 
 
-class TestTigerNetStatsSineLine(unittest.TestCase):
+class TestNeworkStatsSineLine(unittest.TestCase):
     def setUp(self):
         sine = tigernet.generate_sine_lines()
         sine = tigernet.generate_sine_lines()
         sine = sine[sine["SegID"].isin([0, 1, 2, 3])]
 
         # full network
-        self.network = tigernet.TigerNet(s_data=sine.copy())
+        self.network = tigernet.Network(s_data=sine.copy())
         self.network.calc_net_stats()
 
         # simplified network
@@ -209,12 +209,83 @@ class TestTigerNetStatsSineLine(unittest.TestCase):
         self.assertEqual(observed_std, known_std)
 
 
+class TestNeworkConnectivityLattice1x1(unittest.TestCase):
+    def setUp(self):
+        lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        kws = {"n_hori_lines": 1, "n_vert_lines": 1, "bounds": [6, 6, 8, 8]}
+        lat2 = tigernet.generate_lattice(**kws)
+        self.lats = lat1.append(lat2)
+        self.lats.reset_index(drop=True, inplace=True)
+
+    def test_lattice_network_wcomps_connectivity(self):
+        # with recorded components
+        net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
+        net_wcomps.calc_net_stats(conn_stat="all")
+
+        known_alpha = 0.0
+        observed_alpha = net_wcomps.alpha
+        self.assertEqual(observed_alpha, known_alpha)
+
+        known_beta = 0.8
+        observed_beta = net_wcomps.beta
+        self.assertEqual(observed_beta, known_beta)
+
+        known_gamma = 0.3333333333333333
+        observed_gamma = net_wcomps.gamma
+        self.assertEqual(observed_gamma, known_gamma)
+
+        known_eta = 2.75
+        observed_eta = net_wcomps.eta
+        self.assertEqual(observed_eta, known_eta)
+
+    def test_lattice_network_wcomps_alpha(self):
+        # with recorded components
+        net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
+        net_wcomps.calc_net_stats(conn_stat="alpha")
+
+        known_alpha = 0.0
+        observed_alpha = net_wcomps.alpha
+        self.assertEqual(observed_alpha, known_alpha)
+
+    def test_lattice_network_wcomps_beta(self):
+        # with recorded components
+        net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
+        net_wcomps.calc_net_stats(conn_stat="beta")
+
+        known_beta = 0.8
+        observed_beta = net_wcomps.beta
+        self.assertEqual(observed_beta, known_beta)
+
+    def test_lattice_network_wcomps_gamma(self):
+        # with recorded components
+        net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
+        net_wcomps.calc_net_stats(conn_stat="gamma")
+
+        known_gamma = 0.3333333333333333
+        observed_gamma = net_wcomps.gamma
+        self.assertEqual(observed_gamma, known_gamma)
+
+    def test_lattice_network_wcomps_eta(self):
+        # with recorded components
+        net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
+        net_wcomps.calc_net_stats(conn_stat="eta")
+
+        known_eta = 2.75
+        observed_eta = net_wcomps.eta
+        self.assertEqual(observed_eta, known_eta)
+
+
 ##########################################################################################
 # Empirical testing
 ##########################################################################################
 
 
-class TestTigerNetStatsEmpirical(unittest.TestCase):
+class TestNeworkStatsEmpirical(unittest.TestCase):
+    def setUp(self):
+        pass
+
+
+class TestNeworkConnectivityEmpirical(unittest.TestCase):
     def setUp(self):
         pass
 

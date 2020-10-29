@@ -220,7 +220,7 @@ def _drop_geoms(net, gdf, geoms, series=False):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     gdf : geopandas.GeoDataFrame
         Dataframe of geometries to search.
     geoms : list
@@ -253,7 +253,7 @@ def extract_nodes(net):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     Returns
     -------
@@ -267,7 +267,7 @@ def extract_nodes(net):
 
         Parameters
         ----------
-        net : tigernet.TigerNet
+        net : tigernet.Network
         ndf : geopandas.GeoDataFrame
             Node dataframe.
 
@@ -353,7 +353,7 @@ def associate(
     initial_weld : bool
         Welding subset of restricted access road segments. Used in
         ``cleanse_supercycle()``. Default is ``False``.
-    net : tigernet.TigerNet
+    net : tigernet.Network
     df : geopandas.GeoDataFrame
         restricted streets susbet dataframe. Default is ``None``.
     ss : geopandas.GeoDataFrame
@@ -513,7 +513,7 @@ def assert_2_neighs(net):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     """
 
@@ -597,7 +597,7 @@ def get_cc_len(net, len_col=None):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     len_col : str
         The name of the length column. Default is ``None``.
 
@@ -660,7 +660,7 @@ def update_adj(net, seg_keys, node_keys):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     seg_keys : list
         Segment keys to remove from adjacency.
     node_keys : list
@@ -711,7 +711,7 @@ def geom_assoc(net, coords=False):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     coords : bool
         Associate with coordinates (``True``). Default is ``False``.
 
@@ -732,7 +732,7 @@ def calc_valency(net, col=None):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     col : str
         The node neighbors column. Default is ``None``.
 
@@ -770,7 +770,7 @@ def branch_or_leaf(net, geom_type=None):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     geom_type : str
         ``'segm'`` or ``'node'``.
 
@@ -815,7 +815,7 @@ def simplify(net):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     Returns
     -------
@@ -838,7 +838,7 @@ def _locate_naps(net):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
 
     Returns
     -------
@@ -885,7 +885,7 @@ def _simplifysegs(net, na_objs):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     na_objs : dict
         Non-articulation point information.
 
@@ -944,7 +944,7 @@ def _get_hacky_index(net, ni):
     
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     ni : dict
         Non-articulation point information.
     
@@ -1006,7 +1006,7 @@ def _weld_MultiLineString(multilinestring, weld_multi=True, skip_restr=True):
     welded = linemerge(multilinestring)
 
     # Due to minute rounding (.00000001 meters) some line vertices can
-    # be off thus creating a MultiLineString where shapely thinks two
+    # be off, thus creating a MultiLineString where shapely thinks two
     # LineString objects don't actually touch where, in fact, they do.
     # The following loop iterates through each pair of LineString
     # objects sequentially to  determine if their endpoints are
@@ -1083,7 +1083,7 @@ def ring_correction(net, df):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     df : geopandas.GeoDataFrame
         Dataframe of road segments.
 
@@ -1180,7 +1180,7 @@ def get_intersecting_geoms(net, df1=None, geom1=None, df2=None, geom2=None, wboo
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     df1 : geopandas.GeoDataFrame
         Primary dataframe. Default is ``None``.
     geom1 : int
@@ -1247,7 +1247,7 @@ def euc_calc(net, col=None):
 
     Parameters
     ----------
-    net : tigernet.TigerNet
+    net : tigernet.Network
     col : str
         new column name. Default is None.
 
