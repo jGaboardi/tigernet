@@ -2,13 +2,21 @@
 """
 
 from ast import literal_eval
+import copy
 
 import geopandas
 import numpy
 import pandas
-from shapely.geometry import Point, LineString, MultiLineString
+from shapely.geometry import Point, MultiPoint
+from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import GeometryCollection
 from shapely.ops import linemerge
 
+
+from shapely.geometry import Point, MultiPoint
+from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import GeometryCollection
+from shapely.ops import linemerge, polygonize
 
 # used to supress warning in addIDX()
 geopandas.pd.set_option("mode.chained_assignment", None)
@@ -1139,29 +1147,22 @@ def ring_correction(net, df):
     return df
 
 
-def _correct_ring(node_coords, line_coords, post_check=False):
+def _correct_ring(node_coords, line_coords):
     """Helper function for ``ring_correction()``.
 
     Parameters
     ----------
     node_coords : list
-        The ``xy`` tuple for a node.
+        xy tuple for a node.
     line_coords  : list
-        All ``xy`` tuples for a line.
-    post_check : bool
-        Check following a cleanse cycle. Default is ``False``.
+        All xy tuples for a line.
 
     Returns
     -------
-    updated_line : shapely.geometry.LineString
-        Ring road updated so that it begins and ends at the intersecting node.
+    updated_line : shapely.LineString
+        Ring road updated so it begins and ends at the intersecting node.
 
     """
-
-    if post_check:
-        node_coords = [node_coords]
-        if node_coords[0] == line_coords[0]:
-            return line_coords
 
     for itemidx, coord in enumerate(line_coords):
         # find the index of the intersecting coord in the line
@@ -1169,8 +1170,7 @@ def _correct_ring(node_coords, line_coords, post_check=False):
             break
 
     # adjust the line coordinates for the true ring start/end
-    updated_line = line_coords[itemidx:] + line_coords[1 : itemidx + 1]
-    updated_line = LineString(updated_line)
+    updated_line = LineString(line_coords[itemidx:] + line_coords[1 : itemidx + 1])
 
     return updated_line
 
@@ -1289,119 +1289,733 @@ def _euc_dist(p1, p2):
     return euc
 
 
-'''
+###############################################################################
+################ TIGER/Line clean up functionality ############################
+###############################################################################
+
+
+def tiger_netprep(net, in_file=None, calc_len=False):
+    """Scrub a raw TIGER/Line EDGES file at the county level to prep for network.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    calc_len : bool
+        Calculate length and add column. Default is ``False``.
+
+    """
+
+    # Reproject roads and subset by road type
+    initial_subset(net, net.s_data, calc_len=calc_len)
+
+    # Correcting ring roads
+    net.s_data = ring_correction(net, net.s_data)
+
+    # Cleanse SuperCycle -- Before splitting weld interstate segment pieces
+    cleanse_kws = {"calc_len": calc_len, "inherit_attrs": True}
+    net.s_data = cleanse_supercycle(net, net.s_data, **cleanse_kws)
+
+
+def initial_subset(net, raw_file, calc_len=False):
+    """Initalize a network data cleanse from raw tiger line files
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    raw_data : str
+        Directory and file name for to find raw tiger data
+    calc_len : bool
+
+    """
+
+    # Read in raw TIGER street data
+    if not net.is_gdf:
+        net.s_data = geopandas.read_file(net.s_data)
+
+    if calc_len:
+        net.s_data = add_length(net.s_data, len_col=net.len_col, geo_col=net.geo_col)
+
+    # remove trouble maker segments
+    if net.discard_segs:
+        net.s_data = net.s_data[~net.s_data[net.attr2].isin(net.discard_segs)]
+
+    # Add three new MTFCC columns for feature class, description, and rank
+    if net.mtfcc_types:
+        mtfcc_cols = ["FClass", "Desc"]
+        for c in mtfcc_cols:
+            net.s_data[c] = [
+                net.mtfcc_types[mtfcc][c] for mtfcc in net.s_data[net.attr1]
+            ]
+
+    # Subset roads
+    if "FClass" in net.s_data.columns and net.mtfcc_discard:
+        _kws = {"column": "FClass", "mval": net.mtfcc_discard, "oper": "out"}
+        net.s_data = record_filter(net.s_data, **_kws)
+    net.s_data.reset_index(drop=True, inplace=True)
+    net.s_data = label_rings(net.s_data, geo_col=net.geo_col)
+
+    # create segment xyID
+    segm2xyid = generate_xyid(df=net.s_data, geom_type="segm", geo_col=net.geo_col)
+    net.s_data = fill_frame(net.s_data, col=net.xyid, data=segm2xyid)
+
+
+def add_length(frame, len_col=None, geo_col=None):
+    """Add length column to a dataframe.
+
+    Parameters
+    ----------
+    frame : geopandas.GeoDataFrame
+        Dataframe of geometries.
+    len_col : str
+        Length column name in dataframe. Default is ``None``.
+    geo_col : str
+        Geometry column name. Default is ``None``.
+
+    Returns
+    -------
+    frame : geopandas.GeoDataFrame
+        Updated dataframe of geometries.
+
+    """
+
+    if list(frame.columns).__contains__(len_col):
+        frame = frame.drop(len_col, axis=1)
+    frame[len_col] = [frame[geo_col][idx].length for idx in frame.index]
+
+    return frame
+
+
 def record_filter(df, column=None, sval=None, mval=None, oper=None):
-    """used in phase 2 with incidents
-    
+    """Used in phase 2 with incidents
+
     Parameters
     ----------
     df : geopandas.GeoDataFrame
-        dataframe of incident records
-    oper : operator object *OR* str
-        {(operator.eq, operator.ne), ('in', 'out')}
+        Dataframe of incident records.
+    oper : operator object, str
+        ``{(operator.eq, operator.ne)``, ``('in', 'out')}``.
     sval : str, int, float, bool, etc.
-        single value to filter
+        Single value to filter.
     mval : list
-        multiple values to filter
-    
+        Multiple values to filter.
+
     Returns
     -------
     df : geopandas.GeoDataFrame
         dataframe of incident records
+
     """
-    
+
     # use index or specific column
-    if column == 'index':
+    if column == "index":
         frame_col = df.index
     else:
         frame_col = df[column]
-    
+
     # single value in column
     if not sval == None:
         return df[oper(frame_col, sval)].copy()
-    
+
     # multiple values in column
     if not mval == None:
-        if oper == 'in':
+        if oper == "in":
             return df[frame_col.isin(mval)].copy()
-        if oper == 'out':
+        if oper == "out":
             return df[~frame_col.isin(mval)].copy()
 
 
+def label_rings(df, geo_col=None):
+    """Label each line segment as ring (``True``) or not (``False``).
 
-def geom_to_float(df, xval=None, yval=None, geom_type=None):
-    """convert a geometric point object to single floats
-    for inclusion in a dataframe column.
-    
     Parameters
     ----------
-    df : geopandas.GeoDataframe
-        initial dataframe
-    xval : str
-        x coordinate column name. Default is None.
-    yval : str
-        y coordinate column name. Default is None.
-    geom_type : str
-        geometry type to transform into. Currently either cent
-        (centroid) or repp (representative point).
-    
+    df : geopandas.GeoDataFrame
+        Dataframe of geometries.
+    geo_col : str
+        Geometry column name. Default is ``None``.
+
     Returns
     -------
-    df : geopandas.GeoDataframe
-        updated dataframe
+    df : geopandas.GeoDataFrame
+        Dataframe of geometries.
+
     """
-    
-    geoms = {'cent':'centroid', 'repp':'representative_point'} 
-    
-    try:
-        # for centroids
-        df[xval] = [getattr(p, geoms[geom_type]).x for p in df.geometry]
-        df[yval] = [getattr(p, geoms[geom_type]).y for p in df.geometry]
-    
-    except AttributeError:
-        try:
-            # for representative points
-            df[xval] = [getattr(p, geoms[geom_type])().x for p in df.geometry]
-            df[yval] = [getattr(p, geoms[geom_type])().y for p in df.geometry]
-        except:
-            raise AttributeError(geoms[geom_type]+' attribute not present.')
-    
-    df.drop([xval, yval], axis=1, inplace=True)
-    
+
+    df["ring"] = ["False"] * df.shape[0]
+    for idx in df.index:
+        if df[geo_col][idx].is_ring:
+            df["ring"][idx] = "True"
+
     return df
 
 
-def get_fips(st, ct):
-    """return cenus FIPS codes for states and counties
-    
+def cleanse_supercycle(net, gdf, inherit_attrs=False, calc_len=True):
+    """One iteration of a cleanse supercycle; then repeat as necessary.
+    1. Drop equal geoms; 2. Drop contained geoms; 3. Split line segments
+
     Parameters
     ----------
-    st : str
-        state name
-    ct : str
-        county name
+    net : tigernet.Network
+    gdf : geopandas.GeoDataFrame
+        Streets dataframe.
+    inherit_attrs : bool
+        Inherit attributes from the dominant line segment. Default is ``False``.
+    calc_len : bool
+        Calculate length and add column. Default is ``True``.
+
+    Returns
+    -------
+    gdf : geopandas.GeoDataFrame
+        Updated streets dataframe.
+
+    """
+
+    # weld together restricted segments (e.g. Interstates)
+    net.s_data = restriction_welder(net)
+    # split segments at known intersections
+    net.s_data = line_splitter(net, calc_len=calc_len, inherit_attrs=inherit_attrs)
+
+    # Re-lablel Rings
+    net.s_data = label_rings(net.s_data, geo_col=net.geo_col)
+    net.s_data.reset_index(inplace=True, drop=True)
+
+    return net.s_data
+
+
+def restriction_welder(net):
+    """Weld each set of restricted segments (e.g. interstates).
+
+    Parameters
+    ----------
+    net : tigernet.Network
     
     Returns
     -------
-    sf, cf  : tuple
-        state and county fips
+    net.s_data : geopandas.GeoDataFrame
+        Updated streets dataframe.
+    
     """
-    
-    if st.lower() == 'fl' and ct.lower() == 'leon':
-        sf, cf = '12', '073'
-    
-    else:
-        fips_csv_path = '../us_county_fips_2010.csv'
-        us_df = pd.read_csv(fips_csv_path, dtype={'ST_FIPS': str,
-                                                  'CT_FIPS': str})
-        us_df['CT'] = us_df['CT_Name'].apply(lambda x:\
-                                            ''.join(x.split(' ')[:-1]).lower())
-        st_df = us_df[us_df.ST_Post == st.upper()]
-        record = st_df[st_df.CT == ct.replace(' ', '').lower()]
-        sf, cf = record.ST_FIPS.values[0], record.CT_FIPS.values[0]
-    
-    return sf, cf
+
+    # make restricted subset
+    restr_ss = net.s_data[net.s_data[net.attr1] == net.mtfcc_split]
+
+    try:
+        restr_names = [str(grp) for grp in restr_ss[net.mtfcc_split_grp].unique()]
+    except KeyError:
+        return
+
+    # create a sub-subset for each group (e.g. interstate)
+    for grp in restr_names:
+        ss = restr_ss[restr_ss[net.mtfcc_split_grp] == grp]
+
+        # get restriction segments to restriction nodes lookup dict
+        # and restriction nodes to restriction segments lookup dict
+        s2n, n2s = associate(initial_weld=True, net=net, df=restr_ss, ss=ss)
+
+        # x2x topologies
+        s2s = get_neighbors(s2n, n2s, astype=dict)
+        n2n = get_neighbors(n2s, s2n, astype=dict)
+
+        # get rooted connected components
+        s2s_cc = get_roots(s2s)
+
+        # weld together segments from each component of the group
+        for cc in s2s_cc:
+            keep_id, all_ids = cc[0], cc[1]
+            drop_ids = copy.deepcopy(all_ids)
+            drop_ids.remove(keep_id)
+
+            # subset of specific segment to weld
+            weld_ss = ss[ss[net.attr2].isin(all_ids)]
+            weld = list(weld_ss.geometry)
+            weld = _weld_MultiLineString(weld, skip_restr=net.skip_restr)
+
+            # if the new segment if a LineString set the new, welded
+            # geometry to the `keep_id` index of the dataframe
+            if type(weld) == LineString:
+                index = weld_ss.loc[(weld_ss[net.attr2] == keep_id)].index[0]
+                net.s_data.loc[index, net.geo_col] = weld
+
+            # if the weld resulted in a MultiLineString remove ids from
+            # from `drop_ids` and set to new for each n+1 new segment.
+            if type(weld) == MultiLineString:
+                unique_segs = len(weld)
+                keeps_ids = [keep_id] + drop_ids[: unique_segs - 1]
+                index = list(weld_ss[weld_ss[net.attr2].isin(keeps_ids)].index)
+                for idx, seg in enumerate(weld):
+                    net.s_data.loc[index[idx], net.geo_col] = seg
+                for idx in keeps_ids:
+                    if idx in drop_ids:
+                        drop_ids.remove(idx)
+
+            # remove original segments used to create the new, welded
+            # segment(s) from the full segments dataframe
+            net.s_data = net.s_data[~net.s_data[net.attr2].isin(drop_ids)]
+
+    net.s_data.reset_index(inplace=True, drop=True)
+
+    return net.s_data
 
 
+def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
+    """Top-level function for spliting line segments.
 
-'''
+    Parameters
+    ----------
+    net : tigernet.Network
+    inherit_attrs : bool
+        Inherit attributes from the dominant line segment. Default is ``False``.
+    calc_len : bool
+        Calculate length and add column. Default is ``False``.
+    road_type : str
+        Column to use for grouping road types. Default is ``'MTFCC'``.
+
+    Returns
+    -------
+    split_lines : geopandas.GeoDataFrame
+        All line segments including unsplit lines.
+
+    """
+
+    # it `net.mtfcc_split` is string put it into a list
+    if not hasattr(net.mtfcc_split, "__iter__"):
+        net.mtfcc_split = [net.mtfcc_split]
+
+    # create subset of segments to split and not split
+    if net.mtfcc_split_by and net.mtfcc_split:
+        if type(net.mtfcc_split) == list:
+            subset_codes = net.mtfcc_split_by + net.mtfcc_split
+        elif type(net.mtfcc_split) == str:
+            subset_codes = net.mtfcc_split_by + [net.mtfcc_split]
+        non_subset = net.s_data[~net.s_data[road_type].isin(subset_codes)]
+        net.s_data = net.s_data[net.s_data[road_type].isin(subset_codes)]
+
+    if inherit_attrs:
+        drop_cols = [net.len_col, net.geo_col, net.xyid, "ring"]
+        attrs = [col for col in net.s_data.columns if not drop_cols.__contains__(col)]
+        attr_vals = {attr: [] for attr in attrs}
+
+    # Iterate over dataframe to find intersecting and split
+    split_lines = []
+    count_lines_split = 0
+    for loi_idx in net.s_data.index:
+
+        # Working with TIGER/Line *EDGES*
+        if net.mtfcc_split_by and net.mtfcc_split:
+
+            # if a line segment used for splitting
+            # but not to be split itself
+            if net.s_data[road_type][loi_idx] not in net.mtfcc_split:
+                split_lines.extend([net.s_data[net.geo_col][loi_idx]])
+
+                # fill dictionary with attribute values
+                if inherit_attrs:
+                    for attr in attrs:
+                        fill_val = [net.s_data[attr][loi_idx]]
+                        attr_vals[attr].extend(fill_val)
+                continue
+
+        # get segs from the dataset that intersect
+        # with the Line Of Interest
+        intersecting = get_intersecting_geoms(
+            net, df1=net.s_data, geom1=loi_idx, wbool=False
+        )
+        intersecting = intersecting[intersecting.index != loi_idx]
+
+        # Working with TIGER/Line *ROADS*
+        if not net.mtfcc_split_by and not net.mtfcc_split:
+
+            # if the LOI is an interstate only pass in
+            # the ramps for splitting
+            if net.s_data[road_type][loi_idx] == net.mtfcc_intrst:
+                intersecting = intersecting[
+                    (intersecting[road_type] == net.mtfcc_ramp)
+                    | (intersecting[road_type] == net.mtfcc_serv)
+                    | (intersecting[road_type] == net.mtfcc_intrst)
+                ]
+
+            # if LOI not ramp and interstates in dataframe
+            # filter them out
+            elif (
+                list(intersecting[road_type]).__contains__(net.mtfcc_intrst)
+                and net.s_data[road_type][loi_idx] != net.mtfcc_ramp
+            ):
+                intersecting = intersecting[intersecting[road_type] != net.mtfcc_intrst]
+
+        # if There are no intersecting segments
+        if intersecting.shape[0] == 0:
+            continue
+
+        # ring road bool
+        ring_road = literal_eval(net.s_data["ring"][loi_idx])
+
+        # actual line split call happens here
+        new_lines = _split_line(
+            net.s_data[net.geo_col][loi_idx],
+            loi_idx,
+            df=intersecting,
+            ring_road=ring_road,
+            geo_col=net.geo_col,
+        )
+        n_lines = len(new_lines)
+        if n_lines > 1:
+            count_lines_split += 1
+        split_lines.extend(new_lines)
+
+        # fill dictionary with attribute values
+        if inherit_attrs:
+            for attr in attrs:
+                fill_val = [net.s_data[attr][loi_idx]]
+                attr_vals[attr].extend(fill_val * n_lines)
+
+    # create dataframe
+    split_lines = geopandas.GeoDataFrame(split_lines, columns=[net.geo_col])
+
+    # fill dataframe with attribute values
+    if inherit_attrs:
+        for attr in attrs:
+            split_lines[attr] = attr_vals[attr]
+
+    if calc_len:
+        split_lines = add_length(split_lines, len_col=net.len_col, geo_col=net.geo_col)
+
+    # recombine EDGES subset and non subset segment lists
+    if net.mtfcc_split_by and net.mtfcc_split:
+        # combine newly split suset segments with all segments
+        split_lines = split_lines.append(non_subset, sort=False)
+        split_lines.reset_index(inplace=True, drop=True)
+    split_lines = add_ids(split_lines, id_name=net.sid_name)
+
+    # add updated xyid
+    segm2xyid = generate_xyid(df=split_lines, geom_type="segm", geo_col=net.geo_col)
+    split_lines = fill_frame(split_lines, col=net.xyid, data=segm2xyid)
+    split_lines = label_rings(split_lines, geo_col=net.geo_col)
+
+    # number of lines split
+    net.lines_split = count_lines_split
+
+    return split_lines
+
+
+def _split_line(loi, idx, df=None, geo_col=None, ring_road=False):
+    """middle level function for spliting line segements
+
+    Parameters
+    ----------
+    loi : shapely.LineString
+        The line segment in question.
+    idx : int
+        The index number of the LOI.
+    df : geopandas.GeoDataFrame
+        The dataframe of line segments.
+    ring_road : bool
+        (``True``) if ring road. (``False``) if not. Default is ``False``.
+    geo_col : str
+        The geometry column name. Default is ``None``.
+
+    Returns
+    -------
+    new_lines : list
+        A list of new lines generated from splitting.
+
+    """
+
+    intersectinglines = df[df.index != idx]  # all lines not LOI
+
+    # Unary Union for intersection determination
+    intersectinglines = intersectinglines[geo_col].unary_union
+
+    # Intersections of LOI and the Unary Union
+    breaks = loi.intersection(intersectinglines)
+
+    # find and return points on the line to split if any exist
+    unaltered, breaks, ring_endpoint, basic_ring, complex_ring = _find_break_locs(
+        loi=loi, breaks=breaks, ring_road=ring_road
+    )
+
+    if unaltered:
+        return unaltered
+
+    # Line breaking
+    if not type(breaks) == list:
+        breaks = [breaks]
+
+    new_lines = _create_split_lines(
+        breaks=breaks,
+        loi=loi,
+        ring_road=ring_road,
+        basic_ring=basic_ring,
+        complex_ring=complex_ring,
+        ring_endpoint=ring_endpoint,
+    )
+
+    return new_lines
+
+
+def _create_split_lines(
+    breaks=None,
+    ring_endpoint=None,
+    loi=None,
+    ring_road=False,
+    basic_ring=False,
+    complex_ring=False,
+):
+    """Deep function from splitting a single line segment along break points.
+
+    Parameters
+    ----------
+    breaks : list
+        The point to break a line. Default is ``None``.
+    ring_endpoint : shapely.Point
+        The endpoint of a ring road. Default is ``None``.
+    loi : shapely.geometry.LineString
+        The line of interest.
+    ring_road : bool
+        Boolean for 'is' or 'is not' a ring road. Default is ``False``.
+    basic_ring : bool
+        is or is not a basic ring road. This indicates a 'normal' ring
+        road in which there is one endpoint. Default is False.
+    complex_ring : bool
+        is or is not a complex ring road. This indicates a any situation
+        not deemed a 'basic' ring. Default is False.
+
+    Returns
+    -------
+    new_lines : list
+        A list of new lines generated from splitting.
+    
+    """
+
+    points = [Point(xy) for xy in breaks]
+
+    # First coords of line
+    coords = list(loi.coords)
+
+    # Keep list coords where to cut (cuts = 1)
+    cuts = [0] * len(coords)
+    cuts[0] = 1
+    cuts[-1] = 1
+
+    # Add the coords from the points
+    coords += [list(p.coords)[0] for p in points]
+    cuts += [1] * len(points)
+
+    # Calculate the distance along the line for each point
+    dists = [loi.project(Point(p)) for p in coords]
+
+    # sort the coords/cuts based on the distances
+    # see http://stackoverflow.com/questions/6618515/
+    #     sorting-list-based-on-values-from-another-list
+    coords = [p for (d, p) in sorted(zip(dists, coords))]
+    cuts = [p for (d, p) in sorted(zip(dists, cuts))]
+    if ring_road:  # ensure there is an endpoint for rings
+        if basic_ring:
+            coords = ring_endpoint + coords + ring_endpoint
+        if complex_ring:
+            archetelos = [loi.coords[0]]  # beginning and ending of ring
+            coords = archetelos + coords + archetelos
+        cuts = [1] + cuts + [1]
+
+    # generate the lines
+    if cuts[-1] != 1:  # ensure there is an endpoint for rings
+        cuts += [1]
+    new_lines = []
+
+    for i in range(len(coords) - 1):
+        if cuts[i] == 1:
+            # find next element in cuts == 1 starting from index i + 1
+            j = cuts.index(1, i + 1)
+            new_line = LineString(coords[i : j + 1])
+            if new_line.is_valid:
+                new_lines.append(new_line)
+    return new_lines
+
+
+def _find_break_locs(loi=None, breaks=None, ring_road=False):
+    """Locate points along a line segment where breaks need to be made.
+
+    Parameters
+    ----------
+    loi : shapely.geometry.LineString
+        The line of interest.
+    breaks : list
+        The point to break a line. Default is ``None``.
+    ring_road : bool
+        Boolean for 'is' or 'is not' a ring road. Default is ``False``.
+
+    Returns
+    -------
+    unaltered : None or list
+        List of one unaltered LineString.
+    breaks : None of list
+        The point to break a line. Default is ``None``.
+    ring_endpoint : shapely.Point
+        The endpoint of a ring road. Default is ``None``.
+    basic_ring : bool
+        is or is not a basic ring road. This indicates a 'normal' ring
+        road in which there is one endpoint.
+    complex_ring : bool
+        is or is not a complex ring road. This indicates a any
+        situation not deemed a 'basic' ring.
+    
+    """
+
+    intersection_type = type(breaks)
+    unaltered = None
+    ring_endpoint = None
+    basic_ring = False
+    complex_ring = False
+
+    # Case 1
+    # - Single point from a line intersects the LOI
+    # loop roads & 'typical' intersections
+    if intersection_type == Point:
+        ring_endpoint = [breaks]
+        if ring_road == False:
+            if breaks == loi.boundary[0] or breaks == loi.boundary[1]:
+                return [loi], None, None, None, None
+        if ring_road:
+            basic_ring = True
+            # Do nothing, return the exact ring geometry
+            return [loi], None, None, None, None
+        else:
+            breaks = _make_break_locs(breaks=breaks, standard=True)
+
+    # Case 2
+    # - Multiple points from one line intersect the LOI
+    # horseshoe roads, multiple intersections of one line and LOI
+    elif intersection_type == MultiPoint:
+        if ring_road:
+            complex_ring = True
+            breaks = _make_break_locs(breaks=breaks)
+        # horseshoe
+        elif breaks == loi.boundary:
+            return [loi], None, None, None, None
+        else:
+            breaks = _make_break_locs(loi=loi, breaks=breaks)
+
+    # Case 3
+    # - Overlapping line segments along one stretch of road
+    # multiple names, etc. for a section of roadway which was then
+    # digitized as separate, stacked entities.
+    elif intersection_type == LineString:
+        breaks = _make_break_locs(loi=loi, breaks=breaks, line=True)
+
+    # Case 4
+    # - Overlapping line segments along multiple stretches of
+    # road multiple names, etc. for multiple sections of roadway which
+    # were then digitized as separate, stacked entities.
+    elif intersection_type == MultiLineString:
+        breaks = _make_break_locs(loi=loi, breaks=breaks, mline=True)
+
+    # Case 5
+    # - Complex intersection of points and Lines
+    # anomaly in digitization / unclear
+    elif intersection_type == GeometryCollection:
+        # points and line in the geometry collection
+        pts_in_gc = []
+        lns_in_gc = []
+
+        # if only one line intersection with a point intersection
+        multiple_line_intersections = False
+        for idx, geom in enumerate(breaks):
+            # collect points
+            if type(geom) == Point or type(geom) == MultiPoint:
+                pts_in_gc.append(geom)
+            # collect line(s)
+            if type(geom) == LineString or type(geom) == MultiLineString:
+                lns_in_gc.append(geom)
+
+        # get split indices in line based on touching geometry
+        split_index = []
+        iter_limit = len(lns_in_gc) - 1
+        for i in range(iter_limit):
+            j = i + 1
+            current_geom = lns_in_gc[i]
+            next_geom = lns_in_gc[j]
+            # comparing incremental geometry pairs
+            # if touching: do nothing
+            if current_geom.touches(next_geom):
+                continue
+            else:  # if don't touch add a split index
+                split_index.append(j)
+                multiple_line_intersections = True
+
+        # if there are multiple line intersections between two
+        # lines split the segments at the line intersections
+        if multiple_line_intersections:
+            split_list = []
+            for split in split_index:
+                if split == split_index[0]:
+                    prev_split = split
+                    # first split
+                    section = lns_in_gc[:split]
+                else:
+                    # 2nd to n-1 split
+                    section = lns_in_gc[prev_split:split]
+                # add split line segment
+                split_list.append(section)
+                # only one split
+                if split_index[0] == split_index[-1]:
+                    split_list.append(lns_in_gc[split:])
+                # last split
+                elif split == split_index[-1]:
+                    split_list.append(lns_in_gc[split:])
+            lns_in_gc = split_list
+
+        # otherwise if there are not multiple line intersections...
+        if not multiple_line_intersections:
+            welded_line = _weld_MultiLineString(lns_in_gc)
+            pts_in_gc.extend([welded_line.boundary[0], welded_line.boundary[1]])
+        elif multiple_line_intersections:
+            for geoms in lns_in_gc:
+                if len(geoms) == 1:
+                    pts_in_gc.extend([geoms[0].boundary[0], geoms[0].boundary[1]])
+                else:
+                    welded_line = _weld_MultiLineString(geoms)
+                    pts_in_gc.extend([welded_line.boundary[0], welded_line.boundary[1]])
+
+        breaks = _make_break_locs(loi=loi, breaks=pts_in_gc)
+
+    return unaltered, breaks, ring_endpoint, basic_ring, complex_ring
+
+
+def _make_break_locs(breaks=None, standard=False, loi=None, line=False, mline=False):
+    """Record the points along a line where breaks needs to be made.
+
+    Parameters
+    ----------
+    breaks : {shapely.Point, shapely.LineString}
+        The object to use for breaking the segment. Default is ``None``.
+    standard : bool
+        This indicates a single point break. Default is ``False``.
+    loi : shapely.LineString coordinates
+        The coordinates along a line. Default is ``None``.
+    line : bool
+        Boolean for 'is a LineString'. Default is ``False``.
+    mline : bool
+        Boolean for 'is a MultiLineString'. Default is ``False``.
+
+    Returns
+    -------
+    break_points : list
+        The geometries of points to break a line.
+    
+    """
+
+    if breaks and standard:
+        break_points = [Point(breaks.coords[:][0])]
+
+    elif breaks and not standard:
+        if line:
+            breaks = [breaks.boundary[0], breaks.boundary[1]]
+        if mline:
+            lns_in_mls = [l for l in breaks]
+
+            # created welded line, but only referencing
+            # for break location
+            welded_line = _weld_MultiLineString(lns_in_mls)
+            breaks = [welded_line.boundary[0], welded_line.boundary[1]]
+        break_points = [Point(point.coords[:][0]) for point in breaks]
+
+    return break_points

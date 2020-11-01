@@ -161,12 +161,4 @@ def entropies(ent_col, frame, n_elems):
         entropy = subset_proportion * numpy.log2(subset_proportion)
         indiv_entropies[value] = entropy
 
-    """
-    for mtfcc in net.s_data.MTFCC.unique():
-        subset = net.s_data[net.s_data.MTFCC == mtfcc].shape[0]
-        subset_proportion = float(subset) / float(net.n_segm)
-        entropy = subset_proportion * numpy.log2(subset_proportion)
-        indiv_entropies[mtfcc] = entropy
-    
-    """
     return indiv_entropies

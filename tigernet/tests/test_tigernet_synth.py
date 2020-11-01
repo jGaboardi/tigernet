@@ -1,14 +1,8 @@
-"""Testing for tigernet.py
+"""Synthetic data testing.
 """
 
 import tigernet
-
 import unittest
-
-
-##########################################################################################
-# Synthetic testing
-##########################################################################################
 
 
 class TestNetworkBuildLattice1x1(unittest.TestCase):
@@ -297,45 +291,6 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         self.graph = self.network.simplify_network(**kws)
         # inplace
         self.network.simplify_network(inplace=True, **kws)
-
-    # def test_..._copy(self):
-
-    # def test_..._inplace(self):
-
-
-##########################################################################################
-# Empirical testing
-##########################################################################################
-
-
-class TestNetworkBuildEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
-
-
-class TestNetworkTopologyEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
-
-
-class TestNetworkComponentsEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
-
-
-class TestNetworkAssociationsEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
-
-
-class TestNetworkDefineGraphElementsEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
-
-
-class TestNetworkSimplifyEmpirical(unittest.TestCase):
-    def setUp(self):
-        pass
 
 
 if __name__ == "__main__":

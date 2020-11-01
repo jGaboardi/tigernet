@@ -3,6 +3,7 @@
 
 from . import utils
 from . import stats
+from . import info
 
 import copy
 
@@ -13,32 +14,24 @@ __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 class Network:
     def __init__(
         self,
-        tnid="TNID",
-        tnidf="TNIDF",
-        tnidt="TNIDT",
         network_instance=None,
         s_data=None,
         n_data=None,
+        from_raw=False,
+        tiger_edges=True,
         sid_name="SegID",
         nid_name="NodeID",
         geo_col="geometry",
-        # proj_init=None,
-        # proj_trans=None,
-        # proj_units=None,
-        # inter=None,
+        xyid="xyid",
+        len_col="length",
+        tnid="TNID",
+        tnidf="TNIDF",
+        tnidt="TNIDT",
         attr1=None,
         attr2=None,
-        # study_area=None,
-        # county=None,
-        # state=None,
-        # year=None,
-        # place_time=None,
         mtfcc_types=None,
         mtfcc_discard=None,
         discard_segs=None,
-        xyid="xyid",
-        len_col="length",
-        tiger_edges=True,  ######################################################
         edge_subsets=None,
         mtfcc_split=None,
         mtfcc_intrst=None,
@@ -52,23 +45,14 @@ class Network:
         record_geom=False,
         largest_component=False,
         calc_stats=False,
-        gen_matrix=False,
-        mtx_to_csv=None,
-        gen_paths=False,
-        paths_to_csv=None,
-        gen_adjmtx=False,
-        adjmtx_to_csv=None,
-        algo=None,
+        # gen_matrix=False,
+        # mtx_to_csv=None,
+        # gen_paths=False,
+        # paths_to_csv=None,
+        # gen_adjmtx=False,
+        # adjmtx_to_csv=None,
+        # algo=None,
         def_graph_elems=False,
-        simplify=False,
-        save_full=False,
-        full_net_segms=None,
-        full_net_nodes=None,
-        save_simplified=False,
-        simp_net_segms=None,
-        simp_net_nodes=None,
-        remove_gdfs=False,
-        file_type=".shp",
     ):
         """
         Parameters
@@ -91,36 +75,21 @@ class Network:
         nid_name : str
             Node column name. Default is ``'NodeID'``.
 
+
+
+
+
         geo_col
 
+        from_raw
 
-        #proj_init : int
-        #    initial projection. Default is None.
-        #proj_trans : int
-        #    transformed projection. Default is None.
-        #proj_units : str
-        #    unit of transformed projection. Default is None.
+
 
         attr1 : str
             Auxillary variable being used. Default is ``None``.
         attr2 : str
             Auxillary variable being used. Either ``'TLID'`` for tiger edges
             or ``'LINEARID'`` for tiger roads. Default is ``None``.
-
-        #inter : str
-        #    file path to intermediary data. Default is None.
-        #study_area : str
-        #    study area within county. Default is None.
-        #county : str
-        #    county of interest. Default is None.
-        #state : str
-        #    state of interest. Default is None.
-        #year : str
-        #    data collection year. Default is None.
-        #place_time : str
-        #    place and time descriptor. Default is None. e.g.
-        #    '_Leon_FL_2010'
-
         mtfcc_types : dict
             MTFCC road type descriptions. Default is ``None``.
             from [utils.get_mtfcc_types()]
@@ -173,6 +142,7 @@ class Network:
             calculate a cost matrix. Default is False.
         mtx_to_csv : str
             file path to save the cost matrix. Default is None.
+        
         gen_paths : bool
             calculate shortest path trees. Default is False.
         paths_to_csv : str
@@ -183,39 +153,16 @@ class Network:
             file path to save the adjacency matrix. Default is None.
         algo : str
             shortest path algorithm. Default is None.
+        
         def_graph_elems : bool
             define graph elements. Default is False.
-        simplify : bool
-            remove all non-articulation points from the network object.
-            Default is False.
-        save_full : bool
-            save out the full network objects. Default is False.
-        full_net_segms : str
-            path and file name to save out the full network segments.
-            Default is None.
-        full_net_nodes : str
-            path and file name to save out the full network nodes.
-            Default is None.
-        save_simplified : bool
-            save out the simplified network objects. Default is False.
-        simp_net_segms : str
-            path and file name to save out the simplified network
-            segments. Default is None.
-        simp_net_nodes : str
-            path and file name to save out the simplified network nodes.
-            Default is None.
-        remove_gdfs : bool
-            remove dataframes from network object following  network
-            simplification. Default is False.
 
-        file_type : str
-            file extension. Default is ``'.shp'``.
 
         Methods : Attributes
         --------------------
-        __init__ : segmdata, census_data
+        __init__ : s_data
         build_network : --
-        build_base : s_data, n_data, segm2xyid, node2xyid
+        build_base : n_data, segm2xyid, node2xyid
         build_topology : segm2node, node2segment, segm2segm, node2node
         build_components : segm_cc, cc_lens, node_cc, longest_segm_cc,
             largest_segm_cc, largest_node_cc, n_ccs
@@ -226,13 +173,13 @@ class Network:
         add_node : --
         add_edge : --
         adjacency_matrix : n2n_adjmtx
+        
         network_cost_matrix : diameter, radius, d_net, d_euc, circuity,
             n2n_euclidean, n2n_algo, n2n_matrix, n2n_paths
         calc_net_stats : max_sinuosity, min_sinuosity,
             net_mean_sinuosity, net_std_sinuosity, max_node_degree,
             min_node_degree, mean_node_degree, std_node_degree, alpha,
-            beta, gamma, eta, entropies_mtfcc, entropy_mtfcc,
-            actual_object_sizes, actual_total_size
+            beta, gamma, eta, entropies_mtfcc, entropy_mtfcc
 
         ############### sauce.setup_raw : raw_data_info
         ############### sauce.ring_correction : corrected_rings
@@ -284,75 +231,68 @@ class Network:
 
         """
 
-        IS_GDF = hasattr(s_data, "geometry")
+        self.s_data = s_data
+        self.is_gdf = hasattr(self.s_data, "geometry")
+        IS_TIGEREDGES = hasattr(self.s_data, "MTFCC") or tiger_edges == True
+        if IS_TIGEREDGES:
+            self.tiger_edges = True
+        else:
+            self.tiger_edges = False
 
-        if not IS_GDF and not s_data:
+        if not self.is_gdf and not self.s_data and not network_instance:
             msg = "The 'segmdata' parameters must be set, "
-            msg += "either as a 'str' or 'geopandas.GeoDataFrame'."
+            msg += "either as a 'str' or 'geopandas.GeoDataFrame', *OR* "
+            msg += "the 'network_instance' parameter must be set."
             raise ValueError(msg)
 
         if network_instance:
             self = network_instance
         else:
-            self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
+            self.xyid, self.from_raw = xyid, from_raw
             self.sid_name, self.nid_name = sid_name, nid_name
             self.geo_col, self.len_col = geo_col, len_col
-            # self.proj_init, self.proj_trans = proj_init, proj_trans
-            # self.proj_units = proj_units
-            self.xyid = xyid
-            # self.inter = inter
-            # self.file_type = file_type
-            self.mtfcc_types = mtfcc_types
-            self.mtfcc_discard = mtfcc_discard
-            self.tiger_edges = tiger_edges
-            # self.tiger_roads = tiger_roads
-            self.discard_segs = discard_segs
-            if self.tiger_edges:  #############################################
-                self.census_data = True
-            else:
-                self.census_data = False
 
-            if self.census_data:
+            #########################################################################
+            # self.tiger_edges = tiger_edges
+            # if self.tiger_edges:
+            #    self.census_data = True
+            # else:
+            #    self.census_data = False
+            #########################################################################
+
+            if IS_TIGEREDGES:
+
                 # TIGER variable attributes
-                self.attr1 = attr1
-                self.attr2 = attr2
-                # self.study_area = study_area
-                # self.county = county
-                # self.state = state
-                # self.year = year
-                # self.place_time = place_time
-                self.s_data = s_data
-                if self.tiger_edges:
-                    self.tlid = self.attr2
+                self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
+                self.attr1, self.attr2, self.tlid = attr1, attr2, attr2
 
-            # This reads in and prepares/cleans a segments geodataframe
-            if not hasattr(s_data, self.geo_col) and self.census_data:
-                if self.tiger_edges:
-                    self.edge_subsets = edge_subsets
-                    self.mtfcc_split = mtfcc_split
-                    self.mtfcc_intrst = mtfcc_intrst
-                    self.mtfcc_ramp = mtfcc_ramp
-                    self.mtfcc_serv = mtfcc_serv
-                    self.mtfcc_split_grp = mtfcc_split_grp
-                    self.mtfcc_split_by = mtfcc_split_by
-                    self.skip_restr = skip_restr
-                    # fetch path to raw tiger edge data is available
-                    # of local machine, otherwise download from
-                    # https://www2.census.gov/
-                    # raw_file = sauce.get_raw_tiger_edges(self)
-                else:
-                    raise RuntimeError("Unknown line data.")
+                self.mtfcc_types = info.get_mtfcc_types()
+                self.mtfcc_discard = info.get_discard_mtfcc_by_desc()
+                self.discard_segs = discard_segs
 
-                ######################################################################### do after work out `build_network`
-                # freshly cleaned segments geodataframe
-                # segmdata = sauce.tiger_netprep(
-                #    self, in_file=raw_file, calc_len=calc_len
-                # )
-                #########################################################################
+                # This reads in and prepares/cleans a segments geodataframe
+                if self.from_raw:
+                    if self.is_gdf or self.s_data.endswith(".shp"):
+                        # self.edge_subsets = edge_subsets
+
+                        # ---------- make these something like ``mtfcc_kwargs``
+                        self.mtfcc_split = mtfcc_split
+                        self.mtfcc_intrst = mtfcc_intrst
+                        self.mtfcc_ramp = mtfcc_ramp
+                        self.mtfcc_serv = mtfcc_serv
+                        self.mtfcc_split_grp = mtfcc_split_grp
+                        self.mtfcc_split_by = mtfcc_split_by
+                        self.skip_restr = skip_restr
+
+                    else:
+                        raise RuntimeError("Unknown line data.")
+
+                    # freshly cleaned segments
+                    utils.tiger_netprep(self, calc_len=calc_len)
 
             # build a network object from segments
             self.build_network(
-                s_data,
+                self.s_data,
                 record_components=record_components,
                 largest_component=largest_component,
                 record_geom=record_geom,
@@ -360,19 +300,6 @@ class Network:
             )
 
         """
-        ################# simplify the network
-        ################if simplify:
-        ################    # create simplified segments geodataframe
-        ################    simplified_segms = self.simplify_network(self)
-        ################    # build a network object from simplified segments
-        ################    self.build_network(simplified_segms, record_geom=record_geom,
-        ################                       record_components=record_components,
-        ################                       largest_component=largest_component,
-        ################                       def_graph_elems=def_graph_elems)
-        ################    
-        ################    if save_simplified:
-        ################        self.s_data.to_file(simp_net_segms+self.file_type)
-        ################        self.n_data.to_file(simp_net_nodes+self.file_type)
         
         # create node to node adjacency matrix
         if gen_adjmtx:
