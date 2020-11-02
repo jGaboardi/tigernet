@@ -5,38 +5,34 @@ import tigernet
 import unittest
 import geopandas
 
+# get the roads shapefile as a GeoDataFrame
+bbox = (-84.279, 30.480, -84.245, 30.505)
+f = "zip://test_data/Edges_Leon_FL_2010.zip!Edges_Leon_FL_2010.shp"
+gdf = geopandas.read_file(f, bbox=bbox)
+gdf = gdf.to_crs("epsg:2779")
 
-##########################################################################################
-# Synthetic testing
-##########################################################################################
+# filter out only roads
+yes_roads = gdf["ROADFLG"] == "Y"
+roads = gdf[yes_roads].copy()
+
+# Tiger attributes primary and secondary
+ATTR1, ATTR2 = "MTFCC", "TLID"
+
+# segment welding and splitting stipulations --------------------------
+INTRST = "S1100"  # interstates mtfcc code
+RAMP = "S1630"  # ramp mtfcc code
+SERV_DR = "S1640"  # service drive mtfcc code
+SPLIT_GRP = "FULLNAME"  # grouped by this variable
+SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
+SKIP_RESTR = True  # no weld retry if still MLS
 
 
-class TestNetworkBuildEmpirical(unittest.TestCase):
+class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        bbox = (-84.279, 30.480, -84.245, 30.505)
-        f = "zip://test_data/Edges_Leon_FL_2010.zip!Edges_Leon_FL_2010.shp"
-        gdf = geopandas.read_file(f, bbox=bbox)
-        gdf = gdf.to_crs("epsg:2779")
 
-        # Tiger attributes primary and secondary
-        ATTR1, ATTR2 = "MTFCC", "TLID"
-        XVAL, YVAL = "CentX", "CentY"  # individual x and y columns
-        # segment welding and splitting
-        INTRST = "S1100"  # interstates mtfcc code
-        RAMP = "S1630"  # ramp mtfcc code
-        SERV_DR = "S1640"  # service drive mtfcc code
-        SPLIT_GRP = "FULLNAME"  # grouped by this variable
-        SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
-        SKIP_RESTR = True  # no weld retry if still MLS
-
-        # filter out only roads
-        yes_roads = gdf["ROADFLG"] == "Y"
-        roads = gdf[yes_roads].copy()
-
-        # discarded segments for "Waverly Hills" subset
+        # set up the network instantiation parameters
         discard_segs = None
-
-        kwargs = {"s_data": roads, "from_raw": True}
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
         attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
         kwargs.update(attr_kws)
         comp_kws = {"record_components": True, "largest_component": True}
@@ -48,6 +44,8 @@ class TestNetworkBuildEmpirical(unittest.TestCase):
         mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
         mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
         kwargs.update(mtfcc_kws)
+
+        # create a network isntance
         self.network = tigernet.Network(**kwargs)
 
     def test_network_sdata(self):
@@ -114,39 +112,74 @@ class TestNetworkBuildEmpirical(unittest.TestCase):
         self.assertEqual(observed_xyid, known_xyid)
 
 
-"""
-class TestNeworkTopologyLattice1x1(unittest.TestCase):
+class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.Network(s_data=self.lattice)
+        # set up the network instantiation parameters
+        discard_segs = None
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
+        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
+        kwargs.update(attr_kws)
+        comp_kws = {"record_components": True, "largest_component": True}
+        kwargs.update(comp_kws)
+        geom_kws = {"record_geom": True, "calc_len": True}
+        kwargs.update(geom_kws)
+        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
+        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
+        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
+        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
+        kwargs.update(mtfcc_kws)
 
-    def test_lattice_network_segm2node(self):
-        known_segm2node = [[0, [0, 1]], [1, [1, 2]], [2, [1, 3]], [3, [1, 4]]]
-        observed_segm2node = self.lattice_network.segm2node
+        # create a network isntance
+        self.network = tigernet.Network(**kwargs)
+
+    def test_network_segm2node(self):
+        known_segm2node = [
+            [0, [0, 1]],
+            [1, [2, 3]],
+            [2, [4, 5]],
+            [3, [5, 6]],
+            [4, [7, 8]],
+        ]
+        observed_segm2node = self.network.segm2node[:5]
         self.assertEqual(observed_segm2node, known_segm2node)
 
-    def test_lattice_network_node2segm(self):
-        known_node2segm = [[0, [0]], [1, [0, 1, 2, 3]], [2, [1]], [3, [2]], [4, [3]]]
-        observed_node2segm = self.lattice_network.node2segm
+    def test_network_node2segm(self):
+        known_node2segm = [
+            [0, [0, 11, 12]],
+            [1, [0, 82, 284]],
+            [2, [1, 11, 135, 139, 284]],
+            [3, [1, 9, 10]],
+            [4, [2, 5, 6]],
+        ]
+        observed_node2segm = self.network.node2segm[:5]
         self.assertEqual(observed_node2segm, known_node2segm)
 
-    def test_lattice_network_segm2segm(self):
+    def test_network_segm2segm(self):
         known_segm2segm = [
-            [0, [1, 2, 3]],
-            [1, [0, 2, 3]],
-            [2, [0, 1, 3]],
-            [3, [0, 1, 2]],
+            [0, [11, 12, 82, 284]],
+            [1, [135, 9, 10, 11, 139, 284]],
+            [2, [3, 5, 6, 237, 286]],
+            [3, [2, 237, 15, 18, 286]],
+            [4, [17, 5]],
         ]
-        observed_segm2segm = self.lattice_network.segm2segm
+
+        observed_segm2segm = self.network.segm2segm[:5]
         self.assertEqual(observed_segm2segm, known_segm2segm)
 
-    def test_lattice_network_node2node(self):
-        known_node2node = [[0, [1]], [1, [0, 2, 3, 4]], [2, [1]], [3, [1]], [4, [1]]]
-        observed_node2node = self.lattice_network.node2node
+    def test_network_node2node(self):
+        known_node2node = [
+            [0, [1, 2, 13]],
+            [1, [0, 2, 63]],
+            [2, [0, 1, 3, 195, 10]],
+            [3, [2, 13, 14]],
+            [4, [8, 9, 5]],
+        ]
+        observed_node2node = self.network.node2node[:5]
         self.assertEqual(observed_node2node, known_node2node)
 
 
-class TestNeworkComponentsLattice1x1(unittest.TestCase):
+"""
+class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         lat2 = tigernet.generate_lattice(
@@ -236,7 +269,7 @@ class TestNeworkComponentsLattice1x1(unittest.TestCase):
         observed_ccs = list(self.lattice_network_largest_cc.n_data["CC"])
 
 
-class TestNetworkAssociationsLattice1x1(unittest.TestCase):
+class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         self.lattice_network = tigernet.Network(s_data=self.lattice, record_geom=True)
@@ -313,7 +346,7 @@ class TestNetworkAssociationsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_degree, known_degree)
 
 
-class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
+class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         self.lattice_network = tigernet.Network(
@@ -347,7 +380,7 @@ class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_elements, known_elements)
 
 
-class TestNetworkSimplifyBarb(unittest.TestCase):
+class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
         self.barb = lattice[~lattice["SegID"].isin([1, 2, 5, 7, 9, 10])]

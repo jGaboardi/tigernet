@@ -1488,12 +1488,12 @@ def restriction_welder(net):
     Parameters
     ----------
     net : tigernet.Network
-    
+
     Returns
     -------
     net.s_data : geopandas.GeoDataFrame
         Updated streets dataframe.
-    
+
     """
 
     # make restricted subset
@@ -1783,7 +1783,7 @@ def _create_split_lines(
     -------
     new_lines : list
         A list of new lines generated from splitting.
-    
+
     """
 
     points = [Point(xy) for xy in breaks]
@@ -1857,7 +1857,7 @@ def _find_break_locs(loi=None, breaks=None, ring_road=False):
     complex_ring : bool
         is or is not a complex ring road. This indicates a any
         situation not deemed a 'basic' ring.
-    
+
     """
 
     intersection_type = type(breaks)
@@ -2000,7 +2000,7 @@ def _make_break_locs(breaks=None, standard=False, loi=None, line=False, mline=Fa
     -------
     break_points : list
         The geometries of points to break a line.
-    
+
     """
 
     if breaks and standard:

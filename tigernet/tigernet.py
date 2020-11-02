@@ -142,7 +142,7 @@ class Network:
             calculate a cost matrix. Default is False.
         mtx_to_csv : str
             file path to save the cost matrix. Default is None.
-        
+
         gen_paths : bool
             calculate shortest path trees. Default is False.
         paths_to_csv : str
@@ -153,7 +153,7 @@ class Network:
             file path to save the adjacency matrix. Default is None.
         algo : str
             shortest path algorithm. Default is None.
-        
+
         def_graph_elems : bool
             define graph elements. Default is False.
 
@@ -173,7 +173,7 @@ class Network:
         add_node : --
         add_edge : --
         adjacency_matrix : n2n_adjmtx
-        
+
         network_cost_matrix : diameter, radius, d_net, d_euc, circuity,
             n2n_euclidean, n2n_algo, n2n_matrix, n2n_paths
         calc_net_stats : max_sinuosity, min_sinuosity,
