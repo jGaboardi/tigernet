@@ -4,6 +4,7 @@
 import tigernet
 import unittest
 import geopandas
+import numpy
 
 # get the roads shapefile as a GeoDataFrame
 bbox = (-84.279, 30.480, -84.245, 30.505)
@@ -62,14 +63,16 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         observed_nodes = self.network.n_data.shape[0]
         self.assertEqual(observed_nodes, known_nodes)
 
-        known_bounds = [
-            620989.3023002351,
-            163937.37839259504,
-            624605.9723871874,
-            167048.6931314568,
-        ]
-        observed_bounds = list(self.network.n_data.total_bounds)
-        self.assertAlmostEqual(observed_bounds, known_bounds)
+        known_bounds = numpy.array(
+            [
+                620989.3023002351,
+                163937.37839259504,
+                624605.9723871874,
+                167048.6931314568,
+            ]
+        )
+        observed_bounds = numpy.array(self.network.n_data.total_bounds)
+        numpy.testing.assert_array_almost_equal(observed_bounds, known_bounds)
 
     def test_network_sdata_ids(self):
         known_ids = [412, 414, 415, 416, 417]
@@ -82,7 +85,7 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ids, known_ids)
 
     def test_network_segm2xyid(self):
-        known_xyid = [
+        known_id_xyid = [
             417,
             [
                 "x622213.7739825583y166384.2955689532",
@@ -103,12 +106,32 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
                 "x622131.5685194829y166495.76422229825",
             ],
         ]
-        observed_xyid = self.network.segm2xyid[-1]
-        self.assertAlmostEqual(observed_xyid, known_xyid)
+        known_id = known_id_xyid[0]
+        known_xyid = known_id_xyid[1]
+        known_xyid = numpy.array(
+            [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
+        )
+
+        observed_id_xyid = self.network.segm2xyid[-1]
+        observed_id = observed_id_xyid[0]
+        observed_xyid = observed_id_xyid[1]
+        observed_xyid = numpy.array(
+            [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
+        )
+
+        self.assertEqual(observed_id, known_id)
+        numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_network_node2xyid(self):
-        known_xyid = [364, ["x622213.7739825583y166384.2955689532"]]
-        observed_xyid = self.network.node2xyid[-1]
+        known_id_xyid = [364, ["x622213.7739825583y166384.2955689532"]]
+        known_id = known_id_xyid[0]
+        known_xyid = known_id_xyid[1]
+
+        observed_id_xyid = self.network.node2xyid[-1]
+        observed_id = observed_id_xyid[0]
+        observed_xyid = observed_id_xyid[1]
+
+        self.assertEqual(observed_id, known_id)
         self.assertEqual(observed_xyid, known_xyid)
 
 

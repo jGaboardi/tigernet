@@ -196,12 +196,12 @@ class Network:
         >>> import tigernet
         >>> lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         >>> net = tigernet.Network(s_data=lat)
-        >>> net.s_data
-                                                geometry  SegID  MTFCC  length                      xyid    s_neigh n_neigh
-        0  LINESTRING (4.50000 0.00000, 4.50000 4.50000)      0  S1400     4.5  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
-        1  LINESTRING (4.50000 4.50000, 4.50000 9.00000)      1  S1400     4.5  ['x4.5y4.5', 'x4.5y9.0']  [0, 2, 3]  [1, 2]
-        2  LINESTRING (0.00000 4.50000, 4.50000 4.50000)      2  S1400     4.5  ['x0.0y4.5', 'x4.5y4.5']  [0, 1, 3]  [1, 3]
-        3  LINESTRING (4.50000 4.50000, 9.00000 4.50000)      3  S1400     4.5  ['x4.5y4.5', 'x9.0y4.5']  [0, 1, 2]  [1, 4]
+        >>> net.s_data[["SegID", "MTFCC", "length", "xyid", "s_neigh", "n_neigh"]]
+           SegID  MTFCC  length                      xyid    s_neigh n_neigh
+        0      0  S1400     4.5  ['x4.5y0.0', 'x4.5y4.5']  [1, 2, 3]  [0, 1]
+        1      1  S1400     4.5  ['x4.5y4.5', 'x4.5y9.0']  [0, 2, 3]  [1, 2]
+        2      2  S1400     4.5  ['x0.0y4.5', 'x4.5y4.5']  [0, 1, 3]  [1, 3]
+        3      3  S1400     4.5  ['x4.5y4.5', 'x9.0y4.5']  [0, 1, 2]  [1, 4]
 
         >>> net.n_data
                           geometry  NodeID          xyid       s_neigh       n_neigh  degree
