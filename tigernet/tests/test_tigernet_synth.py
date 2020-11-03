@@ -103,7 +103,7 @@ class TestNeworkComponentsLattice1x1(unittest.TestCase):
         observed_ccs = self.lattice_network.segm_cc
         self.assertEqual(observed_ccs, known_ccs)
 
-        known_cc_lens = {1: [18.0, [0, 1, 2, 3]], 5: [4.0, [4, 5, 6, 7]]}
+        known_cc_lens = {1: 18.0, 5: 4.0}
         observed_cc_lens = self.lattice_network.cc_lens
         self.assertEqual(observed_cc_lens, known_cc_lens)
 
@@ -139,11 +139,11 @@ class TestNeworkComponentsLattice1x1(unittest.TestCase):
         observed_ccs = self.lattice_network_largest_cc.segm_cc
         self.assertEqual(observed_ccs, known_ccs)
 
-        known_cc_lens = {1: [18.0, [0, 1, 2, 3]]}
+        known_cc_lens = {1: 18.0}
         observed_cc_lens = self.lattice_network_largest_cc.cc_lens
         self.assertEqual(observed_cc_lens, known_cc_lens)
 
-        known_ccs = 2
+        known_ccs = 1
         observed_ccs = self.lattice_network_largest_cc.n_ccs
         self.assertEqual(observed_ccs, known_ccs)
 

@@ -485,10 +485,10 @@ class Network:
             utils.update_adj(self, segm_smallkeys, node_smallkeys)
 
             lcck = self.largest_segm_cc[0]
-            self.cc_lens = {k: vs for k, vs in self.cc_lens.items() if k == lcck}
+            self.cc_lens = {k: v for k, v in self.cc_lens.items() if k == lcck}
 
         # Count connected components in network
-        self.n_ccs = len(self.segm_cc)
+        self.n_ccs = len(self.cc_lens.keys())
 
     def build_associations(self, record_geom=False):
         """Associate graph elements with geometries, coordinates,

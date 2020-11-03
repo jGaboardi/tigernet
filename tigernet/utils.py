@@ -600,8 +600,7 @@ def get_roots(adj):
 
 
 def get_cc_len(net, len_col=None):
-    """return the geodataframe with the length of each associated
-    connected component in a new column.
+    """Return the length of each connected component in a dicitonary.
 
     Parameters
     ----------
@@ -620,11 +619,12 @@ def get_cc_len(net, len_col=None):
     cc_lens = {}
 
     for (k, v) in net.segm_cc:
-        new_v, segment_ids = v, v
-        new_v = net.s_data[net.s_data[net.sid_name].isin(new_v)]
+        # new_v, segment_ids = v, v
+        new_v = net.s_data[net.s_data[net.sid_name].isin(v)]
         new_v = new_v[len_col].sum()
         net.s_data.loc[net.s_data[net.sid_name].isin(v), "ccLength"] = new_v
-        cc_lens[k] = [new_v, segment_ids]
+        # cc_lens[k] = [new_v, segment_ids]
+        cc_lens[k] = new_v
 
     return cc_lens
 
