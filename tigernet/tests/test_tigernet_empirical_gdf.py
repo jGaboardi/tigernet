@@ -241,7 +241,8 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             413: 41.69245093932556,
         }
         observed_cc_lens = self.network.cc_lens
-        self.assertEqual(observed_cc_lens, known_cc_lens)
+        for k, v in known_cc_lens.items():
+            self.assertAlmostEqual(observed_cc_lens[k], v)
 
         known_ccs = 7
         observed_ccs = self.network.n_ccs
@@ -258,7 +259,8 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
 
         known_cc_lens = [771.0198272868483, 74866.5821646358]
         observed_cc_lens = list(self.network.s_data["ccLength"])[108:110]
-        self.assertEqual(observed_cc_lens, known_cc_lens)
+        for k, o in zip(known_cc_lens, observed_cc_lens):
+            self.assertAlmostEqual(o, k)
 
     def test_network_node_components(self):
         known_ccs = [159, [158, 159, 160, 163, 164, 298, 299]]
@@ -282,9 +284,9 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ccs_k, known_ccs_k)
         self.assertEqual(observed_ccs_v, known_ccs_v)
 
-        known_cc_lens = {131: 74866.5821646358}
+        known_cc_lens = 74866.5821646358
         observed_cc_lens = self.network_largest_cc.cc_lens
-        self.assertEqual(observed_cc_lens, known_cc_lens)
+        self.assertAlmostEqual(observed_cc_lens[known_ccs_k], known_cc_lens)
 
         known_ccs = 1
         observed_ccs = self.network_largest_cc.n_ccs
@@ -301,7 +303,8 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
 
         known_cc_lens = [74866.5821646358, 74866.5821646358]
         observed_cc_lens = list(self.network_largest_cc.s_data["ccLength"])[:2]
-        self.assertEqual(observed_cc_lens, known_cc_lens)
+        for k, o in zip(known_cc_lens, observed_cc_lens):
+            self.assertAlmostEqual(o, k)
 
     def test_network_node_components_largest(self):
         known_ccs_kv = [281, [0, 1, 2, 3, 4]]
