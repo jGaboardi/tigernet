@@ -27,7 +27,7 @@ TigerNet is a Python library that addresses concerns in topology and builds accu
 
 ## Installation
 
-Currently `tigernet` officially supports Python [3.6](https://docs.python.org/3.6/), [3.7](https://docs.python.org/3.7/), and [3.8](https://docs.python.org/3.8/). Please make sure that you are operating in a Python >= 3.6 environment. Install the most current development version of `tigernet` by running:
+Currently `tigernet` officially supports [3.7](https://docs.python.org/3.7/) and [3.8](https://docs.python.org/3.8/). Please make sure that you are operating in a Python >= 3.7 environment. Install the most current development version of `tigernet` by running:
 
 ```
 $ pip install git+https://github.com/jGaboardi/tigernet
