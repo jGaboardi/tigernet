@@ -342,8 +342,8 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "LINESTRING (623605.9583105363 166441.9652821319, 623642.2579218673 166435.6136040619, 623661.2704885595 166432.9939635286, 623683.5540714423 166427.0556520971, 623703.2557014348 166416.5666028635, 623719.0358090349 166399.5284506257, 623728.2024647847 166377.8199573702, 623732.1909850998 166353.5505257068, 623732.1809754729 166313.9739520327)"
-        observed_wkt = self.network.segm2geom[0][1].wkt[:25]
-        self.assertEqual(observed_wkt, known_wkt[:25])
+        observed_wkt = self.network.segm2geom[0][1].wkt[:20]
+        self.assertEqual(observed_wkt, known_wkt[:20])
 
     def test_network_segm2coords(self):
         known_lookup = [
@@ -379,8 +379,8 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "POINT (623605.9583105363 166441.9652821319)"
-        observed_wkt = self.network.node2geom[0][1].wkt[:25]
-        self.assertEqual(observed_wkt, known_wkt[:25])
+        observed_wkt = self.network.node2geom[0][1].wkt[:20]
+        self.assertEqual(observed_wkt, known_wkt[:20])
 
     def test_network_node2coords(self):
         known_lookup = [364, [(622213.7739825583, 166384.2955689532)]]
