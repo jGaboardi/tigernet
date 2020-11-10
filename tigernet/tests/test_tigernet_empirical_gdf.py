@@ -336,16 +336,16 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         # network
         self.network = tigernet.Network(**kwargs)
 
-    def test_lattice_network_segm2geom(self):
+    def test_network_segm2geom(self):
         known_type = "LineString"
         observed_type = self.network.segm2geom[0][1].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "LINESTRING (623605.9583105363 166441.9652821319, 623642.2579218673 166435.6136040619, 623661.2704885595 166432.9939635286, 623683.5540714423 166427.0556520971, 623703.2557014348 166416.5666028635, 623719.0358090349 166399.5284506257, 623728.2024647847 166377.8199573702, 623732.1909850998 166353.5505257068, 623732.1809754729 166313.9739520327)"
-        observed_wkt = self.network.segm2geom[0][1].wkt
-        self.assertEqual(observed_wkt, known_wkt)
+        observed_wkt = self.network.segm2geom[0][1].wkt[:25]
+        self.assertEqual(observed_wkt, known_wkt[:25])
 
-    def test_lattice_network_segm2coords(self):
+    def test_network_segm2coords(self):
         known_lookup = [
             417,
             [
@@ -368,54 +368,56 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
             ],
         ]
         observed_lookup = self.network.segm2coords[-1]
-        self.assertEqual(observed_lookup, known_lookup)
+        self.assertEqual(observed_lookup[0], known_lookup[0])
+        numpy.testing.assert_array_almost_equal(
+            numpy.array(observed_lookup[1]), numpy.array(known_lookup[1])
+        )
 
-    def test_lattice_network_node2geom(self):
+    def test_network_node2geom(self):
         known_type = "Point"
         observed_type = self.network.node2geom[0][1].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "POINT (623605.9583105363 166441.9652821319)"
-        observed_wkt = self.network.node2geom[0][1].wkt
-        self.assertEqual(observed_wkt, known_wkt)
+        observed_wkt = self.network.node2geom[0][1].wkt[:25]
+        self.assertEqual(observed_wkt, known_wkt[:25])
 
-    def test_lattice_network_node2coords(self):
-        known_lookup = [
-            [362, [(623580.7985332746, 164531.84479674642)]],
-            [363, [(623531.6138579083, 164455.13730138823)]],
-            [364, [(622213.7739825583, 166384.2955689532)]],
-        ]
-        observed_lookup = self.network.node2coords[-3:]
-        self.assertEqual(observed_lookup, known_lookup)
+    def test_network_node2coords(self):
+        known_lookup = [364, [(622213.7739825583, 166384.2955689532)]]
+        observed_lookup = self.network.node2coords[-1]
+        self.assertEqual(observed_lookup[0], known_lookup[0])
+        numpy.testing.assert_array_almost_equal(
+            numpy.array(observed_lookup[1]), numpy.array(known_lookup[1])
+        )
 
-    def test_lattice_network_s_ids(self):
+    def test_network_s_ids(self):
         known_ids = [412, 414, 415, 416, 417]
         observed_ids = self.network.s_ids[-5:]
         self.assertEqual(observed_ids, known_ids)
 
-    def test_lattice_network_n_ids(self):
+    def test_network_n_ids(self):
         known_ids = [358, 361, 362, 363, 364]
         observed_ids = self.network.n_ids[-5:]
         self.assertEqual(observed_ids, known_ids)
 
-    def test_lattice_network_n_segm(self):
+    def test_network_n_segm(self):
         known_segm_count, observed_segm_count = 407, self.network.n_segm
         self.assertEqual(observed_segm_count, known_segm_count)
 
-    def test_lattice_network_n_node(self):
+    def test_network_n_node(self):
         known_node_count, observed_node_count = 348, self.network.n_node
         self.assertEqual(observed_node_count, known_node_count)
 
-    def test_lattice_network_length(self):
+    def test_network_length(self):
         known_length, observed_length = 74866.58216463577, self.network.network_length
         self.assertAlmostEqual(observed_length, known_length)
 
-    def test_lattice_node2degree(self):
+    def test_node2degree(self):
         known_node2degree = [(100, 3), (101, 3), (102, 2), (103, 3), (104, 3)]
         observed_node2degree = list(self.network.node2degree.items())[100:105]
         self.assertEqual(observed_node2degree, known_node2degree)
 
-    def test_lattice_ndata_degree(self):
+    def test_ndata_degree(self):
         known_degree = [3, 3, 5, 3, 3, 4, 3, 1, 3, 1, 3, 4, 1, 3, 2]
         observed_degree = list(self.network.n_data["degree"])[:15]
         self.assertEqual(observed_degree, known_degree)
@@ -574,9 +576,12 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_copy_segm2len(self):
-        known_id_len = [[343, 67.00665887539593], [344, 165.09903569556914]]
-        observed_id_lens = self.graph.segm2len[-2:]
-        self.assertAlmostEqual(observed_id_lens, known_id_len)
+        known_id_len = [344, 165.09903569556914]
+        known_id, known_len = known_id_len[0], known_id_len[1]
+        observed_id_lens = self.graph.segm2len[-1]
+        observed_id, observed_len = observed_id_lens[0], observed_id_lens[1]
+        self.assertEqual(observed_id, known_id)
+        self.assertAlmostEqual(observed_len, known_len)
 
     def test_simplify_copy_node2xyid(self):
         known_id_xyid = [285, ["x622213.7739825583y166384.2955689532"]]
@@ -706,9 +711,12 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_inplace_segm2len(self):
-        known_id_len = [[343, 67.00665887539593], [344, 165.09903569556914]]
-        observed_id_lens = self.network.segm2len[-2:]
-        self.assertAlmostEqual(observed_id_lens, known_id_len)
+        known_id_len = [344, 165.09903569556914]
+        known_id, known_len = known_id_len[0], known_id_len[1]
+        observed_id_lens = self.network.segm2len[-1]
+        observed_id, observed_len = observed_id_lens[0], observed_id_lens[1]
+        self.assertEqual(observed_id, known_id)
+        self.assertAlmostEqual(observed_len, known_len)
 
     def test_simplify_inplace_node2xyid(self):
         known_id_xyid = [285, ["x622213.7739825583y166384.2955689532"]]
