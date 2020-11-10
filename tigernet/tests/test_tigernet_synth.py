@@ -237,7 +237,7 @@ class TestNetworkAssociationsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_length, known_length)
 
     def test_lattice_node2degree(self):
-        known_node2degree = [[0, [1]], [1, [4]], [2, [1]], [3, [1]], [4, [1]]]
+        known_node2degree = {0: 1, 1: 4, 2: 1, 3: 1, 4: 1}
         observed_node2degree = self.lattice_network.node2degree
         self.assertEqual(observed_node2degree, known_node2degree)
 
@@ -275,7 +275,7 @@ class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
         observed_elements = self.lattice_network.node2elem
         self.assertEqual(observed_elements, known_elements)
 
-    def test_lattice_network_ndata_segm2elem(self):
+    def test_lattice_network_ndata_node2elem(self):
         known_elements = ["leaf", "branch", "leaf", "leaf", "leaf"]
         observed_elements = list(self.lattice_network.n_data["graph_elem"])
         self.assertEqual(observed_elements, known_elements)
@@ -346,7 +346,7 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_copy_node2degree(self):
-        known_degree = [[0, [1]], [1, [4]], [2, [1]]]
+        known_degree = {0: 1, 1: 4, 2: 1}
         observed_degree = self.graph.node2degree
         self.assertEqual(observed_degree, known_degree)
 
@@ -404,7 +404,7 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_inplace_node2degree(self):
-        known_degree = [[0, [1]], [1, [4]], [2, [1]]]
+        known_degree = {0: 1, 1: 4, 2: 1}
         observed_degree = self.network.node2degree
         self.assertEqual(observed_degree, known_degree)
 

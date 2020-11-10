@@ -323,7 +323,6 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         observed_ccs = list(self.network_largest_cc.n_data["CC"])[:5]
 
 
-"""
 class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
@@ -391,7 +390,7 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_length, known_length)
 
     def test_lattice_node2degree(self):
-        known_node2degree = [[0, [1]], [1, [4]], [2, [1]], [3, [1]], [4, [1]]]
+        known_node2degree = {0: 1, 1: 4, 2: 1, 3: 1, 4: 1}
         observed_node2degree = self.lattice_network.node2degree
         self.assertEqual(observed_node2degree, known_node2degree)
 
@@ -403,38 +402,48 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
 
 class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.lattice_network = tigernet.Network(
-            s_data=self.lattice, record_geom=True, def_graph_elems=True
-        )
+        # set up the network instantiation parameters
+        discard_segs = None
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
+        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
+        kwargs.update(attr_kws)
+        comp_kws = {"record_components": True, "largest_component": True}
+        kwargs.update(comp_kws)
+        geom_kws = {"record_geom": True, "calc_len": True}
+        kwargs.update(geom_kws)
+        graph_elems_kws = {"def_graph_elems": True}
+        kwargs.update(graph_elems_kws)
+        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
+        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
+        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
+        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
+        kwargs.update(mtfcc_kws)
 
-    def test_lattice_network_segm2elem(self):
-        known_elements = [[0, "leaf"], [1, "leaf"], [2, "leaf"], [3, "leaf"]]
-        observed_elements = self.lattice_network.segm2elem
+        # create a network isntance
+        self.network = tigernet.Network(**kwargs)
+
+    def test_network_segm2elem(self):
+        known_elements = [[414, "leaf"], [415, "leaf"], [416, "leaf"], [417, "leaf"]]
+        observed_elements = self.network.segm2elem[-4:]
         self.assertEqual(observed_elements, known_elements)
 
-    def test_lattice_network_sdata_segm2elem(self):
+    def test_network_sdata_segm2elem(self):
         known_elements = ["leaf", "leaf", "leaf", "leaf"]
-        observed_elements = list(self.lattice_network.s_data["graph_elem"])
+        observed_elements = list(self.network.s_data["graph_elem"])[-4:]
         self.assertEqual(observed_elements, known_elements)
 
-    def test_lattice_network_node2elem(self):
-        known_elements = [
-            [0, "leaf"],
-            [1, "branch"],
-            [2, "leaf"],
-            [3, "leaf"],
-            [4, "leaf"],
-        ]
-        observed_elements = self.lattice_network.node2elem
+    def test_network_node2elem(self):
+        known_elements = [[361, "leaf"], [362, "leaf"], [363, "leaf"], [364, "leaf"]]
+        observed_elements = self.network.node2elem[-4:]
         self.assertEqual(observed_elements, known_elements)
 
-    def test_lattice_network_ndata_segm2elem(self):
-        known_elements = ["leaf", "branch", "leaf", "leaf", "leaf"]
-        observed_elements = list(self.lattice_network.n_data["graph_elem"])
+    def test_network_ndata_node2elem(self):
+        known_elements = ["leaf", "leaf", "leaf", "leaf"]
+        observed_elements = list(self.network.n_data["graph_elem"])[-4:]
         self.assertEqual(observed_elements, known_elements)
 
 
+"""
 class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
@@ -561,9 +570,6 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         known_degree = [[0, [1]], [1, [4]], [2, [1]]]
         observed_degree = self.network.node2degree
         self.assertEqual(observed_degree, known_degree)
-
-
-
 """
 
 if __name__ == "__main__":

@@ -520,7 +520,7 @@ class Network:
 
         # Calculate degree for n_ids -- incident segs +1; incident loops +2
         self.node2degree = utils.calc_valency(self, col="n_neigh")
-        self.n_data["degree"] = [n2d[1][0] for n2d in self.node2degree]
+        self.n_data["degree"] = self.n_data[self.nid_name].map(self.node2degree)
 
         # Create segment to TIGER/Line ID lookup
         try:

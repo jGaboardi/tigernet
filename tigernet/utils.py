@@ -498,17 +498,24 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
 
     """
 
-    if c2 in ["nodeNeighs", "segmNeighs"]:
+    # if c2 in ["nodeNeighs", "segmNeighs"]:
+    #    xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
+    ############# what's this for? ------------ take care of this later....
+    if c2 in ["n_neighs", "s_neighs"]:
+        raise RuntimeError()
         xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
 
-    if c2 in ["degree", "length", "TLID"]:
+    elif c2 in ["degree", "length", "TLID"]:
         xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
 
-    if c2 == geo_col and not stipulation:
+    elif c2 == geo_col and not stipulation:
         xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
 
-    if c2 == geo_col and stipulation == "coords":
+    elif c2 == geo_col and stipulation == "coords":
         xw = [[df[c1][ix], df[c2][ix].coords[:]] for ix in df.index]
+
+    else:
+        raise ValueError("Column '%s' not found." % c2)
 
     return xw
 
@@ -619,11 +626,9 @@ def get_cc_len(net, len_col=None):
     cc_lens = {}
 
     for (k, v) in net.segm_cc:
-        # new_v, segment_ids = v, v
         new_v = net.s_data[net.s_data[net.sid_name].isin(v)]
         new_v = new_v[len_col].sum()
         net.s_data.loc[net.s_data[net.sid_name].isin(v), "ccLength"] = new_v
-        # cc_lens[k] = [new_v, segment_ids]
         cc_lens[k] = new_v
 
     return cc_lens
@@ -710,6 +715,7 @@ def remove_adj(e2e, remove):
         The updated e2e relationship list.
 
     """
+
     e2e = [[k, vs] for (k, vs) in e2e if k not in set(remove)]
     return e2e
 
@@ -746,12 +752,12 @@ def calc_valency(net, col=None):
 
     Returns
     -------
-    n2d : list
+    n2d : dict
         The node-to-degree lookup.
 
     """
 
-    n2d = []
+    n2d = {}
     for (node, segs) in net.node2segm:
         loops = 0
         for s in segs:
@@ -762,7 +768,8 @@ def calc_valency(net, col=None):
             if neighs[0] == neighs[1]:
                 loops += 1
         degree = len(segs) + loops
-        n2d.append([node, [degree]])
+
+        n2d[node] = degree
 
     return n2d
 
@@ -797,18 +804,23 @@ def branch_or_leaf(net, geom_type=None):
         msg = "'geom_type' of %s not valid." % geom_type
         raise ValueError(msg)
 
+    # super hacky due to https://github.com/jGaboardi/tigernet/issues/29
+    # should fix this later... why was I using a lists for lookups
+    # instead of dicts in the original implementation anyway???
+    s2n = dict(net.segm2node)
+
     geom2ge = []
     for idx in id_list:
         if geom_type == "segm":
-            n1, n2 = net.segm2node[idx][1][0], net.segm2node[idx][1][1]
-            n1d, n2d = net.node2degree[n1][1][0], net.node2degree[n2][1][0]
+            n1, n2 = s2n[idx][0], s2n[idx][1]
+            n1d, n2d = net.node2degree[n1], net.node2degree[n2]
 
             if n1d == 1 or n2d == 1:
                 graph_element = "leaf"
             else:
                 graph_element = "branch"
         if geom_type == "node":
-            nd = net.node2degree[idx][1][0]
+            nd = net.node2degree[idx]
             if nd == 1:
                 graph_element = "leaf"
             else:
@@ -856,7 +868,7 @@ def _locate_naps(net):
     """
 
     # subset only degree-2 nodes
-    degree_two_nodes = set([n for (n, d) in net.node2degree if 2 in d])
+    degree_two_nodes = set([n for (n, d) in net.node2degree.items() if d == 2])
 
     # recreate n2n xwalk
     new_n2n = {k: v for (k, v) in net.node2node}
