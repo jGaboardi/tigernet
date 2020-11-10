@@ -913,6 +913,7 @@ def _simplifysegs(net, na_objs):
     -------
     net.s_data : geopandas.GeoDataFrame
         Simplified segments dataframe.
+
     """
 
     nsn = net.sid_name

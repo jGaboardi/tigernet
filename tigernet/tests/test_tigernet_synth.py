@@ -342,7 +342,7 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
 
     def test_simplify_copy_node_cc(self):
         known_ccs = [[1, [0, 1, 2]]]
-        observed_ccs = self.graph.segm_cc
+        observed_ccs = self.graph.node_cc
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_copy_node2degree(self):
@@ -400,7 +400,7 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
 
     def test_simplify_inplace_node_cc(self):
         known_ccs = [[1, [0, 1, 2]]]
-        observed_ccs = self.network.segm_cc
+        observed_ccs = self.network.node_cc
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_inplace_node2degree(self):
