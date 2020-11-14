@@ -132,6 +132,24 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_id, known_id)
         self.assertEqual(observed_xyid, known_xyid)
 
+    def test_network_s_ids(self):
+        known_ids = [412, 414, 415, 416, 417]
+        observed_ids = self.network.s_ids[-5:]
+        self.assertEqual(observed_ids, known_ids)
+
+    def test_network_n_ids(self):
+        known_ids = [358, 361, 362, 363, 364]
+        observed_ids = self.network.n_ids[-5:]
+        self.assertEqual(observed_ids, known_ids)
+
+    def test_network_n_segm(self):
+        known_segm_count, observed_segm_count = 407, self.network.n_segm
+        self.assertEqual(observed_segm_count, known_segm_count)
+
+    def test_network_n_node(self):
+        known_node_count, observed_node_count = 348, self.network.n_node
+        self.assertEqual(observed_node_count, known_node_count)
+
 
 class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
@@ -389,24 +407,6 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         numpy.testing.assert_array_almost_equal(
             numpy.array(observed_lookup[1]), numpy.array(known_lookup[1])
         )
-
-    def test_network_s_ids(self):
-        known_ids = [412, 414, 415, 416, 417]
-        observed_ids = self.network.s_ids[-5:]
-        self.assertEqual(observed_ids, known_ids)
-
-    def test_network_n_ids(self):
-        known_ids = [358, 361, 362, 363, 364]
-        observed_ids = self.network.n_ids[-5:]
-        self.assertEqual(observed_ids, known_ids)
-
-    def test_network_n_segm(self):
-        known_segm_count, observed_segm_count = 407, self.network.n_segm
-        self.assertEqual(observed_segm_count, known_segm_count)
-
-    def test_network_n_node(self):
-        known_node_count, observed_node_count = 348, self.network.n_node
-        self.assertEqual(observed_node_count, known_node_count)
 
     def test_network_length(self):
         known_length, observed_length = 74866.58216463577, self.network.network_length
