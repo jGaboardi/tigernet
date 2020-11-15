@@ -85,9 +85,8 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ids, known_ids)
 
     def test_network_segm2xyid(self):
-        known_id_xyid = [
-            417,
-            [
+        known_id_xyid = {
+            417: [
                 "x622213.7739825583y166384.2955689532",
                 "x622195.0607060504y166381.4862537613",
                 "x622184.5013186845y166381.46491087825",
@@ -105,15 +104,14 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
                 "x622135.714887791y166486.57131120094",
                 "x622131.5685194829y166495.76422229825",
             ],
-        ]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
+        }
+        known_id = list(known_id_xyid.keys())[0]
+        known_xyid = list(known_id_xyid.values())[0]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
-        observed_id_xyid = self.network.segm2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_id = list(self.network.segm2xyid.keys())[-1]
+        observed_xyid = list(self.network.segm2xyid.values())[-1]
         observed_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
@@ -121,13 +119,12 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_network_node2xyid(self):
-        known_id_xyid = [364, ["x622213.7739825583y166384.2955689532"]]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
+        known_id_xyid = {364: ["x622213.7739825583y166384.2955689532"]}
+        known_id = list(known_id_xyid.keys())[0]
+        known_xyid = list(known_id_xyid.values())[0]
 
-        observed_id_xyid = self.network.node2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_id = list(self.network.node2xyid.keys())[-1]
+        observed_xyid = list(self.network.node2xyid.values())[-1]
 
         self.assertEqual(observed_id, known_id)
         self.assertEqual(observed_xyid, known_xyid)
@@ -172,48 +169,52 @@ class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
         self.network = tigernet.Network(**kwargs)
 
     def test_network_segm2node(self):
-        known_segm2node = [
-            [0, [0, 1]],
-            [1, [2, 3]],
-            [2, [4, 5]],
-            [3, [5, 6]],
-            [4, [7, 8]],
-        ]
-        observed_segm2node = self.network.segm2node[:5]
-        self.assertEqual(observed_segm2node, known_segm2node)
+        known_segm2node = {
+            0: [0, 1],
+            1: [2, 3],
+            2: [4, 5],
+            3: [5, 6],
+            4: [7, 8],
+        }
+        observed_segm2node = self.network.segm2node
+        for known_k, known_v in known_segm2node.items():
+            self.assertEqual(observed_segm2node[known_k], known_v)
 
     def test_network_node2segm(self):
-        known_node2segm = [
-            [0, [0, 11, 12]],
-            [1, [0, 82, 284]],
-            [2, [1, 11, 135, 139, 284]],
-            [3, [1, 9, 10]],
-            [4, [2, 5, 6]],
-        ]
-        observed_node2segm = self.network.node2segm[:5]
-        self.assertEqual(observed_node2segm, known_node2segm)
+        known_node2segm = {
+            0: [0, 11, 12],
+            1: [0, 82, 284],
+            2: [1, 11, 135, 139, 284],
+            3: [1, 9, 10],
+            4: [2, 5, 6],
+        }
+        observed_node2segm = self.network.node2segm
+        for known_k, known_v in known_node2segm.items():
+            self.assertEqual(observed_node2segm[known_k], known_v)
 
     def test_network_segm2segm(self):
-        known_segm2segm = [
-            [0, [11, 12, 82, 284]],
-            [1, [135, 9, 10, 11, 139, 284]],
-            [2, [3, 5, 6, 237, 286]],
-            [3, [2, 237, 15, 18, 286]],
-            [4, [17, 5]],
-        ]
-        observed_segm2segm = self.network.segm2segm[:5]
-        self.assertEqual(observed_segm2segm, known_segm2segm)
+        known_segm2segm = {
+            0: [11, 12, 82, 284],
+            1: [135, 9, 10, 11, 139, 284],
+            2: [3, 5, 6, 237, 286],
+            3: [2, 237, 15, 18, 286],
+            4: [17, 5],
+        }
+        observed_segm2segm = self.network.segm2segm
+        for known_k, known_v in known_segm2segm.items():
+            self.assertEqual(observed_segm2segm[known_k], known_v)
 
     def test_network_node2node(self):
-        known_node2node = [
-            [0, [1, 2, 13]],
-            [1, [0, 2, 63]],
-            [2, [0, 1, 3, 195, 10]],
-            [3, [2, 13, 14]],
-            [4, [8, 9, 5]],
-        ]
-        observed_node2node = self.network.node2node[:5]
-        self.assertEqual(observed_node2node, known_node2node)
+        known_node2node = {
+            0: [1, 2, 13],
+            1: [0, 2, 63],
+            2: [0, 1, 3, 195, 10],
+            3: [2, 13, 14],
+            4: [8, 9, 5],
+        }
+        observed_node2node = self.network.node2node
+        for known_k, known_v in known_node2node.items():
+            self.assertEqual(observed_node2node[known_k], known_v)
 
 
 class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
@@ -242,9 +243,10 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         self.network_largest_cc = tigernet.Network(**kwargs)
 
     def test_network_segm_components(self):
-        known_ccs = [106, [105, 106, 108, 110, 263, 264]]
-        observed_ccs = self.network.segm_cc[0]
-        self.assertEqual(observed_ccs, known_ccs)
+        known_ccs = {106: [105, 106, 108, 110, 263, 264]}
+        observed_ccs = self.network.segm_cc
+        for known_k, known_v in known_ccs.items():
+            self.assertEqual(observed_ccs[known_k], known_v)
 
         known_cc_lens = {
             106: 771.0198272868483,
@@ -278,9 +280,10 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertAlmostEqual(o, k)
 
     def test_network_node_components(self):
-        known_ccs = [159, [158, 159, 160, 163, 164, 298, 299]]
-        observed_ccs = self.network.node_cc[0]
-        self.assertEqual(observed_ccs, known_ccs)
+        known_ccs = {159: [158, 159, 160, 163, 164, 298, 299]}
+        observed_ccs = self.network.node_cc
+        for known_k, known_v in known_ccs.items():
+            self.assertEqual(observed_ccs[known_k], known_v)
 
     def test_network_ndata_components(self):
         known_ccs = [360, 281, 281, 281, 281]
@@ -288,16 +291,12 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_network_segm_components_largest(self):
-        known_ccs_kv = [131, [0, 1, 2, 3, 4]]
-        known_ccs_k = known_ccs_kv[0]
-        known_ccs_v = known_ccs_kv[1]
-        observed_ccs_kv = self.network_largest_cc.segm_cc
-        observed_ccs_k = observed_ccs_kv[0]
-        observed_ccs_v = observed_ccs_kv[1][:5]
-        self.assertEqual(observed_ccs_k, known_ccs_k)
-        self.assertEqual(observed_ccs_v, known_ccs_v)
+        known_ccs = {131: [0, 1, 2, 3, 4]}
+        observed_ccs = self.network_largest_cc.segm_cc
+        for known_k, known_v in known_ccs.items():
+            self.assertEqual(observed_ccs[known_k][:5], known_v)
 
-        known_cc_lens = 74866.5821646358
+        known_ccs_k, known_cc_lens = 131, 74866.5821646358
         observed_cc_lens = self.network_largest_cc.cc_lens
         self.assertAlmostEqual(observed_cc_lens[known_ccs_k], known_cc_lens)
 
@@ -320,14 +319,10 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertAlmostEqual(o, k)
 
     def test_network_node_components_largest(self):
-        known_ccs_kv = [281, [0, 1, 2, 3, 4]]
-        known_ccs_k = known_ccs_kv[0]
-        known_ccs_v = known_ccs_kv[1]
-        observed_ccs_kv = self.network_largest_cc.node_cc
-        observed_ccs_k = observed_ccs_kv[0]
-        observed_ccs_v = observed_ccs_kv[1][:5]
-        self.assertEqual(observed_ccs_k, known_ccs_k)
-        self.assertEqual(observed_ccs_v, known_ccs_v)
+        known_ccs = {281: [0, 1, 2, 3, 4]}
+        observed_ccs = self.network_largest_cc.node_cc
+        for known_k, known_v in known_ccs.items():
+            self.assertEqual(observed_ccs[known_k][:5], known_v)
 
     def test_network_ndata_components_largest(self):
         known_ccs = [281, 281, 281, 281, 281]
@@ -356,16 +351,15 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
 
     def test_network_segm2geom(self):
         known_type = "LineString"
-        observed_type = self.network.segm2geom[0][1].geom_type
+        observed_type = self.network.segm2geom[0].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "LINESTRING (623605.9583105363 166441.9652821319, 623642.2579218673 166435.6136040619, 623661.2704885595 166432.9939635286, 623683.5540714423 166427.0556520971, 623703.2557014348 166416.5666028635, 623719.0358090349 166399.5284506257, 623728.2024647847 166377.8199573702, 623732.1909850998 166353.5505257068, 623732.1809754729 166313.9739520327)"
-        observed_wkt = self.network.segm2geom[0][1].wkt[:20]
+        observed_wkt = self.network.segm2geom[0].wkt[:20]
         self.assertEqual(observed_wkt, known_wkt[:20])
 
     def test_network_segm2coords(self):
-        known_lookup = [
-            417,
+        known_coords = numpy.array(
             [
                 (622213.7739825583, 166384.2955689532),
                 (622195.0607060504, 166381.4862537613),
@@ -384,29 +378,24 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
                 (622135.714887791, 166486.57131120094),
                 (622131.5685194829, 166495.76422229825),
             ],
-        ]
-        observed_lookup = self.network.segm2coords[-1]
-        self.assertEqual(observed_lookup[0], known_lookup[0])
-        numpy.testing.assert_array_almost_equal(
-            numpy.array(observed_lookup[1]), numpy.array(known_lookup[1])
         )
+
+        observed_coords = numpy.array(self.network.segm2coords[417])
+        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_network_node2geom(self):
         known_type = "Point"
-        observed_type = self.network.node2geom[0][1].geom_type
+        observed_type = self.network.node2geom[0].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "POINT (623605.9583105363 166441.9652821319)"
-        observed_wkt = self.network.node2geom[0][1].wkt[:20]
+        observed_wkt = self.network.node2geom[0].wkt[:20]
         self.assertEqual(observed_wkt, known_wkt[:20])
 
     def test_network_node2coords(self):
-        known_lookup = [364, [(622213.7739825583, 166384.2955689532)]]
-        observed_lookup = self.network.node2coords[-1]
-        self.assertEqual(observed_lookup[0], known_lookup[0])
-        numpy.testing.assert_array_almost_equal(
-            numpy.array(observed_lookup[1]), numpy.array(known_lookup[1])
-        )
+        known_coords = numpy.array([(622213.7739825583, 166384.2955689532)])
+        observed_coords = numpy.array(self.network.node2coords[364])
+        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_network_length(self):
         known_length, observed_length = 74866.58216463577, self.network.network_length
@@ -446,9 +435,12 @@ class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
         self.network = tigernet.Network(**kwargs)
 
     def test_network_segm2elem(self):
-        known_elements = [[414, "leaf"], [415, "leaf"], [416, "leaf"], [417, "leaf"]]
-        observed_elements = self.network.segm2elem[-4:]
-        self.assertEqual(observed_elements, known_elements)
+        known_element_keys = [414, 415, 416, 417]
+        known_element_values = ["leaf", "leaf", "leaf", "leaf"]
+        observed_element_keys = list(self.network.segm2elem.keys())[-4:]
+        observed_element_values = list(self.network.segm2elem.values())[-4:]
+        self.assertEqual(observed_element_keys, known_element_keys)
+        self.assertEqual(observed_element_values, known_element_values)
 
     def test_network_sdata_segm2elem(self):
         known_elements = ["leaf", "leaf", "leaf", "leaf"]
@@ -456,9 +448,12 @@ class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_elements, known_elements)
 
     def test_network_node2elem(self):
-        known_elements = [[361, "leaf"], [362, "leaf"], [363, "leaf"], [364, "leaf"]]
-        observed_elements = self.network.node2elem[-4:]
-        self.assertEqual(observed_elements, known_elements)
+        known_element_keys = [361, 362, 363, 364]
+        known_element_values = ["leaf", "leaf", "leaf", "leaf"]
+        observed_element_keys = list(self.network.node2elem.keys())[-4:]
+        observed_element_values = list(self.network.node2elem.values())[-4:]
+        self.assertEqual(observed_element_keys, known_element_keys)
+        self.assertEqual(observed_element_values, known_element_values)
 
     def test_network_ndata_node2elem(self):
         known_elements = ["leaf", "leaf", "leaf", "leaf"]
@@ -495,134 +490,100 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         self.network.simplify_network(inplace=True, **kws)
 
     def test_simplify_copy_segm2xyid(self):
-        known_id_xyid = [
-            344,
-            [
-                "x622213.7739825583y166384.2955689532",
-                "x622195.0607060504y166381.4862537613",
-                "x622184.5013186845y166381.46491087825",
-                "x622181.715678818y166382.34615142326",
-                "x622179.9855276581y166383.45124237766",
-                "x622167.096623471y166396.0630971515",
-                "x622153.7300268554y166407.56541679866",
-                "x622145.5590545179y166413.20272313987",
-                "x622143.8271135575y166415.1946855663",
-                "x622142.3804582829y166418.51752763707",
-                "x622140.6237954168y166432.70389406924",
-                "x622140.7789228398y166450.88502889618",
-                "x622139.3965777882y166469.83907459615",
-                "x622137.935323471y166480.3677023711",
-                "x622135.714887791y166486.57131120094",
-                "x622131.5685194829y166495.76422229825",
-            ],
+        known_id = 344
+        known_xyid = [
+            "x622213.7739825583y166384.2955689532",
+            "x622195.0607060504y166381.4862537613",
+            "x622184.5013186845y166381.46491087825",
+            "x622181.715678818y166382.34615142326",
+            "x622179.9855276581y166383.45124237766",
+            "x622167.096623471y166396.0630971515",
+            "x622153.7300268554y166407.56541679866",
+            "x622145.5590545179y166413.20272313987",
+            "x622143.8271135575y166415.1946855663",
+            "x622142.3804582829y166418.51752763707",
+            "x622140.6237954168y166432.70389406924",
+            "x622140.7789228398y166450.88502889618",
+            "x622139.3965777882y166469.83907459615",
+            "x622137.935323471y166480.3677023711",
+            "x622135.714887791y166486.57131120094",
+            "x622131.5685194829y166495.76422229825",
         ]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
-        observed_id_xyid = self.graph.segm2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_xyid = self.graph.segm2xyid[known_id]
         observed_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
-        self.assertEqual(observed_id, known_id)
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_simplify_copy_segm2coords(self):
-        known_id_coords = [
-            344,
-            [
-                (622213.7739825583, 166384.2955689532),
-                (622195.0607060504, 166381.4862537613),
-                (622184.5013186845, 166381.46491087825),
-                (622181.715678818, 166382.34615142326),
-                (622179.9855276581, 166383.45124237766),
-                (622167.096623471, 166396.0630971515),
-                (622153.7300268554, 166407.56541679866),
-                (622145.5590545179, 166413.20272313987),
-                (622143.8271135575, 166415.1946855663),
-                (622142.3804582829, 166418.51752763707),
-                (622140.6237954168, 166432.70389406924),
-                (622140.7789228398, 166450.88502889618),
-                (622139.3965777882, 166469.83907459615),
-                (622137.935323471, 166480.3677023711),
-                (622135.714887791, 166486.57131120094),
-                (622131.5685194829, 166495.76422229825),
-            ],
+        known_id = 344
+        known_coords = [
+            (622213.7739825583, 166384.2955689532),
+            (622195.0607060504, 166381.4862537613),
+            (622184.5013186845, 166381.46491087825),
+            (622181.715678818, 166382.34615142326),
+            (622179.9855276581, 166383.45124237766),
+            (622167.096623471, 166396.0630971515),
+            (622153.7300268554, 166407.56541679866),
+            (622145.5590545179, 166413.20272313987),
+            (622143.8271135575, 166415.1946855663),
+            (622142.3804582829, 166418.51752763707),
+            (622140.6237954168, 166432.70389406924),
+            (622140.7789228398, 166450.88502889618),
+            (622139.3965777882, 166469.83907459615),
+            (622137.935323471, 166480.3677023711),
+            (622135.714887791, 166486.57131120094),
+            (622131.5685194829, 166495.76422229825),
         ]
-        known_id = known_id_coords[0]
-        known_coords = numpy.array(known_id_coords[1])
-        observed_id_coords = self.graph.segm2coords[-1]
-        observed_id = observed_id_coords[0]
-        observed_coords = numpy.array(observed_id_coords[1])
-        self.assertEqual(observed_id, known_id)
+        observed_coords = self.graph.segm2coords[known_id]
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_simplify_copy_segm2elem(self):
-        known_elements = [[342, "leaf"], [343, "leaf"], [344, "leaf"]]
-        observed_elements = self.graph.segm2elem[-3:]
-        self.assertEqual(observed_elements, known_elements)
+        known_elements = {342: "leaf", 343: "leaf", 344: "leaf"}
+        observed_elements = self.graph.segm2elem
+        for k, v in known_elements.items():
+            self.assertEqual(observed_elements[k], v)
 
     def test_simplify_copy_segm_cc(self):
-        known_root_ccs = [[72, [340, 341, 342, 343, 344]]]
-        known_root = known_root_ccs[0][0]
-        known_ccs = known_root_ccs[0][1]
-        observed_root_ccs = self.graph.segm_cc
-        observed_root = observed_root_ccs[0][0]
-        observed_ccs = observed_root_ccs[0][1][-5:]
-        self.assertEqual(observed_root, known_root)
+        known_root, known_ccs = 72, [340, 341, 342, 343, 344]
+        observed_ccs = self.graph.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_copy_segm2len(self):
-        known_id_len = [344, 165.09903569556914]
-        known_id, known_len = known_id_len[0], known_id_len[1]
-        observed_id_lens = self.graph.segm2len[-1]
-        observed_id, observed_len = observed_id_lens[0], observed_id_lens[1]
-        self.assertEqual(observed_id, known_id)
+        known_id, known_len = 344, 165.09903569556914
+        observed_len = self.graph.segm2len[known_id]
         self.assertAlmostEqual(observed_len, known_len)
 
     def test_simplify_copy_node2xyid(self):
-        known_id_xyid = [285, ["x622213.7739825583y166384.2955689532"]]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
+        known_id, known_xyid = 285, ["x622213.7739825583y166384.2955689532"]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
-        observed_id_xyid = self.graph.node2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_xyid = self.graph.node2xyid[known_id]
         observed_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
-        self.assertEqual(observed_id, known_id)
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_simplify_copy_node2coords(self):
-        known_id_coords = [285, [(622213.7739825583, 166384.2955689532)]]
-        known_id = known_id_coords[0]
-        known_coords = numpy.array(known_id_coords[1])
-        observed_id_coords = self.graph.node2coords[-1]
-        observed_id = observed_id_coords[0]
-        observed_coords = numpy.array(observed_id_coords[1])
-        self.assertEqual(observed_id, known_id)
+        known_id, known_coords = 285, [(622213.7739825583, 166384.2955689532)]
+        known_xyid = numpy.array(known_coords)
+        observed_coords = numpy.array(self.graph.node2coords[known_id])
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_simplify_copy_node2elem(self):
-        known_elements = [[283, "leaf"], [284, "leaf"], [285, "leaf"]]
-        observed_elements = self.graph.node2elem[-3:]
-        self.assertEqual(observed_elements, known_elements)
+        known_elements = {283: "leaf", 284: "leaf", 285: "leaf"}
+        observed_elements = self.graph.node2elem
+        for k, v in known_elements.items():
+            self.assertEqual(observed_elements[k], v)
 
     def test_simplify_copy_node_cc(self):
-        known_root_ccs = [[89, [281, 282, 283, 284, 285]]]
-        known_root = known_root_ccs[0][0]
-        known_ccs = known_root_ccs[0][1]
-        observed_root_ccs = self.graph.node_cc
-        observed_root = observed_root_ccs[0][0]
-        observed_ccs = observed_root_ccs[0][1][-5:]
-        self.assertEqual(observed_root, known_root)
-        self.assertEqual(observed_ccs, known_ccs)
+        known_root, known_ccs = 89, [281, 282, 283, 284, 285]
+        observed_ccs = self.graph.node_cc[known_root]
+        self.assertEqual(observed_ccs[-5:], known_ccs)
 
     def test_simplify_copy_node2degree(self):
         known_degree = [(0, 3), (1, 3), (2, 5), (3, 3)]
@@ -630,134 +591,100 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_degree, known_degree)
 
     def test_simplify_inplace_segm2xyid(self):
-        known_id_xyid = [
-            344,
-            [
-                "x622213.7739825583y166384.2955689532",
-                "x622195.0607060504y166381.4862537613",
-                "x622184.5013186845y166381.46491087825",
-                "x622181.715678818y166382.34615142326",
-                "x622179.9855276581y166383.45124237766",
-                "x622167.096623471y166396.0630971515",
-                "x622153.7300268554y166407.56541679866",
-                "x622145.5590545179y166413.20272313987",
-                "x622143.8271135575y166415.1946855663",
-                "x622142.3804582829y166418.51752763707",
-                "x622140.6237954168y166432.70389406924",
-                "x622140.7789228398y166450.88502889618",
-                "x622139.3965777882y166469.83907459615",
-                "x622137.935323471y166480.3677023711",
-                "x622135.714887791y166486.57131120094",
-                "x622131.5685194829y166495.76422229825",
-            ],
+        known_id = 344
+        known_xyid = [
+            "x622213.7739825583y166384.2955689532",
+            "x622195.0607060504y166381.4862537613",
+            "x622184.5013186845y166381.46491087825",
+            "x622181.715678818y166382.34615142326",
+            "x622179.9855276581y166383.45124237766",
+            "x622167.096623471y166396.0630971515",
+            "x622153.7300268554y166407.56541679866",
+            "x622145.5590545179y166413.20272313987",
+            "x622143.8271135575y166415.1946855663",
+            "x622142.3804582829y166418.51752763707",
+            "x622140.6237954168y166432.70389406924",
+            "x622140.7789228398y166450.88502889618",
+            "x622139.3965777882y166469.83907459615",
+            "x622137.935323471y166480.3677023711",
+            "x622135.714887791y166486.57131120094",
+            "x622131.5685194829y166495.76422229825",
         ]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
-        observed_id_xyid = self.network.segm2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_xyid = self.network.segm2xyid[known_id]
         observed_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
-        self.assertEqual(observed_id, known_id)
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_simplify_inplace_segm2coords(self):
-        known_id_coords = [
-            344,
-            [
-                (622213.7739825583, 166384.2955689532),
-                (622195.0607060504, 166381.4862537613),
-                (622184.5013186845, 166381.46491087825),
-                (622181.715678818, 166382.34615142326),
-                (622179.9855276581, 166383.45124237766),
-                (622167.096623471, 166396.0630971515),
-                (622153.7300268554, 166407.56541679866),
-                (622145.5590545179, 166413.20272313987),
-                (622143.8271135575, 166415.1946855663),
-                (622142.3804582829, 166418.51752763707),
-                (622140.6237954168, 166432.70389406924),
-                (622140.7789228398, 166450.88502889618),
-                (622139.3965777882, 166469.83907459615),
-                (622137.935323471, 166480.3677023711),
-                (622135.714887791, 166486.57131120094),
-                (622131.5685194829, 166495.76422229825),
-            ],
+        known_id = 344
+        known_coords = [
+            (622213.7739825583, 166384.2955689532),
+            (622195.0607060504, 166381.4862537613),
+            (622184.5013186845, 166381.46491087825),
+            (622181.715678818, 166382.34615142326),
+            (622179.9855276581, 166383.45124237766),
+            (622167.096623471, 166396.0630971515),
+            (622153.7300268554, 166407.56541679866),
+            (622145.5590545179, 166413.20272313987),
+            (622143.8271135575, 166415.1946855663),
+            (622142.3804582829, 166418.51752763707),
+            (622140.6237954168, 166432.70389406924),
+            (622140.7789228398, 166450.88502889618),
+            (622139.3965777882, 166469.83907459615),
+            (622137.935323471, 166480.3677023711),
+            (622135.714887791, 166486.57131120094),
+            (622131.5685194829, 166495.76422229825),
         ]
-        known_id = known_id_coords[0]
-        known_coords = numpy.array(known_id_coords[1])
-        observed_id_coords = self.network.segm2coords[-1]
-        observed_id = observed_id_coords[0]
-        observed_coords = numpy.array(observed_id_coords[1])
-        self.assertEqual(observed_id, known_id)
+        observed_coords = self.network.segm2coords[known_id]
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_simplify_inplace_segm2elem(self):
-        known_elements = [[342, "leaf"], [343, "leaf"], [344, "leaf"]]
-        observed_elements = self.network.segm2elem[-3:]
-        self.assertEqual(observed_elements, known_elements)
+        known_elements = {342: "leaf", 343: "leaf", 344: "leaf"}
+        observed_elements = self.network.segm2elem
+        for k, v in known_elements.items():
+            self.assertEqual(observed_elements[k], v)
 
     def test_simplify_inplace_segm_cc(self):
-        known_root_ccs = [[72, [340, 341, 342, 343, 344]]]
-        known_root = known_root_ccs[0][0]
-        known_ccs = known_root_ccs[0][1]
-        observed_root_ccs = self.network.segm_cc
-        observed_root = observed_root_ccs[0][0]
-        observed_ccs = observed_root_ccs[0][1][-5:]
-        self.assertEqual(observed_root, known_root)
+        known_root, known_ccs = 72, [340, 341, 342, 343, 344]
+        observed_ccs = self.network.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_inplace_segm2len(self):
-        known_id_len = [344, 165.09903569556914]
-        known_id, known_len = known_id_len[0], known_id_len[1]
-        observed_id_lens = self.network.segm2len[-1]
-        observed_id, observed_len = observed_id_lens[0], observed_id_lens[1]
-        self.assertEqual(observed_id, known_id)
+        known_id, known_len = 344, 165.09903569556914
+        observed_len = self.network.segm2len[known_id]
         self.assertAlmostEqual(observed_len, known_len)
 
     def test_simplify_inplace_node2xyid(self):
-        known_id_xyid = [285, ["x622213.7739825583y166384.2955689532"]]
-        known_id = known_id_xyid[0]
-        known_xyid = known_id_xyid[1]
+        known_id, known_xyid = 285, ["x622213.7739825583y166384.2955689532"]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
-        observed_id_xyid = self.network.node2xyid[-1]
-        observed_id = observed_id_xyid[0]
-        observed_xyid = observed_id_xyid[1]
+        observed_xyid = self.network.node2xyid[known_id]
         observed_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
-        self.assertEqual(observed_id, known_id)
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
     def test_simplify_inplace_node2coords(self):
-        known_id_coords = [285, [(622213.7739825583, 166384.2955689532)]]
-        known_id = known_id_coords[0]
-        known_coords = numpy.array(known_id_coords[1])
-        observed_id_coords = self.network.node2coords[-1]
-        observed_id = observed_id_coords[0]
-        observed_coords = numpy.array(observed_id_coords[1])
-        self.assertEqual(observed_id, known_id)
+        known_id, known_coords = 285, [(622213.7739825583, 166384.2955689532)]
+        known_xyid = numpy.array(known_coords)
+        observed_coords = numpy.array(self.network.node2coords[known_id])
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
     def test_simplify_inplace_node2elem(self):
-        known_elements = [[283, "leaf"], [284, "leaf"], [285, "leaf"]]
-        observed_elements = self.network.node2elem[-3:]
-        self.assertEqual(observed_elements, known_elements)
+        known_elements = {283: "leaf", 284: "leaf", 285: "leaf"}
+        observed_elements = self.network.node2elem
+        for k, v in known_elements.items():
+            self.assertEqual(observed_elements[k], v)
 
     def test_simplify_inplace_node_cc(self):
-        known_root_ccs = [[89, [281, 282, 283, 284, 285]]]
-        known_root = known_root_ccs[0][0]
-        known_ccs = known_root_ccs[0][1]
-        observed_root_ccs = self.network.node_cc
-        observed_root = observed_root_ccs[0][0]
-        observed_ccs = observed_root_ccs[0][1][-5:]
-        self.assertEqual(observed_root, known_root)
-        self.assertEqual(observed_ccs, known_ccs)
+        known_root, known_ccs = 89, [281, 282, 283, 284, 285]
+        observed_ccs = self.network.node_cc[known_root]
+        self.assertEqual(observed_ccs[-5:], known_ccs)
 
     def test_simplify_inplace_node2degree(self):
         known_degree = [(0, 3), (1, 3), (2, 5), (3, 3)]

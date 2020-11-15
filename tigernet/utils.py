@@ -359,11 +359,11 @@ def extract_nodes(net):
 
 def set_ids(net):
     """Set segment & node ID lists and counts elements.
-    
+
     Parameters
     ----------
     net : tigernet.Network
-    
+
     """
 
     # id lists
@@ -533,7 +533,7 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
 
     Returns
     -------
-    xw : list
+    xw : dict
         The adjacency crosswalk.
 
     """
@@ -541,18 +541,19 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
     # if c2 in ["nodeNeighs", "segmNeighs"]:
     #    xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
     ############# what's this for? ------------ take care of this later....
+
     if c2 in ["n_neighs", "s_neighs"]:
         raise RuntimeError()
-        xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
+        xw = {df[c1][ix]: literal_eval(df[c2][ix]) for ix in df.index}
 
     elif c2 in ["degree", "length", "TLID"]:
-        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix] for ix in df.index}
 
     elif c2 == geo_col and not stipulation:
-        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix] for ix in df.index}
 
     elif c2 == geo_col and stipulation == "coords":
-        xw = [[df[c1][ix], df[c2][ix].coords[:]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix].coords[:] for ix in df.index}
 
     else:
         raise ValueError("Column '%s' not found." % c2)
@@ -735,7 +736,7 @@ def update_adj(net, seg_keys, node_keys):
     net.s_data = net.s_data[net.s_data[net.sid_name].isin(scc_vals)]
     net.s_data.reset_index(drop=True, inplace=True)
     ncc_vals = list(net.node_cc.values())[0]
-    net.n_data = net.n_data[net.n_data[net.nid_name].isin(net.node_cc.values())]
+    net.n_data = net.n_data[net.n_data[net.nid_name].isin(ncc_vals)]
     net.n_data.reset_index(drop=True, inplace=True)
 
 
@@ -799,7 +800,7 @@ def calc_valency(net, col=None):
     """
 
     n2d = {}
-    for (node, segs) in net.node2segm:
+    for node, segs in net.node2segm.items():
         loops = 0
         for s in segs:
             segv = net.s_data[net.sid_name] == s
@@ -832,7 +833,7 @@ def branch_or_leaf(net, geom_type=None):
 
     Returns
     -------
-    geom2ge : list
+    geom2ge : dict
         Geometry ID-to-graph element type crosswalk.
 
     """
@@ -845,15 +846,10 @@ def branch_or_leaf(net, geom_type=None):
         msg = "'geom_type' of %s not valid." % geom_type
         raise ValueError(msg)
 
-    # super hacky due to https://github.com/jGaboardi/tigernet/issues/29
-    # should fix this later... why was I using a lists for lookups
-    # instead of dicts in the original implementation anyway???
-    s2n = dict(net.segm2node)
-
-    geom2ge = []
+    geom2ge = {}
     for idx in id_list:
         if geom_type == "segm":
-            n1, n2 = s2n[idx][0], s2n[idx][1]
+            n1, n2 = net.segm2node[idx][0], net.segm2node[idx][1]
             n1d, n2d = net.node2degree[n1], net.node2degree[n2]
 
             if n1d == 1 or n2d == 1:
@@ -866,7 +862,7 @@ def branch_or_leaf(net, geom_type=None):
                 graph_element = "leaf"
             else:
                 graph_element = "branch"
-        geom2ge.append([idx, graph_element])
+        geom2ge[idx] = graph_element
 
     return geom2ge
 
@@ -909,10 +905,10 @@ def _locate_naps(net):
     """
 
     # subset only degree-2 nodes
-    degree_two_nodes = set([n for (n, d) in net.node2degree.items() if d == 2])
+    degree_two_nodes = set([n for n, d in net.node2degree.items() if d == 2])
 
     # recreate n2n xwalk
-    new_n2n = {k: v for (k, v) in net.node2node}
+    new_n2n = {k: v for k, v in net.node2node.items()}
     two2two = {k: new_n2n[k] for k in degree_two_nodes}
 
     # get set intersection of degree-2 node neighbors
@@ -920,19 +916,19 @@ def _locate_naps(net):
         two2two[k] = list(degree_two_nodes.intersection(set(vs)))
 
     # convert back to list
-    two2two = [[k, vs] for k, vs in list(two2two.items())]
+    two2two = {k: vs for k, vs in two2two.items()}
 
     # created rooted non-articulation nodes object
     rooted_napts, napts, napts_count = get_roots(two2two), {}, 0
-    for (k, v) in rooted_napts:
+    for k, v in rooted_napts.items():
         napts_count += 1
         napts[napts_count] = {net.nid_name: v}
 
     # add segment info to rooted non-articulation point object
-    for napt_count, napt_info in list(napts.items()):
+    for napt_count, napt_info in napts.items():
         napt = []
         for napt_node in napt_info[net.nid_name]:
-            napt.extend([i[1] for i in net.node2segm if i[0] == napt_node])
+            napt.extend([v for k, v in net.node2segm.items() if k == napt_node])
 
         # if more than one pair of segments in napt
         napt = set([seg for segs in napt for seg in segs])
@@ -960,7 +956,7 @@ def _simplifysegs(net, na_objs):
     nsn = net.sid_name
 
     # for each bridge
-    for na_objs_sidx, na_objs_info in list(na_objs.items()):
+    for na_objs_sidx, na_objs_info in na_objs.items():
 
         # get the dominant SegIDX and dataframe index
         inherit_attrs_from, idx = _get_hacky_index(net, na_objs_info)
@@ -1313,8 +1309,8 @@ def euc_calc(net, col=None):
     """
 
     net.s_data[col] = numpy.nan
-    for (seg_k, (n1, n2)) in net.segm2node:
-        p1, p2 = net.node2coords[n1][1][0], net.node2coords[n2][1][0]
+    for seg_k, (n1, n2) in net.segm2node.items():
+        p1, p2 = net.node2coords[n1][0], net.node2coords[n2][0]
         ed = _euc_dist(p1, p2)
         net.s_data.loc[(net.s_data[net.sid_name] == seg_k), col] = ed
 
@@ -1574,8 +1570,7 @@ def restriction_welder(net):
         s2s_cc = get_roots(s2s)
 
         # weld together segments from each component of the group
-        for cc in s2s_cc:
-            keep_id, all_ids = cc[0], cc[1]
+        for keep_id, all_ids in s2s_cc.items():
             drop_ids = copy.deepcopy(all_ids)
             drop_ids.remove(keep_id)
 

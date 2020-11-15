@@ -364,8 +364,6 @@ class Network:
         if record_components:
             self.build_components(largest_cc=largest_component)
         self.build_associations(record_geom=record_geom)
-        return  ###################################################################################
-        stop
         if def_graph_elems:
             self.define_graph_elements()
 
@@ -513,12 +511,12 @@ class Network:
         if record_geom:
             utils.geom_assoc(self)
         utils.geom_assoc(self, coords=True)
-        return  ###################################################################################
+
         # associate segments with length
         self.segm2len = utils.xwalk(self.s_data, c1=self.sid_name, c2=self.len_col)
 
         # total length
-        self.network_length = sum([v for (k, v) in self.segm2len])
+        self.network_length = sum([v for k, v in self.segm2len.items()])
 
         # Calculate degree for n_ids -- incident segs +1; incident loops +2
         self.node2degree = utils.calc_valency(self, col="n_neigh")

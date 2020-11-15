@@ -189,7 +189,6 @@ class TestNeworkComponentsLattice1x1(unittest.TestCase):
         observed_ccs = list(self.lattice_network_largest_cc.n_data["CC"])
 
 
-"""
 class TestNetworkAssociationsLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
@@ -197,40 +196,40 @@ class TestNetworkAssociationsLattice1x1(unittest.TestCase):
 
     def test_lattice_network_segm2geom(self):
         known_type = "LineString"
-        observed_type = self.lattice_network.segm2geom[0][1].geom_type
+        observed_type = self.lattice_network.segm2geom[0].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "LINESTRING (4.5 0, 4.5 4.5)"
-        observed_wkt = self.lattice_network.segm2geom[0][1].wkt
+        observed_wkt = self.lattice_network.segm2geom[0].wkt
         self.assertEqual(observed_wkt, known_wkt)
 
     def test_lattice_network_segm2coords(self):
-        known_lookup = [
-            [0, [(4.5, 0.0), (4.5, 4.5)]],
-            [1, [(4.5, 4.5), (4.5, 9.0)]],
-            [2, [(0.0, 4.5), (4.5, 4.5)]],
-            [3, [(4.5, 4.5), (9.0, 4.5)]],
-        ]
+        known_lookup = {
+            0: [(4.5, 0.0), (4.5, 4.5)],
+            1: [(4.5, 4.5), (4.5, 9.0)],
+            2: [(0.0, 4.5), (4.5, 4.5)],
+            3: [(4.5, 4.5), (9.0, 4.5)],
+        }
         observed_lookup = self.lattice_network.segm2coords
         self.assertEqual(observed_lookup, known_lookup)
 
     def test_lattice_network_node2geom(self):
         known_type = "Point"
-        observed_type = self.lattice_network.node2geom[0][1].geom_type
+        observed_type = self.lattice_network.node2geom[0].geom_type
         self.assertEqual(observed_type, known_type)
 
         known_wkt = "POINT (4.5 0)"
-        observed_wkt = self.lattice_network.node2geom[0][1].wkt
+        observed_wkt = self.lattice_network.node2geom[0].wkt
         self.assertEqual(observed_wkt, known_wkt)
 
     def test_lattice_network_node2coords(self):
-        known_lookup = [
-            [0, [(4.5, 0.0)]],
-            [1, [(4.5, 4.5)]],
-            [2, [(4.5, 9.0)]],
-            [3, [(0.0, 4.5)]],
-            [4, [(9.0, 4.5)]],
-        ]
+        known_lookup = {
+            0: [(4.5, 0.0)],
+            1: [(4.5, 4.5)],
+            2: [(4.5, 9.0)],
+            3: [(0.0, 4.5)],
+            4: [(9.0, 4.5)],
+        }
         observed_lookup = self.lattice_network.node2coords
         self.assertEqual(observed_lookup, known_lookup)
 
@@ -257,7 +256,7 @@ class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
         )
 
     def test_lattice_network_segm2elem(self):
-        known_elements = [[0, "leaf"], [1, "leaf"], [2, "leaf"], [3, "leaf"]]
+        known_elements = {0: "leaf", 1: "leaf", 2: "leaf", 3: "leaf"}
         observed_elements = self.lattice_network.segm2elem
         self.assertEqual(observed_elements, known_elements)
 
@@ -267,13 +266,13 @@ class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
         self.assertEqual(observed_elements, known_elements)
 
     def test_lattice_network_node2elem(self):
-        known_elements = [
-            [0, "leaf"],
-            [1, "branch"],
-            [2, "leaf"],
-            [3, "leaf"],
-            [4, "leaf"],
-        ]
+        known_elements = {
+            0: "leaf",
+            1: "branch",
+            2: "leaf",
+            3: "leaf",
+            4: "leaf",
+        }
         observed_elements = self.lattice_network.node2elem
         self.assertEqual(observed_elements, known_elements)
 
@@ -295,55 +294,55 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         self.network.simplify_network(inplace=True, **kws)
 
     def test_simplify_copy_segm2xyid(self):
-        known_xyids = [
-            [0, ["x4.5y0.0", "x4.5y4.5"]],
-            [1, ["x4.5y4.5", "x9.0y4.5", "x9.0y9.0", "x4.5y9.0", "x4.5y4.5"]],
-            [2, ["x0.0y4.5", "x4.5y4.5"]],
-        ]
+        known_xyids = {
+            0: ["x4.5y0.0", "x4.5y4.5"],
+            1: ["x4.5y4.5", "x9.0y4.5", "x9.0y9.0", "x4.5y9.0", "x4.5y4.5"],
+            2: ["x0.0y4.5", "x4.5y4.5"],
+        }
         observed_xyids = self.graph.segm2xyid
         self.assertEqual(observed_xyids, known_xyids)
 
     def test_simplify_copy_segm2coords(self):
-        known_coords = [
-            [0, [(4.5, 0.0), (4.5, 4.5)]],
-            [1, [(4.5, 4.5), (9.0, 4.5), (9.0, 9.0), (4.5, 9.0), (4.5, 4.5)]],
-            [2, [(0.0, 4.5), (4.5, 4.5)]],
-        ]
+        known_coords = {
+            0: [(4.5, 0.0), (4.5, 4.5)],
+            1: [(4.5, 4.5), (9.0, 4.5), (9.0, 9.0), (4.5, 9.0), (4.5, 4.5)],
+            2: [(0.0, 4.5), (4.5, 4.5)],
+        }
         observed_coords = self.graph.segm2coords
         self.assertEqual(observed_coords, known_coords)
 
     def test_simplify_copy_segm2elem(self):
-        known_elements = [[0, "leaf"], [1, "branch"], [2, "leaf"]]
+        known_elements = {0: "leaf", 1: "branch", 2: "leaf"}
         observed_elements = self.graph.segm2elem
         self.assertEqual(observed_elements, known_elements)
 
     def test_simplify_copy_segm_cc(self):
-        known_ccs = [[1, [0, 1, 2]]]
+        known_ccs = {1: [0, 1, 2]}
         observed_ccs = self.graph.segm_cc
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_copy_segm2len(self):
-        known_lens = [[0, 4.5], [1, 18.0], [2, 4.5]]
+        known_lens = {0: 4.5, 1: 18.0, 2: 4.5}
         observed_lens = self.graph.segm2len
         self.assertEqual(observed_lens, known_lens)
 
     def test_simplify_copy_node2xyid(self):
-        known_xyids = [[0, ["x4.5y0.0"]], [1, ["x4.5y4.5"]], [2, ["x0.0y4.5"]]]
+        known_xyids = {0: ["x4.5y0.0"], 1: ["x4.5y4.5"], 2: ["x0.0y4.5"]}
         observed_xyids = self.graph.node2xyid
         self.assertEqual(observed_xyids, known_xyids)
 
     def test_simplify_copy_node2coords(self):
-        known_coords = [[0, [(4.5, 0.0)]], [1, [(4.5, 4.5)]], [2, [(0.0, 4.5)]]]
+        known_coords = {0: [(4.5, 0.0)], 1: [(4.5, 4.5)], 2: [(0.0, 4.5)]}
         observed_coords = self.graph.node2coords
         self.assertEqual(observed_coords, known_coords)
 
     def test_simplify_copy_node2elem(self):
-        known_elements = [[0, "leaf"], [1, "branch"], [2, "leaf"]]
+        known_elements = {0: "leaf", 1: "branch", 2: "leaf"}
         observed_elements = self.graph.node2elem
         self.assertEqual(observed_elements, known_elements)
 
     def test_simplify_copy_node_cc(self):
-        known_ccs = [[1, [0, 1, 2]]]
+        known_ccs = {1: [0, 1, 2]}
         observed_ccs = self.graph.node_cc
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -353,55 +352,55 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         self.assertEqual(observed_degree, known_degree)
 
     def test_simplify_inplace_segm2xyid(self):
-        known_xyids = [
-            [0, ["x4.5y0.0", "x4.5y4.5"]],
-            [1, ["x4.5y4.5", "x9.0y4.5", "x9.0y9.0", "x4.5y9.0", "x4.5y4.5"]],
-            [2, ["x0.0y4.5", "x4.5y4.5"]],
-        ]
+        known_xyids = {
+            0: ["x4.5y0.0", "x4.5y4.5"],
+            1: ["x4.5y4.5", "x9.0y4.5", "x9.0y9.0", "x4.5y9.0", "x4.5y4.5"],
+            2: ["x0.0y4.5", "x4.5y4.5"],
+        }
         observed_xyids = self.network.segm2xyid
         self.assertEqual(observed_xyids, known_xyids)
 
     def test_simplify_inplace_segm2coords(self):
-        known_coords = [
-            [0, [(4.5, 0.0), (4.5, 4.5)]],
-            [1, [(4.5, 4.5), (9.0, 4.5), (9.0, 9.0), (4.5, 9.0), (4.5, 4.5)]],
-            [2, [(0.0, 4.5), (4.5, 4.5)]],
-        ]
+        known_coords = {
+            0: [(4.5, 0.0), (4.5, 4.5)],
+            1: [(4.5, 4.5), (9.0, 4.5), (9.0, 9.0), (4.5, 9.0), (4.5, 4.5)],
+            2: [(0.0, 4.5), (4.5, 4.5)],
+        }
         observed_coords = self.network.segm2coords
         self.assertEqual(observed_coords, known_coords)
 
     def test_simplify_inplace_segm2elem(self):
-        known_elements = [[0, "leaf"], [1, "branch"], [2, "leaf"]]
+        known_elements = {0: "leaf", 1: "branch", 2: "leaf"}
         observed_elements = self.network.segm2elem
         self.assertEqual(observed_elements, known_elements)
 
     def test_simplify_inplace_segm_cc(self):
-        known_ccs = [[1, [0, 1, 2]]]
+        known_ccs = {1: [0, 1, 2]}
         observed_ccs = self.network.segm_cc
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_simplify_inplace_segm2len(self):
-        known_lens = [[0, 4.5], [1, 18.0], [2, 4.5]]
+        known_lens = {0: 4.5, 1: 18.0, 2: 4.5}
         observed_lens = self.network.segm2len
         self.assertEqual(observed_lens, known_lens)
 
     def test_simplify_inplace_node2xyid(self):
-        known_xyids = [[0, ["x4.5y0.0"]], [1, ["x4.5y4.5"]], [2, ["x0.0y4.5"]]]
+        known_xyids = {0: ["x4.5y0.0"], 1: ["x4.5y4.5"], 2: ["x0.0y4.5"]}
         observed_xyids = self.network.node2xyid
         self.assertEqual(observed_xyids, known_xyids)
 
     def test_simplify_inplace_node2coords(self):
-        known_coords = [[0, [(4.5, 0.0)]], [1, [(4.5, 4.5)]], [2, [(0.0, 4.5)]]]
+        known_coords = {0: [(4.5, 0.0)], 1: [(4.5, 4.5)], 2: [(0.0, 4.5)]}
         observed_coords = self.network.node2coords
         self.assertEqual(observed_coords, known_coords)
 
     def test_simplify_inplace_node2elem(self):
-        known_elements = [[0, "leaf"], [1, "branch"], [2, "leaf"]]
+        known_elements = {0: "leaf", 1: "branch", 2: "leaf"}
         observed_elements = self.network.node2elem
         self.assertEqual(observed_elements, known_elements)
 
     def test_simplify_inplace_node_cc(self):
-        known_ccs = [[1, [0, 1, 2]]]
+        known_ccs = {1: [0, 1, 2]}
         observed_ccs = self.network.node_cc
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -409,7 +408,7 @@ class TestNetworkSimplifyBarb(unittest.TestCase):
         known_degree = {0: 1, 1: 4, 2: 1}
         observed_degree = self.network.node2degree
         self.assertEqual(observed_degree, known_degree)
-"""
+
 
 if __name__ == "__main__":
     unittest.main()
