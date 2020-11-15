@@ -212,22 +212,22 @@ class Network:
         4       4  ['x9.0y4.5']           [3]           [1]       1
 
         >>> net.segm2xyid[0]
-        [0, ['x4.5y0.0', 'x4.5y4.5']]
+        ['x4.5y0.0', 'x4.5y4.5']
 
         >>> net.node2xyid[0]
-        [0, ['x4.5y0.0']]
+        ['x4.5y0.0']
 
-        >>> net.segm2node[-1]
-        [3, [1, 4]]
+        >>> net.segm2node[3]
+        [1, 4]
 
-        >>> net.node2segm[-1]
-        [4, [3]]
+        >>> net.node2segm[4]
+        [3]
 
-        >>> net.segm2segm[-1]
-        [3, [0, 1, 2]]
+        >>> net.segm2segm[3]
+        [0, 1, 2]
 
-        >>> net.node2node[-1]
-        [4, [1]]
+        >>> net.node2node[4]
+        [1]
 
         """
 
