@@ -45,13 +45,6 @@ class Network:
         record_geom=False,
         largest_component=False,
         calc_stats=False,
-        # gen_matrix=False,
-        # mtx_to_csv=None,
-        # gen_paths=False,
-        # paths_to_csv=None,
-        # gen_adjmtx=False,
-        # adjmtx_to_csv=None,
-        # algo=None,
         def_graph_elems=False,
     ):
         """
@@ -138,25 +131,8 @@ class Network:
             Default is False.
         calc_stats : bool
             calculate network stats. Default is False.
-        gen_matrix : bool
-            calculate a cost matrix. Default is False.
-        mtx_to_csv : str
-            file path to save the cost matrix. Default is None.
-
-        gen_paths : bool
-            calculate shortest path trees. Default is False.
-        paths_to_csv : str
-            file path to save the shortest path trees. Default is None.
-        gen_adjmtx : bool
-            calculate node adjacency matrix. Default is False.
-        adjmtx_to_csv : str
-            file path to save the adjacency matrix. Default is None.
-        algo : str
-            shortest path algorithm. Default is None.
-
         def_graph_elems : bool
             define graph elements. Default is False.
-
 
         Methods : Attributes
         --------------------
@@ -172,7 +148,6 @@ class Network:
         simplify_network : --
         add_node : --
         add_edge : --
-        adjacency_matrix : n2n_adjmtx
 
         network_cost_matrix : diameter, radius, d_net, d_euc, circuity,
             n2n_euclidean, n2n_algo, n2n_matrix, n2n_paths
@@ -298,30 +273,6 @@ class Network:
                 record_geom=record_geom,
                 def_graph_elems=def_graph_elems,
             )
-
-        """
-        
-        # create node to node adjacency matrix
-        if gen_adjmtx:
-            self.adjacency_matrix(adjmtx_to_csv)
-        
-        # Create and save out an all to all network node cost matrix
-        if gen_matrix:
-            
-            if not algo:
-                raise Exception('Set algorithm for cost matrix calculation.')
-            
-            self.n2n_algo = algo
-            self.network_cost_matrix(mtx_to_csv=mtx_to_csv, gpths=gen_paths,
-                                     paths_to_csv=paths_to_csv,
-                                     calc_stats=calc_stats)
-        # calculate descriptive network stats
-        if calc_stats:
-            self.calc_net_stats()
-        
-        if remove_gdfs:
-            self.remove_frames()
-        """
 
     ###########################################################################
     ########################    end __init__    ###############################
@@ -689,3 +640,67 @@ class Network:
 
         """
         pass
+
+    def cost_matrix(
+        self, calc_stats=False, validate_symmetry=False, wpaths=False, asattr=True
+    ):
+        """Network node-to-node cost matrix calculation with
+        options for generating shortests paths along tree.
+
+        Parameters
+        ----------
+        calc_stats : bool
+            Calculate diameter and radius of the network. #######################################
+        validate_symmetry : bool
+            Validate matrix symmetry. Default is ``False``. #########################################
+        wpaths : bool
+            Generate shortest paths tree. Default is ``False``.
+        asattr : bool
+            Set ``n2n_matrix`` and ``paths`` as attributes of ``Network`` if ``True``,
+            otherwise return them. Default is ``True``.
+
+        Returns
+        -------
+        n2n_matrix : numpy.ndarray
+            Shortest path costs between all nodes.
+        paths : dict
+            Graph traveral paths.
+
+        """
+
+        n2n_matrix, paths = utils.shortest_path(self, gp=wpaths)
+
+        if calc_stats:
+
+            # network diameter -- longest shortest path
+            self.diameter = sauce._get_dia_rad(n2n_matrix, "max")
+
+            # network radius -- shortest shortest path
+            self.radius = sauce._get_dia_rad(n2n_matrix, "min")
+
+            # circuity
+            self.d_net = n2n_matrix.sum()  # all network shortest paths
+            coords = [v[0] for (k, v) in self.node2coords.items()]
+            self.n2n_euclidean = distance_matrix(coords, coords)
+
+            # all euclidean shortest paths
+            self.d_euc = self.n2n_euclidean.sum()
+            self.circuity = self.d_net / self.d_euc
+
+            delattr(self, "n2n_euclidean")
+
+        if validate_symmetry:
+            # validate symmetry
+            if n2n_matrix[0][0] == 0.0:
+                if not sauce._check_symmetric(n2n_matrix, tol=1e-8):
+                    raise Exception("all to all matrix is not symmetric")
+
+        if asattr:
+            self.n2n_matrix = n2n_matrix
+            if wpaths:
+                self.n2n_paths = paths
+        else:
+            if wpaths:
+                return n2n_matrix, paths
+            else:
+                return n2n_matrix

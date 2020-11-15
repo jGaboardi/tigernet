@@ -2068,3 +2068,159 @@ def _make_break_locs(breaks=None, standard=False, loi=None, line=False, mline=Fa
         break_points = [Point(point.coords[:][0]) for point in breaks]
 
     return break_points
+
+
+###############################################################################
+################ Network Cost Matrix functionality ############################
+###############################################################################
+
+
+def shortest_path(net, gp=False):
+    """Graph traversal for shortest path.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    gp : bool
+        Generate paths. Default is ``False``.
+
+    Returns
+    -------
+    mtx : numpy.ndarray
+        Shortest path costs between all nodes.
+    paths : dict
+        Graph traveral paths.
+
+    """
+
+    # Instantiate empty cost matrix and paths
+    mtx, paths = numpy.empty((net.n_node, net.n_node)), {}
+
+    # Dijkstra classic source-to-all algo for optimal shortest path graph traversal.
+    for n in net.n_ids:
+
+        # get the distance array and predecessor nodes for each node
+        dist, pred = dijkstra(net, n)
+        tree = None
+
+        # if recording the paths
+        if gp:
+            tree = generate_tree(pred)
+
+        # set the distance array in a matrix and paths in a dict
+        mtx[n], paths[n] = dist, tree
+
+    return mtx, paths
+
+
+def dijkstra(net, source):
+    """Dijkstra single source to all destinations.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    source : int
+        Source node for iteration.
+
+    Returns
+    -------
+    distance : list
+        Distances from the source node.
+    pred : list
+        Predecessor nodes.
+
+    """
+
+    initial_dist = numpy.inf
+    distance = [initial_dist for n in net.n_ids]
+    distance[source] = 0.0
+    unvisited, pred = set([source]), [-1 for n in net.n_ids]
+
+    while unvisited:
+
+        # Get node with the lowest value from distance.
+        dist = initial_dist
+        for node in unvisited:
+            if distance[node] < dist:
+                dist, current = distance[node], node
+
+        # Remove that node from the set.
+        unvisited.remove(current)
+
+        # Get the neighbors & distances to the current node.
+        neighbors = get_neighbor_distances(net, current)
+        for neigh, add_dist in list(neighbors.items()):
+
+            new_dist = distance[current] + add_dist
+
+            if distance[neigh] > new_dist:
+                distance[neigh] = new_dist
+                pred[neigh] = current
+                unvisited.add(neigh)
+
+    return distance, pred
+
+
+def get_neighbor_distances(net, v):
+    """Create a lookup of neighbors with distances for dijkstra.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    v  : int
+        Source node for iteration of neighbors.
+
+    Returns
+    -------
+    neighbors : dict
+        Lookup dictionary in the form ``{neighor_ID: neighbor_distance}``.
+    """
+
+    neighbors = {}
+
+    for e in net.node2segm[v]:
+
+        if net.segm2node[e][0] != v:
+            neighbors[net.segm2node[e][0]] = net.segm2len[e]
+
+        else:
+            neighbors[net.segm2node[e][1]] = net.segm2len[e]
+
+    return neighbors
+
+
+def generate_tree(pred):
+    """Generate a tree for shortest path between source and destination nodes.
+
+     Parameters
+     ----------
+     pred : list
+         Predecessor nodes.
+
+    Returns
+     -------
+     tree : dict
+         Shortest path tree in the form:
+         ``{source_node: [destination_node, ..., source_node]}``
+         e.g.: ``{0: [0], 1: [0], 2: [339, 0]}``
+    """
+
+    tree = {}
+
+    for i, p in enumerate(pred):
+        if p == -1:
+            # root node
+            tree[i] = [i]
+            continue
+
+        idx = p
+        path = [idx]
+
+        while idx >= 0:
+            nextnode = pred[idx]
+            idx = nextnode
+            if idx >= 0:
+                path.append(nextnode)
+        tree[i] = path
+
+    return tree
