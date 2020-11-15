@@ -212,22 +212,22 @@ class Network:
         4       4  ['x9.0y4.5']           [3]           [1]       1
 
         >>> net.segm2xyid[0]
-        [0, ['x4.5y0.0', 'x4.5y4.5']]
+        ['x4.5y0.0', 'x4.5y4.5']
 
         >>> net.node2xyid[0]
-        [0, ['x4.5y0.0']]
+        ['x4.5y0.0']
 
-        >>> net.segm2node[-1]
-        [3, [1, 4]]
+        >>> net.segm2node[3]
+        [1, 4]
 
-        >>> net.node2segm[-1]
-        [4, [3]]
+        >>> net.node2segm[4]
+        [3]
 
-        >>> net.segm2segm[-1]
-        [3, [0, 1, 2]]
+        >>> net.segm2segm[3]
+        [0, 1, 2]
 
-        >>> net.node2node[-1]
-        [4, [1]]
+        >>> net.node2node[4]
+        [1]
 
         """
 
@@ -404,6 +404,9 @@ class Network:
         _nkws = {"idx": self.nid_name, "col": self.xyid, "data": self.node2xyid}
         self.n_data = utils.fill_frame(self.n_data, **_nkws)
 
+        # set segment & node ID lists and counts elements
+        utils.set_ids(self)
+
     def build_topology(self):
         """Relate all graph elements."""
 
@@ -417,11 +420,11 @@ class Network:
 
         # Associate segments with neighboring segments
         _args = self.segm2node, self.node2segm
-        self.segm2segm = utils.get_neighbors(*_args, astype=list)
+        self.segm2segm = utils.get_neighbors(*_args, astype=dict, valtype=list)
 
         # Associate nodes with neighboring nodes
         _args = self.node2segm, self.segm2node
-        self.node2node = utils.get_neighbors(*_args, astype=list)
+        self.node2node = utils.get_neighbors(*_args, astype=dict, valtype=list)
 
         # 1. Catch cases w/ >= 3 neighboring nodes for a segment and throw an error.
         # 2. Catch rings and add start & end node.
@@ -484,8 +487,11 @@ class Network:
             # Keep only the largest connected component
             utils.update_adj(self, segm_smallkeys, node_smallkeys)
 
-            lcck = self.largest_segm_cc[0]
+            lcck = list(self.largest_segm_cc.keys())[0]
             self.cc_lens = {k: v for k, v in self.cc_lens.items() if k == lcck}
+
+            # set segment & node ID lists and counts elements
+            utils.set_ids(self)
 
         # Count connected components in network
         self.n_ccs = len(self.cc_lens.keys())
@@ -501,22 +507,16 @@ class Network:
 
         """
 
+        # associate segments & nodes with geometries and coordinates
         if record_geom:
             utils.geom_assoc(self)
         utils.geom_assoc(self, coords=True)
 
-        # id lists
-        self.s_ids = list(self.s_data[self.sid_name])
-        self.n_ids = list(self.n_data[self.nid_name])
-
-        # permanent segment count & node count
-        self.n_segm, self.n_node = len(self.s_ids), len(self.n_ids)
-
-        # Associate segments with length
+        # associate segments with length
         self.segm2len = utils.xwalk(self.s_data, c1=self.sid_name, c2=self.len_col)
 
         # total length
-        self.network_length = sum([v for (k, v) in self.segm2len])
+        self.network_length = sum([v for k, v in self.segm2len.items()])
 
         # Calculate degree for n_ids -- incident segs +1; incident loops +2
         self.node2degree = utils.calc_valency(self, col="n_neigh")

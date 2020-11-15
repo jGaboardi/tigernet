@@ -133,18 +133,18 @@ def generate_xyid(df=None, geom_type="node", geo_col=None):
 
     Returns
     -------
-    xyid : list
+    xyid : dict
         List of combined x-coord + y-coords strings.
 
     """
 
-    xyid = []
+    xyid = {}
 
     for idx, geom in enumerate(df[geo_col]):
 
         if geom_type == "segm":
             xys = ["x" + str(x) + "y" + str(y) for (x, y) in geom.coords[:]]
-            xyid.append([idx, xys])
+            xyid[idx] = xys
 
         # try to make the xyid from a polygon
         if geom_type == "node":
@@ -164,7 +164,7 @@ def generate_xyid(df=None, geom_type="node", geo_col=None):
                         + "\t\t- `.[coord]`"
                     )
 
-            xyid.append([idx, [xy]])
+            xyid[idx] = [xy]
 
     return xyid
 
@@ -205,20 +205,41 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
     # write a single column in a geopandas.GeoDataFrame
     else:
         frame[col] = numpy.nan
-        for (k, v) in data:
-            k += add_factor
+
+        data_type = type(data)
+        if data_type == list:
+            for (k, v) in data:
+                k += add_factor
+
+                if col == "CC":
+                    frame.loc[frame[idx].isin(v), col] = k
+
+                elif idx == "index":
+                    frame.loc[k, col] = str(v)
+
+                else:
+                    frame.loc[(frame[idx] == k), col] = str(v)
 
             if col == "CC":
-                frame.loc[frame[idx].isin(v), col] = k
+                frame[col] = frame[col].astype("category").astype(int)
+        elif data_type == dict:
+            for k, v in data.items():
+                k += add_factor
 
-            elif idx == "index":
-                frame.loc[k, col] = str(v)
+                if col == "CC":
+                    frame.loc[frame[idx].isin(v), col] = k
 
-            else:
-                frame.loc[(frame[idx] == k), col] = str(v)
+                elif idx == "index":
+                    frame.loc[k, col] = str(v)
 
-        if col == "CC":
-            frame[col] = frame[col].astype("category").astype(int)
+                else:
+                    frame.loc[(frame[idx] == k), col] = str(v)
+
+            if col == "CC":
+                frame[col] = frame[col].astype("category").astype(int)
+        else:
+            msg = "The 'data' parameter is a '%s' but must be a 'list' or 'dict'."
+            raise TypeError(msg % data_type)
 
     return frame
 
@@ -336,6 +357,23 @@ def extract_nodes(net):
     return nodedf
 
 
+def set_ids(net):
+    """Set segment & node ID lists and counts elements.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+
+    """
+
+    # id lists
+    net.s_ids = list(net.s_data[net.sid_name])
+    net.n_ids = list(net.n_data[net.nid_name])
+
+    # segment count & node count
+    net.n_segm, net.n_node = len(net.s_ids), len(net.n_ids)
+
+
 def associate(
     primary=None,
     secondary=None,
@@ -373,8 +411,8 @@ def associate(
         Neighoring elements in the form: ``{seg1, [node1, node2]}``.
     node_dict : dict
         Neighoring elements in the form: ``{node1, [seg1, seg2]}``.
-    topos_list : list
-        Neighoring elements in the form: ``[x1, [y1, y2]]``.
+    topos_dict : dict
+        Neighoring elements in the form: ``{x1: [y1, y2]}``.
 
     """
 
@@ -401,36 +439,34 @@ def associate(
 
         return segm_dict, node_dict
 
-    topos_list = []
+    topos_dict = {}
 
-    for primary_idx, primary_info in enumerate(primary):
-        topos = [primary_idx, []]
+    for primary_idx, primary_info in primary.items():
+        topos_dict[primary_idx] = []
 
-        for secondary_idx, secondary_info in enumerate(secondary):
+        for secondary_idx, secondary_info in secondary.items():
             secondary_idxs = []
 
             # first and last point of the segment in string format for primary_info
             # in 'segm2node' and secondary_info in 'node2segm'
             if assoc == "segm2node":
-                s10p10 = secondary_info[1][0] == primary_info[1][0]
-                s10p11 = secondary_info[1][0] == primary_info[1][-1]
+                s10p10 = secondary_info[0] == primary_info[0]
+                s10p11 = secondary_info[0] == primary_info[-1]
                 if s10p10 or s10p11:
                     secondary_idxs.append(secondary_idx)
 
             if assoc == "node2segm":
-                p10s10 = primary_info[1][0] == secondary_info[1][0]
-                p10s11 = primary_info[1][0] == secondary_info[1][-1]
+                p10s10 = primary_info[0] == secondary_info[0]
+                p10s11 = primary_info[0] == secondary_info[-1]
                 if p10s10 or p10s11:
                     secondary_idxs.append(secondary_idx)
 
-            topos[1].extend(secondary_idxs)
+            topos_dict[primary_idx].extend(secondary_idxs)
 
-        topos_list.extend([topos])
-
-    return topos_list
+    return topos_dict
 
 
-def get_neighbors(x2y, y2x, astype=None):
+def get_neighbors(x2y, y2x, astype=None, valtype=set()):
     """Get all neighboring graph elements of the same type.
 
     Parameters
@@ -441,6 +477,8 @@ def get_neighbors(x2y, y2x, astype=None):
         Element type2 to element type1 crosswalk.
     astype : list or dict
         Return the lookup as either type. Default is ``None``.
+    valtype : set
+        Type of value if ``astype`` is a ``dict``. Default is ``set()``.
 
     Returns
     -------
@@ -459,6 +497,8 @@ def get_neighbors(x2y, y2x, astype=None):
             for v in vn:
                 x2x[k].update(y2x[v])
                 x2x[k].discard(k)
+        if valtype != set:
+            x2x = {k: list(v) for k, v in x2x.items()}
 
     elif astype == list:
         x2x = []
@@ -493,7 +533,7 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
 
     Returns
     -------
-    xw : list
+    xw : dict
         The adjacency crosswalk.
 
     """
@@ -501,18 +541,19 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
     # if c2 in ["nodeNeighs", "segmNeighs"]:
     #    xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
     ############# what's this for? ------------ take care of this later....
+
     if c2 in ["n_neighs", "s_neighs"]:
         raise RuntimeError()
-        xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
+        xw = {df[c1][ix]: literal_eval(df[c2][ix]) for ix in df.index}
 
     elif c2 in ["degree", "length", "TLID"]:
-        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix] for ix in df.index}
 
     elif c2 == geo_col and not stipulation:
-        xw = [[df[c1][ix], df[c2][ix]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix] for ix in df.index}
 
     elif c2 == geo_col and stipulation == "coords":
-        xw = [[df[c1][ix], df[c2][ix].coords[:]] for ix in df.index]
+        xw = {df[c1][ix]: df[c2][ix].coords[:] for ix in df.index}
 
     else:
         raise ValueError("Column '%s' not found." % c2)
@@ -532,19 +573,19 @@ def assert_2_neighs(net):
 
     """
 
-    more_2_neighs = [k for (k, v) in net.segm2node if len(v) > 2]
+    more_2_neighs = [k for k, v in net.segm2node.items() if len(v) > 2]
 
     if more_2_neighs:
         msg = "Adjacency value corruption. The segments listed below are incident with "
         msg += " more than two nodes.\n\nProblem segment IDs: %s" % str(more_2_neighs)
         raise AssertionError(msg)
 
-    rings = [k for (k, v) in net.segm2node if len(v) < 2]
+    rings = [k for k, v in net.segm2node.items() if len(v) < 2]
 
     if rings:
         for ring in rings:
-            n1 = net.segm2node[ring][1][0]
-            net.segm2node[ring][1] = [n1, n1]
+            n1 = net.segm2node[ring][0]
+            net.segm2node[ring] = [n1, n1]
 
     return net
 
@@ -554,12 +595,12 @@ def get_roots(adj):
 
     Parameters
     ----------
-    adj : list
+    adj : dict
         Record of adjacency.
 
     Returns
     -------
-    ccs : list
+    ccs : dict
         Rooted connected components
 
     """
@@ -572,14 +613,14 @@ def get_roots(adj):
         obj_rootdepth = obj, root[obj][1]
         return obj_rootdepth
 
-    if type(adj) == dict:
-        adj = [[idx, list(cc)] for idx, cc in list(adj.items())]
+    # if type(adj) == dict:################################################################
+    #    adj = [[idx, list(cc)] for idx, cc in list(adj.items())]
 
     # 1. set all objects within the root lookup to zero
-    root = {i: (i, 0) for (i, neighs) in adj}
+    root = {i: (i, 0) for i, neighs in adj.items()}
 
     # 2. iterate through each combination of neighbors
-    for (i, neighs) in adj:
+    for i, neighs in adj.items():
         for j in neighs:
 
             # 2-A. find the root of i and its depth
@@ -597,11 +638,10 @@ def get_roots(adj):
                 root[_min] = (root[_max][0], -1)
 
     # 3. create empty list entry for each rooted connected component
-    ccs = {i: [] for (i, neighs) in adj if root[i][0] == i}
+    ccs = {i: [] for (i, neighs) in adj.items() if root[i][0] == i}
 
     # 4. fill each list with the components
-    [ccs[_find_root_depth(i, root)[0]].append(i) for (i, neighs) in adj]
-    ccs = [list(cc) for cc in list(ccs.items())]
+    [ccs[_find_root_depth(i, root)[0]].append(i) for (i, neighs) in adj.items()]
 
     return ccs
 
@@ -625,7 +665,7 @@ def get_cc_len(net, len_col=None):
     net.s_data["ccLength"] = numpy.nan
     cc_lens = {}
 
-    for (k, v) in net.segm_cc:
+    for k, v in net.segm_cc.items():
         new_v = net.s_data[net.s_data[net.sid_name].isin(v)]
         new_v = new_v[len_col].sum()
         net.s_data.loc[net.s_data[net.sid_name].isin(v), "ccLength"] = new_v
@@ -639,8 +679,8 @@ def get_largest_cc(ccs, smallkeys=True):
 
     Parameters
     ----------
-    ccs : list
-        A list of connected components.
+    ccs : dict
+        A lookup of connected components.
     smallkeys : bool
         Return the keys of the smaller components. Default is ``True``.
 
@@ -652,18 +692,18 @@ def get_largest_cc(ccs, smallkeys=True):
 
     """
 
-    largest = max(ccs, key=lambda k: len(k[1]))
+    largest = max(ccs.items(), key=lambda k: len(k[1]))
     largest_key = largest[0]
     largest_values = largest[1]
 
-    results = [largest_key, largest_values]
+    results = {largest_key: largest_values}
 
     if smallkeys:
         non_largest = []
-        for (cck, ccvs) in ccs:
+        for cck, ccvs in ccs.items():
             if cck is not largest_key:
                 non_largest.extend(ccvs)
-        results = [largest_key, largest_values], non_largest
+        results = results, non_largest
 
     return results
 
@@ -692,9 +732,11 @@ def update_adj(net, seg_keys, node_keys):
     net.node_cc = net.largest_node_cc
 
     # Set component ID to dataframe
-    net.s_data = net.s_data[net.s_data[net.sid_name].isin(net.segm_cc[1])]
+    scc_vals = list(net.segm_cc.values())[0]
+    net.s_data = net.s_data[net.s_data[net.sid_name].isin(scc_vals)]
     net.s_data.reset_index(drop=True, inplace=True)
-    net.n_data = net.n_data[net.n_data[net.nid_name].isin(net.node_cc[1])]
+    ncc_vals = list(net.node_cc.values())[0]
+    net.n_data = net.n_data[net.n_data[net.nid_name].isin(ncc_vals)]
     net.n_data.reset_index(drop=True, inplace=True)
 
 
@@ -703,20 +745,20 @@ def remove_adj(e2e, remove):
 
     Parameters
     ----------
-    e2e : list
-        The element-to-element relationship list. This is either an
+    e2e : dict
+        The element-to-element relationships. This is either an
         'x2x' relationship or 'x2y' relationship.
     remove : list
         The keys to remove from list.
 
     Returns
     -------
-    e2e : list
-        The updated e2e relationship list.
+    e2e : dict
+        The updated e2e relationships.
 
     """
 
-    e2e = [[k, vs] for (k, vs) in e2e if k not in set(remove)]
+    e2e = {k: vs for k, vs in e2e.items() if k not in set(remove)}
     return e2e
 
 
@@ -758,7 +800,7 @@ def calc_valency(net, col=None):
     """
 
     n2d = {}
-    for (node, segs) in net.node2segm:
+    for node, segs in net.node2segm.items():
         loops = 0
         for s in segs:
             segv = net.s_data[net.sid_name] == s
@@ -791,7 +833,7 @@ def branch_or_leaf(net, geom_type=None):
 
     Returns
     -------
-    geom2ge : list
+    geom2ge : dict
         Geometry ID-to-graph element type crosswalk.
 
     """
@@ -804,15 +846,10 @@ def branch_or_leaf(net, geom_type=None):
         msg = "'geom_type' of %s not valid." % geom_type
         raise ValueError(msg)
 
-    # super hacky due to https://github.com/jGaboardi/tigernet/issues/29
-    # should fix this later... why was I using a lists for lookups
-    # instead of dicts in the original implementation anyway???
-    s2n = dict(net.segm2node)
-
-    geom2ge = []
+    geom2ge = {}
     for idx in id_list:
         if geom_type == "segm":
-            n1, n2 = s2n[idx][0], s2n[idx][1]
+            n1, n2 = net.segm2node[idx][0], net.segm2node[idx][1]
             n1d, n2d = net.node2degree[n1], net.node2degree[n2]
 
             if n1d == 1 or n2d == 1:
@@ -825,7 +862,7 @@ def branch_or_leaf(net, geom_type=None):
                 graph_element = "leaf"
             else:
                 graph_element = "branch"
-        geom2ge.append([idx, graph_element])
+        geom2ge[idx] = graph_element
 
     return geom2ge
 
@@ -868,10 +905,10 @@ def _locate_naps(net):
     """
 
     # subset only degree-2 nodes
-    degree_two_nodes = set([n for (n, d) in net.node2degree.items() if d == 2])
+    degree_two_nodes = set([n for n, d in net.node2degree.items() if d == 2])
 
     # recreate n2n xwalk
-    new_n2n = {k: v for (k, v) in net.node2node}
+    new_n2n = {k: v for k, v in net.node2node.items()}
     two2two = {k: new_n2n[k] for k in degree_two_nodes}
 
     # get set intersection of degree-2 node neighbors
@@ -879,19 +916,19 @@ def _locate_naps(net):
         two2two[k] = list(degree_two_nodes.intersection(set(vs)))
 
     # convert back to list
-    two2two = [[k, vs] for k, vs in list(two2two.items())]
+    two2two = {k: vs for k, vs in two2two.items()}
 
     # created rooted non-articulation nodes object
     rooted_napts, napts, napts_count = get_roots(two2two), {}, 0
-    for (k, v) in rooted_napts:
+    for k, v in rooted_napts.items():
         napts_count += 1
         napts[napts_count] = {net.nid_name: v}
 
     # add segment info to rooted non-articulation point object
-    for napt_count, napt_info in list(napts.items()):
+    for napt_count, napt_info in napts.items():
         napt = []
         for napt_node in napt_info[net.nid_name]:
-            napt.extend([i[1] for i in net.node2segm if i[0] == napt_node])
+            napt.extend([v for k, v in net.node2segm.items() if k == napt_node])
 
         # if more than one pair of segments in napt
         napt = set([seg for segs in napt for seg in segs])
@@ -919,7 +956,7 @@ def _simplifysegs(net, na_objs):
     nsn = net.sid_name
 
     # for each bridge
-    for na_objs_sidx, na_objs_info in list(na_objs.items()):
+    for na_objs_sidx, na_objs_info in na_objs.items():
 
         # get the dominant SegIDX and dataframe index
         inherit_attrs_from, idx = _get_hacky_index(net, na_objs_info)
@@ -1272,8 +1309,8 @@ def euc_calc(net, col=None):
     """
 
     net.s_data[col] = numpy.nan
-    for (seg_k, (n1, n2)) in net.segm2node:
-        p1, p2 = net.node2coords[n1][1][0], net.node2coords[n2][1][0]
+    for seg_k, (n1, n2) in net.segm2node.items():
+        p1, p2 = net.node2coords[n1][0], net.node2coords[n2][0]
         ed = _euc_dist(p1, p2)
         net.s_data.loc[(net.s_data[net.sid_name] == seg_k), col] = ed
 
@@ -1533,8 +1570,7 @@ def restriction_welder(net):
         s2s_cc = get_roots(s2s)
 
         # weld together segments from each component of the group
-        for cc in s2s_cc:
-            keep_id, all_ids = cc[0], cc[1]
+        for keep_id, all_ids in s2s_cc.items():
             drop_ids = copy.deepcopy(all_ids)
             drop_ids.remove(keep_id)
 

@@ -46,7 +46,7 @@ class TestUtilsErrors(unittest.TestCase):
 
     def test_assert_2_neighs(self):
         _net = copy.deepcopy(self.lattice_network)
-        _net.segm2node.append([999, [888, 777, 666]])
+        _net.segm2node[999] = [888, 777, 666]
         with self.assertRaises(AssertionError):
             tigernet.utils.assert_2_neighs(_net)
 
