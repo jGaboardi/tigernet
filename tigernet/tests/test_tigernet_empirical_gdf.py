@@ -46,7 +46,7 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
         kwargs.update(mtfcc_kws)
 
-        # create a network isntance
+        # create a network instance
         self.network = tigernet.Network(**kwargs)
 
     def test_network_sdata(self):

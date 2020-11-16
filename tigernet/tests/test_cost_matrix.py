@@ -4,8 +4,31 @@
 import tigernet
 import unittest
 import numpy
+import geopandas
 
 inf = numpy.inf
+
+
+# get the roads shapefile as a GeoDataFrame
+bbox = (-84.279, 30.480, -84.245, 30.505)
+f = "zip://test_data/Edges_Leon_FL_2010.zip!Edges_Leon_FL_2010.shp"
+gdf = geopandas.read_file(f, bbox=bbox)
+gdf = gdf.to_crs("epsg:2779")
+
+# filter out only roads
+yes_roads = gdf["ROADFLG"] == "Y"
+roads = gdf[yes_roads].copy()
+
+# Tiger attributes primary and secondary
+ATTR1, ATTR2 = "MTFCC", "TLID"
+
+# segment welding and splitting stipulations --------------------------------------------
+INTRST = "S1100"  # interstates mtfcc code
+RAMP = "S1630"  # ramp mtfcc code
+SERV_DR = "S1640"  # service drive mtfcc code
+SPLIT_GRP = "FULLNAME"  # grouped by this variable
+SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
+SKIP_RESTR = True  # no weld retry if still MLS
 
 
 class TestNetworkCostMatrixLattice1x1(unittest.TestCase):
@@ -502,12 +525,81 @@ class TestNetworkCostMatrixSimplifyBarb(unittest.TestCase):
 
 class TestNetworkCostMatrixEmpircalGDF(unittest.TestCase):
     def setUp(self):
-        pass
 
+        # set up the network instantiation parameters
+        discard_segs = None
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
+        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
+        kwargs.update(attr_kws)
+        comp_kws = {"record_components": True, "largest_component": True}
+        kwargs.update(comp_kws)
+        geom_kws = {"record_geom": True, "calc_len": True}
+        kwargs.update(geom_kws)
+        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
+        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
+        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
+        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
+        kwargs.update(mtfcc_kws)
 
-class TestGraphCostMatrixEmpircalGDF(unittest.TestCase):
-    def setUp(self):
-        pass
+        # create a network instance
+        self.network = tigernet.Network(**kwargs)
+
+        # simplify network
+        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
+        self.network.simplify_network(inplace=True, **kws)
+
+        # cost matrix
+        self.matrix = self.network.cost_matrix(asattr=False)
+
+        # shortest path trees
+        _, self.paths = self.network.cost_matrix(wpaths=True, asattr=False)
+
+    def test_network_cost_matrix(self):
+        known_cost_matrix = numpy.array(
+            [
+                [0.0, 212.3835341, 167.23911279, 343.31388701],
+                [212.3835341, 0.0, 120.53015797, 296.60493218],
+                [167.23911279, 120.53015797, 0.0, 176.07477422],
+                [343.31388701, 296.60493218, 176.07477422, 0.0],
+            ]
+        )
+        observed_cost_matrix = self.matrix[:4, :4]
+        numpy.testing.assert_array_almost_equal(observed_cost_matrix, known_cost_matrix)
+
+    def test_network_paths_1(self):
+        known_src, known_dest = 0, 0
+        known_path = [0]
+        observed_path = self.paths[known_src][known_dest]
+        self.assertEqual(observed_path, known_path)
+
+    def test_network_paths_2(self):
+        known_src, known_dest = 19, 99
+        known_path = [98, 18, 19]
+        observed_path = self.paths[known_src][known_dest]
+        self.assertEqual(observed_path, known_path)
+
+    def test_network_paths_3(self):
+        known_src, known_dest = 20, 17
+        known_path = [
+            16,
+            15,
+            2,
+            1,
+            57,
+            56,
+            73,
+            188,
+            101,
+            199,
+            216,
+            148,
+            154,
+            110,
+            21,
+            20,
+        ]
+        observed_path = self.paths[known_src][known_dest]
+        self.assertEqual(observed_path, known_path)
 
 
 if __name__ == "__main__":

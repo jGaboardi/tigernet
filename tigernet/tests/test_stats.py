@@ -47,11 +47,13 @@ class TestNeworkStatsBarb(unittest.TestCase):
 
         # full network
         self.network = tigernet.Network(s_data=barb.copy())
-        self.network.calc_net_stats()
+        with self.assertWarns(UserWarning):
+            self.network.calc_net_stats()
 
         # simplified network
         self.graph = self.network.simplify_network()
-        self.graph.calc_net_stats()
+        with self.assertWarns(UserWarning):
+            self.graph.calc_net_stats()
 
     def test_barb_network_sinuosity(self):
         known_sinuosity = [1.0] * 10
@@ -140,11 +142,13 @@ class TestNeworkStatsSineLine(unittest.TestCase):
 
         # full network
         self.network = tigernet.Network(s_data=sine.copy())
-        self.network.calc_net_stats()
+        with self.assertWarns(UserWarning):
+            self.network.calc_net_stats()
 
         # simplified network
         self.graph = self.network.simplify_network()
-        self.graph.calc_net_stats()
+        with self.assertWarns(UserWarning):
+            self.graph.calc_net_stats()
 
     def test_sine_network_sinuosity(self):
         known_sinuosity = [
@@ -241,7 +245,8 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
     def test_lattice_network_wcomps_connectivity(self):
         # with recorded components
         net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
-        net_wcomps.calc_net_stats(conn_stat="all")
+        with self.assertWarns(UserWarning):
+            net_wcomps.calc_net_stats(conn_stat="all")
 
         known_alpha = 0.0
         observed_alpha = net_wcomps.alpha
@@ -262,7 +267,8 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
     def test_lattice_network_wcomps_alpha(self):
         # with recorded components
         net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
-        net_wcomps.calc_net_stats(conn_stat="alpha")
+        with self.assertWarns(UserWarning):
+            net_wcomps.calc_net_stats(conn_stat="alpha")
 
         known_alpha = 0.0
         observed_alpha = net_wcomps.alpha
@@ -271,7 +277,8 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
     def test_lattice_network_wcomps_beta(self):
         # with recorded components
         net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
-        net_wcomps.calc_net_stats(conn_stat="beta")
+        with self.assertWarns(UserWarning):
+            net_wcomps.calc_net_stats(conn_stat="beta")
 
         known_beta = 0.8
         observed_beta = net_wcomps.beta
@@ -280,7 +287,8 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
     def test_lattice_network_wcomps_gamma(self):
         # with recorded components
         net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
-        net_wcomps.calc_net_stats(conn_stat="gamma")
+        with self.assertWarns(UserWarning):
+            net_wcomps.calc_net_stats(conn_stat="gamma")
 
         known_gamma = 0.3333333333333333
         observed_gamma = net_wcomps.gamma
@@ -289,7 +297,8 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
     def test_lattice_network_wcomps_eta(self):
         # with recorded components
         net_wcomps = tigernet.Network(s_data=self.lats.copy(), record_components=True)
-        net_wcomps.calc_net_stats(conn_stat="eta")
+        with self.assertWarns(UserWarning):
+            net_wcomps.calc_net_stats(conn_stat="eta")
 
         known_eta = 2.75
         observed_eta = net_wcomps.eta
@@ -327,6 +336,15 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
         self.assertEqual(observed_entropy, known_entropy)
 
 
+class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
+    def setUp(self):
+        pass
+
+        # diameter
+        # radius
+        # circuity
+
+
 ##########################################################################################
 # Empirical testing
 ##########################################################################################
@@ -352,60 +370,43 @@ class TestNeworkStatsEmpirical(unittest.TestCase):
 
         # full network
         self.network = tigernet.Network(**kwargs)
-        self.network.calc_net_stats()
 
         # simplified network
         kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.graph = self.network.simplify_network(**kws)
-        self.graph.calc_net_stats()
+        self.network.simplify_network(inplace=True, **kws)
+        self.network.cost_matrix()
+        self.network.calc_net_stats()
 
-    """
     def test_network_sinuosity(self):
-        known_sinuosity = [1.0] * 10
-        observed_sinuosity = list(self.network.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
+        known_sinuosity = [
+            1.1814786403587332,
+            1.0,
+            1.0002181434117707,
+            1.000964242197008,
+            1.0025264664243565,
+        ]
+        observed_sinuosity = list(self.network.s_data["sinuosity"][:5])
+        self.assertAlmostEqual(observed_sinuosity, known_sinuosity)
 
     def test_network_sinuosity_stats(self):
-        known_max = 1.0
+        known_max = 4.479497558172366
         observed_max = self.network.max_sinuosity
-        self.assertEqual(observed_max, known_max)
+        self.assertAlmostEqual(observed_max, known_max)
 
         known_min = 1.0
         observed_min = self.network.min_sinuosity
         self.assertEqual(observed_min, known_min)
 
-        known_mean = 1.0
+        known_mean = 1.1300036198574728
         observed_mean = self.network.mean_sinuosity
-        self.assertEqual(observed_mean, known_mean)
+        self.assertAlmostEqual(observed_mean, known_mean)
 
-        known_std = 0.0
+        known_std = 0.48197915355062204
         observed_std = self.network.std_sinuosity
-        self.assertEqual(observed_std, known_std)
-
-    def test_graph_sinuosity(self):
-        known_sinuosity = [2.23606797749979, numpy.inf, 1.0]
-        observed_sinuosity = list(self.graph.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
-
-    def test_graph_sinuosity_stats(self):
-        known_max = 2.23606797749979
-        observed_max = self.graph.max_sinuosity
-        self.assertEqual(observed_max, known_max)
-
-        known_min = 1.0
-        observed_min = self.graph.min_sinuosity
-        self.assertEqual(observed_min, known_min)
-
-        known_mean = 1.8240453183331933
-        observed_mean = self.graph.mean_sinuosity
-        self.assertEqual(observed_mean, known_mean)
-
-        known_std = 0.71364417954618
-        observed_std = self.graph.std_sinuosity
-        self.assertEqual(observed_std, known_std)
+        self.assertAlmostEqual(observed_std, known_std)
 
     def test_network_node_degree_stats(self):
-        known_max = 4
+        known_max = 5
         observed_max = self.network.max_node_degree
         self.assertEqual(observed_max, known_max)
 
@@ -413,72 +414,57 @@ class TestNeworkStatsEmpirical(unittest.TestCase):
         observed_min = self.network.min_node_degree
         self.assertEqual(observed_min, known_min)
 
-        known_mean = 2.0
+        known_mean = 2.4125874125874125
         observed_mean = self.network.mean_node_degree
-        self.assertEqual(observed_mean, known_mean)
+        self.assertAlmostEqual(observed_mean, known_mean)
 
-        known_std = 0.816496580927726
+        known_std = 1.0650997569862783
         observed_std = self.network.std_node_degree
-        self.assertEqual(observed_std, known_std)
-
-    def test_graph_node_degree_stats(self):
-        known_max = 4
-        observed_max = self.graph.max_node_degree
-        self.assertEqual(observed_max, known_max)
-
-        known_min = 1
-        observed_min = self.graph.min_node_degree
-        self.assertEqual(observed_min, known_min)
-
-        known_mean = 2.0
-        observed_mean = self.graph.mean_node_degree
-        self.assertEqual(observed_mean, known_mean)
-
-        known_std = 1.7320508075688772
-        observed_std = self.graph.std_node_degree
-        self.assertEqual(observed_std, known_std)
-    """
-
-    """
-    def test_network_node_degree_stats(self):
-        known_max = 2
-        observed_max = self.network.max_node_degree
-        self.assertEqual(observed_max, known_max)
-
-        known_min = 1
-        observed_min = self.network.min_node_degree
-        self.assertEqual(observed_min, known_min)
-
-        known_mean = 1.3333333333333333
-        observed_mean = self.network.mean_node_degree
-        self.assertEqual(observed_mean, known_mean)
-
-        known_std = 0.5163977794943223
-        observed_std = self.network.std_node_degree
-        self.assertEqual(observed_std, known_std)
-
-    def test_graph_node_degree_stats(self):
-        known_max = 1
-        observed_max = self.graph.max_node_degree
-        self.assertEqual(observed_max, known_max)
-
-        known_min = 1
-        observed_min = self.graph.min_node_degree
-        self.assertEqual(observed_min, known_min)
-
-        known_mean = 1.0
-        observed_mean = self.graph.mean_node_degree
-        self.assertEqual(observed_mean, known_mean)
-
-        known_std = 0.0
-        observed_std = self.graph.std_node_degree
-        self.assertEqual(observed_std, known_std)
-    """
+        self.assertAlmostEqual(observed_std, known_std)
 
 
 class TestNeworkConnectivityEmpirical(unittest.TestCase):
     def setUp(self):
-        pass
+        # set up the network instantiation parameters
+        discard_segs = None
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
+        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
+        kwargs.update(attr_kws)
+        comp_kws = {"record_components": True, "largest_component": True}
+        kwargs.update(comp_kws)
+        geom_kws = {"record_geom": True, "calc_len": True}
+        kwargs.update(geom_kws)
+        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
+        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
+        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
+        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
+        kwargs.update(mtfcc_kws)
+
+        # full network
+        self.network = tigernet.Network(**kwargs)
+
+        # simplified network
+        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
+        self.network.simplify_network(inplace=True, **kws)
+        with self.assertWarns(UserWarning):
+            self.network.calc_net_stats(conn_stat="all")
+
+    def test_lattice_network_wcomps_connectivity(self):
+        known_alpha = 0.10582010582010581
+        observed_alpha = self.network.alpha
+        self.assertAlmostEqual(observed_alpha, known_alpha)
+
+        known_beta = 1.2062937062937062
+        observed_beta = self.network.beta
+        self.assertAlmostEqual(observed_beta, known_beta)
+
+        known_gamma = 0.40492957746478875
+        observed_gamma = self.network.gamma
+        self.assertAlmostEqual(observed_gamma, known_gamma)
+
+        known_eta = 217.00458598445144
+        observed_eta = self.network.eta
+        self.assertAlmostEqual(observed_eta, known_eta)
 
 
 class TestNeworkEntropyEmpirical(unittest.TestCase):
@@ -518,6 +504,15 @@ class TestNeworkEntropyEmpirical(unittest.TestCase):
         known_entropy = 0.9469505064601262
         observed_entropy = self.network.network_mtfcc_entropy
         self.assertAlmostEqual(observed_entropy, known_entropy)
+
+
+class TestNeworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
+    def setUp(self):
+        pass
+
+        # diameter
+        # radius
+        # circuity
 
 
 if __name__ == "__main__":
