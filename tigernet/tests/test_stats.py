@@ -386,7 +386,8 @@ class TestNeworkStatsEmpirical(unittest.TestCase):
             1.0025264664243565,
         ]
         observed_sinuosity = list(self.network.s_data["sinuosity"][:5])
-        self.assertAlmostEqual(observed_sinuosity, known_sinuosity)
+        for k, o in zip(known_sinuosity, observed_sinuosity):
+            self.assertAlmostEqual(o, k)
 
     def test_network_sinuosity_stats(self):
         known_max = 4.479497558172366
