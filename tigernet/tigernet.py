@@ -6,6 +6,7 @@ from . import stats
 from . import info
 
 import copy
+import warnings
 
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
@@ -603,6 +604,24 @@ class Network:
             else:
                 raise ValueError("Connectivity measure '%s' not supported." % _cs)
 
+        # network diameter, radius, circuity
+        mtx_str = "n2n_matrix"
+        if not hasattr(self, mtx_str):
+            msg = "The 'Network' has no '%s' attribute. " % mtx_str
+            msg += "Run 'cost_matrix()' and try again."
+            warnings.warn(msg)
+        else:
+            mtx = getattr(self, mtx_str)
+
+            # network diameter -- longest shortest path
+            self.diameter = stats.dist_metric(mtx, "max")
+
+            # network radius -- shortest shortest path
+            self.radius = stats.dist_metric(mtx, "min")
+
+            # circuity
+            stats.circuity(self)
+
     def calc_entropy(self, ent_col, frame_name):
         """Network entropy statistics. For descriptions see ``stats.entropies()``.
 
@@ -633,31 +652,28 @@ class Network:
         setattr(self, attr_name, network_entropy)
 
     def stats_frame(self):
-        """
+        """###############################################################
         # create dataframe of descriptive network stats
         if hasattr(self, 'n2n_matrix'):
             sauce.get_stats_frame(self)
 
         """
-        pass
+        pass  ###############################################################
 
-    def cost_matrix(
-        self, calc_stats=False, validate_symmetry=False, wpaths=False, asattr=True
-    ):
-        """Network node-to-node cost matrix calculation with
-        options for generating shortests paths along tree.
+    def cost_matrix(self, wpaths=False, asattr=True, validate_symmetry=True):
+        """Network node-to-node cost matrix calculation with options for generating
+        shortest paths along tree. For best results the network should be simplified
+        prior to running this method.
 
         Parameters
         ----------
-        calc_stats : bool
-            Calculate diameter and radius of the network. #######################################
-        validate_symmetry : bool
-            Validate matrix symmetry. Default is ``False``. #########################################
         wpaths : bool
             Generate shortest paths tree. Default is ``False``.
         asattr : bool
             Set ``n2n_matrix`` and ``paths`` as attributes of ``Network`` if ``True``,
             otherwise return them. Default is ``True``.
+        validate_symmetry : bool
+            Validate matrix symmetry. Default is ``False``.
 
         Returns
         -------
@@ -668,32 +684,24 @@ class Network:
 
         """
 
+        # check whether IDs are consecutive and sequential
+        i1 = self.s_ids[-1]
+        i2 = self.n_segm - 1
+        i3 = list(self.s_data[self.sid_name])[-1]
+        simplified = i1 == i2 == i3
+        if not simplified:
+            msg = "Network element IDs are not consecutive/sequential. "
+            msg += "Simplify the network and try again."
+            raise IndexError(msg)
+
         n2n_matrix, paths = utils.shortest_path(self, gp=wpaths)
-
-        if calc_stats:
-
-            # network diameter -- longest shortest path
-            self.diameter = sauce._get_dia_rad(n2n_matrix, "max")
-
-            # network radius -- shortest shortest path
-            self.radius = sauce._get_dia_rad(n2n_matrix, "min")
-
-            # circuity
-            self.d_net = n2n_matrix.sum()  # all network shortest paths
-            coords = [v[0] for (k, v) in self.node2coords.items()]
-            self.n2n_euclidean = distance_matrix(coords, coords)
-
-            # all euclidean shortest paths
-            self.d_euc = self.n2n_euclidean.sum()
-            self.circuity = self.d_net / self.d_euc
-
-            delattr(self, "n2n_euclidean")
 
         if validate_symmetry:
             # validate symmetry
             if n2n_matrix[0][0] == 0.0:
-                if not sauce._check_symmetric(n2n_matrix, tol=1e-8):
-                    raise Exception("all to all matrix is not symmetric")
+                if not utils._check_symmetric(n2n_matrix, tol=1e-8):
+                    msg = "The all-to-all cost matrix is not symmetric."
+                    raise ValueError(msg)
 
         if asattr:
             self.n2n_matrix = n2n_matrix

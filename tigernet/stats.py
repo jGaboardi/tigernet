@@ -3,6 +3,7 @@
 
 from . import utils
 import numpy
+from scipy.spatial import distance_matrix
 
 
 def calc_sinuosity(net):
@@ -143,8 +144,12 @@ def entropies(ent_col, frame, n_elems):
     Parameters
     ----------
 
-    series :
-
+    ent_col : str
+        Column on with to calculate entropy.
+    frame : geopandas.GeoDataFrame
+        Full network dataframe.
+    n_elems : int
+        Number of dataframe records.
 
     Returns
     -------
@@ -162,3 +167,58 @@ def entropies(ent_col, frame, n_elems):
         indiv_entropies[value] = entropy
 
     return indiv_entropies
+
+
+def dist_metric(mtx, stat):
+    """Get the diameter or radius of a network with associated nodes.
+
+    Parameters
+    ----------
+    mtx : numpy.ndarray
+        Cost matrix.
+    stat : str
+        ``'min'`` or ``'max'``. Default is ``'max'``.
+
+    Returns
+    -------
+    idx_val : list
+        Metric in the form ``[idx,value]``.
+
+    """
+
+    if stat == "max":
+        value = mtx.max()
+    else:
+        value = mtx[mtx != 0.0].min()
+
+    idx = tuple(numpy.where(mtx == value))
+
+    if len(idx[0]) > 1:
+        idx = tuple(idx[0])
+    else:
+        idx = tuple([idx[0][0], idx[1][0]])
+
+    idx_val = [idx, value]
+
+    return idx_val
+
+
+def circuity(net):
+    """Calculate network circuity.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    mtx : numpy.ndarray
+        Cost matrix.
+
+    """
+
+    # all network shortest paths
+    net.d_net = net.n2n_matrix.sum()
+    coords = [v[0] for (k, v) in net.node2coords.items()]
+    n2n_euclidean = distance_matrix(coords, coords)
+
+    # all euclidean shortest paths
+    net.d_euc = n2n_euclidean.sum()
+    net.circuity = net.d_net / net.d_euc

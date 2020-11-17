@@ -103,14 +103,15 @@ def add_ids(frame, id_name=None):
     Parameters
     ----------
     frame : geopandas.GeoDataFrame
-        dataframe of geometries
+        Dataframe of geometries.
     id_name : str
         name of id column. Default is None.
 
     Returns
     -------
     frame : geopandas.GeoDataFrame
-        updated dataframe of geometries
+        Updated dataframe of geometries.
+
     """
 
     frame[id_name] = [idx for idx in range(frame.shape[0])]
@@ -2224,3 +2225,25 @@ def generate_tree(pred):
         tree[i] = path
 
     return tree
+
+
+def _check_symmetric(a, tol=1e-8):
+    """Validate matrix symmetry for nXn matrices.
+
+    Parameters
+    ----------
+    a : numpy.ndarray
+        Cost matrix.
+    tol : float
+        Tolerance. Default is ``1e-8``.
+
+    Returns
+    -------
+    symmetric : bool
+        Symmetric (``True``) or not (``False``).
+
+    """
+
+    symmetric = numpy.allclose(a, a.T, atol=tol)
+
+    return symmetric
