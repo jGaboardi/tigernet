@@ -1475,31 +1475,6 @@ def record_filter(df, column=None, sval=None, mval=None, oper=None):
             return df[~frame_col.isin(mval)].copy()
 
 
-def label_rings(df, geo_col=None):
-    """Label each line segment as ring (``True``) or not (``False``).
-
-    Parameters
-    ----------
-    df : geopandas.GeoDataFrame
-        Dataframe of geometries.
-    geo_col : str
-        Geometry column name. Default is ``None``.
-
-    Returns
-    -------
-    df : geopandas.GeoDataFrame
-        Dataframe of geometries.
-
-    """
-
-    df["ring"] = ["False"] * df.shape[0]
-    for idx in df.index:
-        if df[geo_col][idx].is_ring:
-            df["ring"][idx] = "True"
-
-    return df
-
-
 def cleanse_supercycle(net, gdf, inherit_attrs=False, calc_len=True):
     """One iteration of a cleanse supercycle; then repeat as necessary.
     1. Drop equal geoms; 2. Drop contained geoms; 3. Split line segments
