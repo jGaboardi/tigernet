@@ -1390,7 +1390,7 @@ def initial_subset(net, raw_file, calc_len=False):
     if net.discard_segs:
         net.s_data = net.s_data[~net.s_data[net.attr2].isin(net.discard_segs)]
 
-    # Add three new MTFCC columns for feature class, description, and rank
+    # Add two new MTFCC columns for feature class and description
     if net.mtfcc_types:
         mtfcc_cols = ["FClass", "Desc"]
         for c in mtfcc_cols:

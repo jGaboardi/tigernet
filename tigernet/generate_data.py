@@ -7,6 +7,7 @@ from shapely.geometry import Point, LineString
 
 from .utils import _get_lat_lines
 
+
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
@@ -151,3 +152,64 @@ def generate_lattice(
     lat_arcs[mtfcc] = [mtfcc_label] * lat_arcs.shape[0]
 
     return lat_arcs
+
+
+def generate_obs(npts, s_df, near_net=None, restrict=None, seed=0):
+    """Generate random point observations.
+
+    Parameters
+    ----------
+    npts : int
+        The number of random points desired.
+    s_df : geopandas.GeoDataFrame
+        Network line segments.
+    near_net : {int, float}
+        The distance from segments to generate point. If set to  ``None``
+        the full area in ``s_df.total_bounds`` is used. Default is ``None``.
+    restrict : list
+        Do not generate points along these MTFCC types. Default is ``None``.
+    seed : int
+        The random seed for point generation. Default is ``0``
+
+    Returns
+    -------
+    rand_obs : geopandas.GeoDataFrame
+        Randomly generated point observations.
+
+    """
+
+    # extract bounds
+    minx, miny, maxx, maxy = s_df.total_bounds
+
+    # set random seed and declare random alias
+    numpy.random.seed(seed)
+    nru = numpy.random.uniform
+
+    # declare anonymous function for point generation
+    rand_pt = lambda xy: Point(nru(minx, maxx), nru(miny, maxy))
+
+    # generate point within a specified proximity to the network
+    if near_net:
+        if restrict:
+            # remove restricted segments from consideration
+            segms = s_df[~s_df[restrict[0]].isin(restrict[1])].copy()
+        else:
+            segms = s_df.copy()
+        # union of network line segments buffer
+        in_space = segms.buffer(near_net).unary_union
+        # intersection checker
+        intersector = lambda pt: pt.intersects(in_space)
+        rand_pts = []
+        while len(rand_pts) != npts:
+            point = rand_pt(0)
+            if intersector(point):
+                rand_pts.append(point)
+
+    # generate points with the total segment bounds
+    else:
+        rand_pts = [rand_pt(pt) for pt in range(npts)]
+
+    # instantiate as a GeoDataFrame
+    rand_obs = geopandas.GeoDataFrame(geometry=rand_pts)
+
+    return rand_obs
