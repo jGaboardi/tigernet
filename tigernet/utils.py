@@ -208,22 +208,7 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
         frame[col] = numpy.nan
 
         data_type = type(data)
-        if data_type == list:
-            for (k, v) in data:
-                k += add_factor
-
-                if col == "CC":
-                    frame.loc[frame[idx].isin(v), col] = k
-
-                elif idx == "index":
-                    frame.loc[k, col] = str(v)
-
-                else:
-                    frame.loc[(frame[idx] == k), col] = str(v)
-
-            if col == "CC":
-                frame[col] = frame[col].astype("category").astype(int)
-        elif data_type == dict:
+        if data_type == dict:
             for k, v in data.items():
                 k += add_factor
 
@@ -239,7 +224,7 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
             if col == "CC":
                 frame[col] = frame[col].astype("category").astype(int)
         else:
-            msg = "The 'data' parameter is a '%s' but must be a 'list' or 'dict'."
+            msg = "The 'data' parameter is a '%s' but must be a 'dict'."
             raise TypeError(msg % data_type)
 
     return frame
@@ -467,7 +452,7 @@ def associate(
     return topos_dict
 
 
-def get_neighbors(x2y, y2x, astype=None, valtype=set()):
+def get_neighbors(x2y, y2x, valtype=set()):
     """Get all neighboring graph elements of the same type.
 
     Parameters
@@ -476,42 +461,25 @@ def get_neighbors(x2y, y2x, astype=None, valtype=set()):
         Element type1 to element type2 crosswalk.
     y2x : list or dict
         Element type2 to element type1 crosswalk.
-    astype : list or dict
-        Return the lookup as either type. Default is ``None``.
     valtype : set
-        Type of value if ``astype`` is a ``dict``. Default is ``set()``.
+        Datatype of the ``dict`` value if Default is ``set()``.
 
     Returns
     -------
-    x2x : list or dict
+    x2x : dict
         Element type1 to element type1 crosswalk *OR* element type2 to element
-        type2 crosswalk in the form: ``{x1, [x2,x3]}`` *OR* ``[x1, [x2,x3]]``.
+        type2 crosswalk in the form: ``{x1: [x2,x3]}``.
+
     """
 
-    if not astype:
-        raise ValueError("The `astype` parameter must be set.")
-
-    elif astype == dict:
-        x2x = {}
-        for k, vn in list(x2y.items()):
-            x2x[k] = set()
-            for v in vn:
-                x2x[k].update(y2x[v])
-                x2x[k].discard(k)
-        if valtype != set:
-            x2x = {k: list(v) for k, v in x2x.items()}
-
-    elif astype == list:
-        x2x = []
-        for (k, vn) in x2y:
-            x2x.append([k, set()])
-            for v in vn:
-                x2x[k][1].update(y2x[v][1])
-                x2x[k][1].discard(k)
-        x2x = [[k, list(v)] for (k, v) in x2x]
-
-    else:
-        raise TypeError(str(type), "not a valid type for `astype` parameter.")
+    x2x = {}
+    for k, vn in list(x2y.items()):
+        x2x[k] = set()
+        for v in vn:
+            x2x[k].update(y2x[v])
+            x2x[k].discard(k)
+    if valtype != set:
+        x2x = {k: list(v) for k, v in x2x.items()}
 
     return x2x
 
@@ -539,15 +507,7 @@ def xwalk(df, c1=None, c2=None, stipulation=None, geo_col=None):
 
     """
 
-    # if c2 in ["nodeNeighs", "segmNeighs"]:
-    #    xw = [[df[c1][ix], literal_eval(df[c2][ix])] for ix in df.index]
-    ############# what's this for? ------------ take care of this later....
-
-    if c2 in ["n_neighs", "s_neighs"]:
-        raise RuntimeError()
-        xw = {df[c1][ix]: literal_eval(df[c2][ix]) for ix in df.index}
-
-    elif c2 in ["degree", "length", "TLID"]:
+    if c2 in ["degree", "length", "TLID"]:
         xw = {df[c1][ix]: df[c2][ix] for ix in df.index}
 
     elif c2 == geo_col and not stipulation:
@@ -613,9 +573,6 @@ def get_roots(adj):
         # (int, int)
         obj_rootdepth = obj, root[obj][1]
         return obj_rootdepth
-
-    # if type(adj) == dict:################################################################
-    #    adj = [[idx, list(cc)] for idx, cc in list(adj.items())]
 
     # 1. set all objects within the root lookup to zero
     root = {i: (i, 0) for i, neighs in adj.items()}
@@ -1539,8 +1496,8 @@ def restriction_welder(net):
         s2n, n2s = associate(initial_weld=True, net=net, df=restr_ss, ss=ss)
 
         # x2x topologies
-        s2s = get_neighbors(s2n, n2s, astype=dict)
-        n2n = get_neighbors(n2s, s2n, astype=dict)
+        s2s = get_neighbors(s2n, n2s)
+        n2n = get_neighbors(n2s, s2n)
 
         # get rooted connected components
         s2s_cc = get_roots(s2s)

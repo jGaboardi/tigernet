@@ -372,11 +372,11 @@ class Network:
 
         # Associate segments with neighboring segments
         _args = self.segm2node, self.node2segm
-        self.segm2segm = utils.get_neighbors(*_args, astype=dict, valtype=list)
+        self.segm2segm = utils.get_neighbors(*_args, valtype=list)
 
         # Associate nodes with neighboring nodes
         _args = self.node2segm, self.segm2node
-        self.node2node = utils.get_neighbors(*_args, astype=dict, valtype=list)
+        self.node2node = utils.get_neighbors(*_args, valtype=list)
 
         # 1. Catch cases w/ >= 3 neighboring nodes for a segment and throw an error.
         # 2. Catch rings and add start & end node.

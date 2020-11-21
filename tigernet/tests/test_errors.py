@@ -90,18 +90,20 @@ class TestUtilsErrors(unittest.TestCase):
         self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         self.lattice_network = tigernet.Network(s_data=self.lattice)
 
-    def test_get_neighbors(self):
+    def test_bad_xwalk_column(self):
         with self.assertRaises(ValueError):
-            utils.get_neighbors(None, None, astype=None)
-
-        with self.assertRaises(TypeError):
-            utils.get_neighbors(None, None, astype=str)
+            tigernet.utils.xwalk(geopandas.GeoDataFrame(), c1="bad1", c2="bad2")
 
     def test_assert_2_neighs(self):
         _net = copy.deepcopy(self.lattice_network)
         _net.segm2node[999] = [888, 777, 666]
         with self.assertRaises(AssertionError):
             tigernet.utils.assert_2_neighs(_net)
+
+    def test_bad_branch_or_leaf(self):
+        _net = copy.deepcopy(self.lattice_network)
+        with self.assertRaises(ValueError):
+            tigernet.utils.branch_or_leaf(_net, geom_type="rhombus")
 
 
 if __name__ == "__main__":
