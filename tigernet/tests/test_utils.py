@@ -61,9 +61,15 @@ class TestUtils(unittest.TestCase):
         self.network = tigernet.Network(**kwargs)
         """
 
-    def test__weld_MultiLineString(self):
+    def test__weld_MultiLineString_1(self):
         known_weld_wkt = "LINESTRING (0 0, 0 1, 1 1)"
         mls = MultiLineString((((0, 0), (0, 1)), ((0, 1), (1, 1))))
+        observed_weld_wkt = utils._weld_MultiLineString(mls).wkt
+        self.assertEqual(observed_weld_wkt, known_weld_wkt)
+
+    def test__weld_MultiLineString_2(self):
+        known_weld_wkt = "LINESTRING (0 0, 0 1, 1 1)"
+        mls = MultiLineString((((0, 0), (0, 0.99999999)), ((0, 1), (1, 1))))
         observed_weld_wkt = utils._weld_MultiLineString(mls).wkt
         self.assertEqual(observed_weld_wkt, known_weld_wkt)
 
