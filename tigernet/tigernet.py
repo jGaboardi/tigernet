@@ -572,6 +572,20 @@ class Network:
 
         """
 
+        def _set_stat(s: str, xnccs: bool):
+            """Calculate a connectivity stat and set as attribute."""
+
+            # anonymous function for calculating and setting stats
+            setter = lambda _s: setattr(self, _s, stats.connectivity(self, measure=_s))
+
+            if (s == "alpha" and not xnccs) or s != "alpha":
+                setter(s)
+            elif s == "alpha" and xnccs:
+                msg = "\nConnected components must be calculated"
+                msg += " for alpha connectivity.\nCall the"
+                msg += " 'build_components' method and run again."
+                raise AttributeError(msg)
+
         # Calculate the sinuosity of network segments and provide descriptive stats
         stats.calc_sinuosity(self)
 
@@ -589,18 +603,9 @@ class Network:
             _cs = conn_stat.lower()
             if _cs == "all":
                 for _as in _available_stats:
-                    if _as == "alpha" and not x_n_ccs or _as != "alpha":
-                        setattr(self, _as, stats.connectivity(self, measure=_as))
-                    elif _as == "alpha" and x_n_ccs:
-                        msg = "\nConnected components must be calculated"
-                        msg += " for alpha connectivity.\nCall the"
-                        msg += " 'build_components' method and run again."
-                        raise AttributeError(msg)
-                    else:
-                        msg = "Connectivity measure '%s' not supported." % _cs
-                        raise ValueError(msg)
+                    _set_stat(_as, x_n_ccs)
             elif _cs in _available_stats:
-                setattr(self, _cs, stats.connectivity(self, measure=_cs))
+                _set_stat(_cs, x_n_ccs)
             else:
                 raise ValueError("Connectivity measure '%s' not supported." % _cs)
 
@@ -650,15 +655,6 @@ class Network:
         network_entropy = sum(_entropy) * -1.0
         attr_name = "network_%s_entropy" % ent_col.lower()
         setattr(self, attr_name, network_entropy)
-
-    def stats_frame(self):
-        """###############################################################
-        # create dataframe of descriptive network stats
-        if hasattr(self, 'n2n_matrix'):
-            sauce.get_stats_frame(self)
-
-        """
-        pass  ###############################################################
 
     def cost_matrix(self, wpaths=False, asattr=True, validate_symmetry=True):
         """Network node-to-node cost matrix calculation with options for generating

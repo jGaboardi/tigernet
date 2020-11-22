@@ -74,10 +74,15 @@ class TestStatsErrors(unittest.TestCase):
             lattice_network = tigernet.Network(s_data=self.lattice.copy())
             lattice_network.calc_net_stats(conn_stat="alpha")
 
-    def test_bad_alpha(self):
+    def test_bad_stat(self):
         with self.assertRaises(ValueError):
             lattice_network = tigernet.Network(s_data=self.lattice.copy())
             lattice_network.calc_net_stats(conn_stat="omega")
+
+    def test_no_ccs_for_alpa(self):
+        with self.assertRaises(AttributeError):
+            lattice_network = tigernet.Network(s_data=self.lattice.copy())
+            lattice_network.calc_net_stats(conn_stat="all")
 
     def test_no_circuity(self):
         with self.assertWarns(UserWarning):
