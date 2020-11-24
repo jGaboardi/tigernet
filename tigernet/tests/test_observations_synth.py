@@ -300,7 +300,9 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         ]
         observed_obs2coords = self.net_obs.obs2coords
         for k, v in known_obs2coords:
-            self.assertAlmostEqual(observed_obs2coords[k], v)
+            numpy.testing.assert_array_equal(
+                numpy.array(observed_obs2coords[k]), numpy.array(v)
+            )
 
     def test_obs2node(self):
         known_obs2node = [(495, 192), (496, 245), (497, 122), (498, 133), (499, 151)]
@@ -309,15 +311,20 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
             self.assertAlmostEqual(observed_obs2node[k], v)
 
     def test_snapped_points_df_dist2node(self):
-        known_dist2node = [
-            233.41263770566138,
-            298.0459114928476,
-            34.25197729818704,
-            170.95581991959833,
-            300.2025615374258,
-        ]
+        known_dist2node = numpy.array(
+            [
+                233.41263770566138,
+                298.0459114928476,
+                34.25197729818704,
+                170.95581991959833,
+                300.2025615374258,
+            ]
+        )
         observed_dist2node = list(self.net_obs.snapped_points["dist2node"])[-5:]
-        self.assertAlmostEqual(observed_dist2node, known_dist2node)
+
+        numpy.testing.assert_array_equal(
+            numpy.array(numpy.array(observed_dist2node)), known_dist2node
+        )
 
 
 if __name__ == "__main__":
