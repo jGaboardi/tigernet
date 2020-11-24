@@ -1563,6 +1563,9 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
     if not hasattr(net.mtfcc_split, "__iter__"):
         net.mtfcc_split = [net.mtfcc_split]
 
+    if net.s_data.crs:
+        crs = net.s_data.crs
+
     # create subset of segments to split and not split
     if net.mtfcc_split_by and net.mtfcc_split:
         if type(net.mtfcc_split) == list:
@@ -1651,7 +1654,7 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
                 attr_vals[attr].extend(fill_val * n_lines)
 
     # create dataframe
-    split_lines = geopandas.GeoDataFrame(split_lines, columns=[net.geo_col])
+    split_lines = geopandas.GeoDataFrame(split_lines, columns=[net.geo_col], crs=crs)
 
     # fill dataframe with attribute values
     if inherit_attrs:
