@@ -711,7 +711,6 @@ class Network:
             else:
                 return n2n_matrix
 
-    ######################################################################### needs tests...
     def nodes_kdtree(self, only_coords=False):
         """Build a kdtree from the network node coords for observations lookup.
 
