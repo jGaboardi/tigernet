@@ -43,9 +43,9 @@ class TestSyntheticObservationsSegmentRandomLattice1x1(unittest.TestCase):
         net_nodes_kdtree = network.nodes_kdtree()
 
         # associate observations with the network
-        self.net_obs = tigernet.Observations(
-            network, obs.copy(), net_nodes_kdtree, df_name="obs1", df_key="obs_id",
-        )
+        args = network, obs.copy(), net_nodes_kdtree
+        kwargs = {"df_name": "obs1", "df_key": "obs_id"}
+        net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = {
@@ -55,7 +55,6 @@ class TestSyntheticObservationsSegmentRandomLattice1x1(unittest.TestCase):
             (3, "d"): (3.9382849013642325, 8.025957007038718),
             (4, "e"): (8.672964844509263, 3.4509736694319995),
         }
-
         observed_obs2coords = self.net_obs.obs2coords
         for k, v in known_obs2coords.items():
             self.assertAlmostEqual(observed_obs2coords[k], v)
@@ -123,14 +122,9 @@ class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
         net_nodes_kdtree = network.nodes_kdtree()
 
         # associate observations with the network
-        self.net_obs = tigernet.Observations(
-            network,
-            obs.copy(),
-            net_nodes_kdtree,
-            df_name="obs1",
-            df_key="obs_id",
-            snap_to="nodes",
-        )
+        args = network, obs.copy(), net_nodes_kdtree
+        kwargs = {"df_name": "obs1", "df_key": "obs_id", "snap_to": "nodes"}
+        net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = {
@@ -140,7 +134,6 @@ class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
             (3, "d"): (3.9382849013642325, 8.025957007038718),
             (4, "e"): (8.672964844509263, 3.4509736694319995),
         }
-
         observed_obs2coords = self.net_obs.obs2coords
         for k, v in known_obs2coords.items():
             self.assertAlmostEqual(observed_obs2coords[k], v)
@@ -160,11 +153,6 @@ class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
         ]
         observed_dist2node = list(self.net_obs.snapped_points["dist2node"])
         self.assertAlmostEqual(observed_dist2node, known_dist2node)
-
-
-##############################
-###############################
-##############################
 
 
 class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
@@ -200,9 +188,9 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         net_nodes_kdtree = network.nodes_kdtree()
 
         # associate observations with the network
-        self.net_obs = tigernet.Observations(
-            network, obs.copy(), net_nodes_kdtree, df_name="obs1", df_key="obs_id",
-        )
+        args = network, obs.copy(), net_nodes_kdtree
+        kwargs = {"df_name": "obs1", "df_key": "obs_id"}
+        net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = [
@@ -212,7 +200,6 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
             ((498, 498), (622851.6060250874, 166857.07354681785)),
             ((499, 499), (621816.24144166, 166044.17761455863)),
         ]
-
         observed_obs2coords = self.net_obs.obs2coords
         for k, v in known_obs2coords:
             self.assertAlmostEqual(observed_obs2coords[k], v)
@@ -299,14 +286,9 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         net_nodes_kdtree = network.nodes_kdtree()
 
         # associate observations with the network
-        self.net_obs = tigernet.Observations(
-            network,
-            obs.copy(),
-            net_nodes_kdtree,
-            df_name="obs1",
-            df_key="obs_id",
-            snap_to="nodes",
-        )
+        args = network, obs.copy(), net_nodes_kdtree
+        kwargs = {"df_name": "obs1", "df_key": "obs_id", "snap_to": "nodes"}
+        net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = [
