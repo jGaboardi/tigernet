@@ -45,7 +45,7 @@ class TestSyntheticObservationsSegmentRandomLattice1x1(unittest.TestCase):
         # associate observations with the network
         args = network, obs.copy(), net_nodes_kdtree
         kwargs = {"df_name": "obs1", "df_key": "obs_id"}
-        net_obs = tigernet.Observations(*args, **kwargs)
+        self.net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = {
@@ -124,7 +124,7 @@ class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
         # associate observations with the network
         args = network, obs.copy(), net_nodes_kdtree
         kwargs = {"df_name": "obs1", "df_key": "obs_id", "snap_to": "nodes"}
-        net_obs = tigernet.Observations(*args, **kwargs)
+        self.net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = {
@@ -190,7 +190,7 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         # associate observations with the network
         args = network, obs.copy(), net_nodes_kdtree
         kwargs = {"df_name": "obs1", "df_key": "obs_id"}
-        net_obs = tigernet.Observations(*args, **kwargs)
+        self.net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = [
@@ -288,7 +288,7 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         # associate observations with the network
         args = network, obs.copy(), net_nodes_kdtree
         kwargs = {"df_name": "obs1", "df_key": "obs_id", "snap_to": "nodes"}
-        net_obs = tigernet.Observations(*args, **kwargs)
+        self.net_obs = tigernet.Observations(*args, **kwargs)
 
     def test_obs2coords(self):
         known_obs2coords = [
