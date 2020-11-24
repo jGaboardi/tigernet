@@ -3,6 +3,7 @@
 
 import tigernet
 import unittest
+import numpy
 
 
 class TestObservationsSegmentRandomLattice1x1(unittest.TestCase):
@@ -16,13 +17,13 @@ class TestObservationsSegmentRandomLattice1x1(unittest.TestCase):
         self.obs["obs_id"] = ["a", "b", "c", "d", "e"]
 
         # build kd tree
-        self.net_nodes_kdtree = self.lattice_network.nodes_kdtree()
+        net_nodes_kdtree = self.lattice_network.nodes_kdtree()
 
         # associate observations with the network
         self.net_obs = tigernet.Observations(
             self.lattice_network,
             self.obs.copy(),
-            self.net_nodes_kdtree,
+            net_nodes_kdtree,
             df_name="obs1",
             df_key="obs_id",
         )
