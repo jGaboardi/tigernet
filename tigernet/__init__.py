@@ -4,7 +4,7 @@ __version__ = "v0.1-prealpha"
 `tigernet` --- "Network Topology via TIGER/Line Shapefiles"
 """
 
-from .tigernet import Network
+from .tigernet import Network, Observations
 
 from .generate_data import generate_sine_lines, generate_lattice, generate_obs
 

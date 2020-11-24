@@ -8,6 +8,8 @@ from . import info
 import copy
 import warnings
 
+from libpysal import cg
+
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
@@ -708,3 +710,151 @@ class Network:
                 return n2n_matrix, paths
             else:
                 return n2n_matrix
+
+    ######################################################################### needs tests...
+    def nodes_kdtree(self, only_coords=False):
+        """Build a kdtree from the network node coords for observations lookup.
+
+        Parameters
+        ----------
+        only_coords : bool
+            Flag for only coordinated being passed in.
+
+        Returns
+        -------
+        kdtree : scipy.spatial.kdtree.KDTree
+            All network nodes lookup.
+
+        """
+
+        if only_coords:
+            geoms = self.n_data[self.geo_col]
+            coords = list(zip(geoms.x, geoms.y))
+            kdtree = cg.KDTree(coords)
+        else:
+            coords = [coords[0] for (node, coords) in list(self.node2coords.items())]
+            kdtree = cg.KDTree(coords)
+
+        return kdtree
+
+
+class Observations:
+    """Near-network observations.
+
+    Parameters
+    ----------
+    net : tigernet.Network
+        Network object.
+    df : geopandas.GeoDataFrame
+        Observation points dataframe.
+    kd_tree : scipy.spatial.kdtree.KDTree
+        All network nodes lookup.
+    df_name : str
+        Dataframe name. Default is ``None``.
+    df_key : {str, int}
+        Dataframe key column name. Default is ``'index'``.
+    df_pop : ...........
+        .......................... find where this is used..........
+    simulated : bool
+        Empir. or sim. points along network segments. Default is ``False``.
+    k : int
+        Number of nearest neighbors to query. Default is ``5``.
+    tol : float
+        Snapping to line tolerance. Default is ``.01``.
+    snap_to : str
+        Snap points to either segments of nodes. Default is ``'segments'``.
+    no_pop : list ########################################################################
+        Observations that do not include a population measure.
+        Default is ``['FireStations', 'FireStationsSynthetic']``.
+
+    Methods : Attributes
+    --------------------
+    study_area : str
+        study area within county
+    sid_name : str
+        segment id column name.
+    xyid : str
+        combined x-coord + y-coords string ID
+    obs2coords : list
+        observation index and attribute id lookup of coordinates.
+    snapped_points : geopandas.GeoDataFrame
+        snapped point representation
+    obs2segm : dict
+        observation id (key) to segment id
+
+    """
+
+    def __init__(
+        self,
+        net,
+        df,
+        kd_tree,
+        df_name=None,
+        df_key=None,
+        df_pop=None,
+        simulated=False,
+        k=5,
+        tol=0.01,
+        snap_to="segments",
+        geo_col="geometry",
+        # no_pop=["FireStations", "FireStationsSynthetic", "SegmMidpoints"],
+    ):
+
+        if not hasattr(net, "segm2geom"):
+            msg = "The 'segm2geom' attribute is not present for the network. "
+            msg += "Instantiate the network again with 'record_geom=True' "
+            msg += "before re-running."
+            raise AttributeError(msg)
+
+        snap_to = snap_to.lower()
+        valid_snap_values = ["segments", "nodes"]
+        if not snap_to in valid_snap_values:
+            msg = "The 'snap_to' parameter is set to '%s'. " % snap_to
+            msg += "Valid values are: %s." % valid_snap_values
+            raise ValueError(msg)
+
+        self.sid_name = net.sid_name
+        self.df = df
+        self.geo_col = geo_col
+        self.df_name = df_name
+        self.df_key = df_key
+        self.xyid = net.xyid
+        self.k = k
+        self.kd_tree = kd_tree
+        self.tol = tol
+        self.snap_to = snap_to
+
+        # create observation to coordinate xwalk
+        self.obs2coords = utils.get_obs2coords(self)
+
+        # snap points and return dataframe
+        self.snapped_points = utils.snap_to_nearest(self, net=net)
+
+        # create observation-to-segment lookup
+        if self.snap_to == "segments":
+            k, s = self.snapped_points[self.df_key], self.snapped_points["assoc_segm"]
+            self.obs2segm = dict(zip(k, s))
+        else:
+            k, n = self.snapped_points[self.df_key], self.snapped_points["assoc_node"]
+            self.obs2node = dict(zip(k, n))
+
+        # if not self.df_name in no_pop:
+        #
+        #    try:
+        #        self.snapped_points[df_pop] = self.df[df_pop]
+        #    except KeyError:
+        #        try:
+        #            df_pop = "POP100_syn"
+        #            self.snapped_points[df_pop] = self.df[df_pop]
+        #        except KeyError:
+        #            df_pop = "synth_pop"
+        #            self.snapped_points[df_pop] = self.df[df_pop]
+        #
+        #    # create a segment-to-population tracker
+        #    # this will vary with each different method employed
+        #    self.segm2pop = {
+        #        seg: self.snapped_points.loc[
+        #            (self.snapped_points["assoc_segm"] == seg), df_pop
+        #        ].sum()
+        #        for seg in net.s_ids
+        #    }
