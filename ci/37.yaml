@@ -11,6 +11,6 @@ dependencies:
   - shapely>=1.7.1
   # testing
   - black
+  - codecov
   - pytest
   - pytest-cov
-  - codecov

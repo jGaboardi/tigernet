@@ -2179,3 +2179,264 @@ def _check_symmetric(a, tol=1e-8):
     symmetric = numpy.allclose(a, a.T, atol=tol)
 
     return symmetric
+
+
+###############################################################################
+################ Near-Network Observations functionality ######################
+###############################################################################
+
+
+def get_obs2coords(obs):
+    """Create an observation to coordinate xwalk.
+
+    Parameters
+    ----------
+    obs : tigernet.Observations
+
+    Returns
+    -------
+    o2c : dict
+        Observations to coordinates lookup.
+
+    """
+
+    # o2c = [[(ix, pp.df.loc[ix, pp.df_key]),\
+    #        (pp.df.loc[ix, pp.geo_col].x,
+    #         pp.df.loc[ix, pp.geo_col].y)]\
+    #                 for ix in pp.df.index]
+
+    o2c = {
+        (ix, obs.df.loc[ix, obs.df_key]): (
+            obs.df.loc[ix, obs.geo_col].x,
+            obs.df.loc[ix, obs.geo_col].y,
+        )
+        for ix in obs.df.index
+    }
+
+    return o2c
+
+
+def snap_to_nearest(obs, net):
+    """Record the nearest network node then snap to either that
+    endpoint or the nearest line segment.
+
+    Parameters
+    ----------
+    obs : tigernet.Observations
+    net : tigernet.Network
+
+    Returns
+    -------
+    snp_pts_df : geopandas.GeoDataFrame
+        Dataframe of observations snapped to the network.
+
+    """
+
+    def _get_k_nearest(obs, net):
+        """Record k nearest in the form: ``[[(idx, key), [dists, nodes], [segments]]]``.
+
+        Returns
+        -------
+        k_nearest : list
+            Information on the k-nearest neighbors.
+
+        """
+
+        if obs.k > len(net.s_ids):
+            obs.k = len(net.s_ids)
+
+        k_nearest = []
+
+        for (obidx, coords) in obs.obs2coords.items():
+
+            # query kdtree and return array-like list in the form:
+            # >>>    [[dist1, n1], [dist2, node2], ...[distn, noden]]
+            tree = numpy.array(obs.kd_tree.query(coords, k=obs.k)).T.tolist()
+
+            # convert id from float to int
+            tree = [[dist, net.n_ids[int(idx)]] for (dist, idx) in tree]
+
+            # get all segments associated with each k-nearest node
+            segms = [net.node2segm[idx] for (dist, idx) in tree]
+            segms = set([seg for segs in segms for seg in segs])
+
+            # get node distances and nodes from tree query
+            nodes = [idx for (dist, idx) in tree]
+            node_dists = [dist for (dist, idx) in tree]
+
+            # append to nearest information list
+            k_nearest.append([obidx, [node_dists, nodes], segms])
+
+        return k_nearest
+
+    def _record_snapped_points(obs, net, kne):
+        """Find the nearest point along a line segment of the nearest
+        network node and records pertinent information.
+
+        Parameters
+        ----------
+        kne : list
+            Information on the k-nearest neighbors.
+
+        Returns
+        -------
+        snpts : dict
+            Information on the newly-snapped observations.
+
+        """
+
+        def _unary2point(obs, net, sf, sgs, spinfo, opt):
+            """Find the nearest point along the lines of a unary union.
+
+            Parameters
+            ----------
+            sf : geopandas.GeoDataFrame
+                Network segments dataframe.
+            sgs : list
+                Unrestricted segment ids.
+            spinfo : dict
+                Snapped point information.
+            opt : shapely.geometry.Point
+                Original point geometry.
+
+            Returns
+            -------
+            spinfo : dict
+                Updated snapped point information.
+
+            """
+
+            # get line subset
+            segms_sub = sf[sf[obs.sid_name].isin(sgs)]
+            segms_uu = segms_sub.unary_union
+            near_points = []
+
+            for line in segms_uu:
+                near_pt = line.interpolate(line.project(opt))
+                near_points.append(near_pt)
+
+            NEAREAST_POINT_DIST = numpy.inf
+            point = None
+            for near_p in near_points:
+                if near_p.distance(opt) < NEAREAST_POINT_DIST:
+                    NEAREAST_POINT_DIST = near_p.distance(opt)
+                    point = near_p
+
+            # get coords of new point
+            spinfo[obs.geo_col] = point
+
+            # tease out which exact segment
+            for ns in sgs:
+                if net.segm2geom[ns].intersects(point.buffer(obs.tol)):
+                    spinfo["assoc_segm"] = ns
+                    break
+            return spinfo
+
+        # snapped points dictionary
+        snpts = {}
+
+        for (idx, key), (dists, nodes), (segms) in kne:
+
+            spinfo = {obs.df_key: key}
+            if obs.snap_to == "segments":
+
+                # original point geometry
+                opt = obs.df[obs.geo_col][idx]
+                spinfo = _unary2point(obs, net, sframe, segms, spinfo, opt)
+
+                # associated segment
+                asc_seg = spinfo["assoc_segm"]
+
+                # snapped point geometry
+                snp = spinfo[obs.geo_col]
+                line_length = net.segm2len[asc_seg]
+
+                # line segment geometry
+                asc_seg_geom = net.segm2geom[asc_seg]
+
+                # endpoint of the associated line segment
+                line_ep1 = net.segm2node[asc_seg][0]
+                line_ep2 = net.segm2node[asc_seg][1]
+
+                # line segment endpoint 1 geometry
+                line_ep1_geom = net.node2geom[line_ep1]
+
+                # set line endpoints 1 and 2 as node a and node b
+                # node a is determined as being 0.0 distance from the
+                # projected distance along the line segment
+                if asc_seg_geom.project(line_ep1_geom) == 0.0:
+                    node_a = line_ep1
+                    node_b = line_ep2
+                else:
+                    node_a = line_ep2
+                    node_b = line_ep1
+
+                # node a information ----------------------------------
+                #       * node a is the point which shapely chooses as
+                #         the base from which calculation occurs
+                #         for 'project' distance.
+                #       * node a is generally the 'smaller' of the
+                #         the two line segment endpoint in
+                #         euclidean space
+                dist_a = asc_seg_geom.project(snp)
+                spinfo["dist_a"] = dist_a
+                spinfo["node_a"] = node_a
+                # node b information ----------------------------------
+                dist_b = line_length - dist_a
+                spinfo["dist_b"] = dist_b
+                spinfo["node_b"] = node_b
+                spinfo["dist2line"] = snp.distance(opt)
+
+            # just to the nearest network vertex
+            # does not currently stipulate tha ti has to be the
+            # nearest vertex on the nearest line
+            # can add in functionality later
+            if obs.snap_to == "nodes":
+                nearest_node, nearest_dist = nodes[0], dists[0]
+                spinfo["assoc_node"] = nearest_node
+                spinfo["dist2node"] = nearest_dist
+                spinfo[net.geo_col] = net.node2geom[nearest_node]
+
+            # add to dictionary
+            snpts[idx] = spinfo
+
+        return snpts
+
+    # within `remove_restricted()` this is converted to a dictionary
+    # so convert back to dict if not been already
+    # if type(net.node2segm) == list:
+    #    net.node2segm = _convert_to_dict(net.node2segm)
+    # if type(net.segm2geom) == list:
+    #    net.segm2geom = _convert_to_dict(net.segm2geom)
+
+    sframe = net.s_data
+
+    k_near_elems = _get_k_nearest(obs, net)
+
+    # snap points
+    snapped_pts = _record_snapped_points(obs, net, k_near_elems)
+
+    # make columns headers based on snap method
+    if obs.snap_to == "segments":
+        cols = [
+            obs.df_key,
+            "assoc_segm",
+            "dist2line",
+            "dist_a",
+            "node_a",
+            "dist_b",
+            "node_b",
+            obs.geo_col,
+        ]
+
+    if obs.snap_to == "nodes":
+        cols = [obs.df_key, "assoc_node", "dist2node", obs.geo_col]
+
+    # create dataframe
+    snp_pts_df = fill_frame(obs.df, full=True, col=cols, data=snapped_pts)
+
+    # add xyid
+    node2xyid = generate_xyid(df=snp_pts_df, geom_type="node", geo_col=obs.geo_col)
+    snp_pts_df = fill_frame(snp_pts_df, idx="index", col=obs.xyid, data=node2xyid)
+
+    return snp_pts_df

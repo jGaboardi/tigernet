@@ -32,12 +32,23 @@ SKIP_RESTR = True  # no weld retry if still MLS
 
 
 class TestNeworkErrors(unittest.TestCase):
-    def setUp(self):
-        pass
-
     def test_no_segmdata(self):
         with self.assertRaises(ValueError):
             tigernet.Network(s_data=None)
+
+
+class TestObservationsErrors(unittest.TestCase):
+    def test_no_segm2geom(self):
+        lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        network = tigernet.Network(s_data=lattice)
+        with self.assertRaises(AttributeError):
+            tigernet.Observations(network, None, None)
+
+    def test_bad_snap_to(self):
+        lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        network = tigernet.Network(s_data=lattice, record_geom=True)
+        with self.assertRaises(ValueError):
+            tigernet.Observations(network, None, None, snap_to="network")
 
 
 class TestCostMatrixErrors(unittest.TestCase):
