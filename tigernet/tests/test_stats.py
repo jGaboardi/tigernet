@@ -309,7 +309,7 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
 
-    def test_lattice_network_entropy_xvariation(self):
+    def test_lattice_network_segment_entropy_xvariation(self):
         net = tigernet.Network(s_data=self.lat.copy())
         net.calc_entropy("MTFCC", "s_data")
 
@@ -321,7 +321,7 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
         observed_entropy = net.network_mtfcc_entropy
         self.assertEqual(observed_entropy, known_entropy)
 
-    def test_lattice_network_entropy_wvariation(self):
+    def test_lattice_network_segment_entropy_wvariation(self):
         _lat = self.lat.copy()
         _lat["MTFCC"] = ["S1100", "S1200", "S1400", "S1700"]
         net = tigernet.Network(s_data=_lat)
@@ -334,6 +334,20 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
         known_entropy = 2.0
         observed_entropy = net.network_mtfcc_entropy
         self.assertEqual(observed_entropy, known_entropy)
+
+    def test_lattice_network_node_entropy(self):
+        _lat = self.lat.copy()
+        net = tigernet.Network(s_data=_lat)
+        net.calc_entropy("degree", "n_data")
+
+        known_entropies = {1: -0.2575424759098898, 4: -0.46438561897747244}
+        observed_entropies = net.degree_entropies
+        for k, v in known_entropies.items():
+            self.assertAlmostEqual(observed_entropies[k], v)
+
+        known_entropy = 0.7219280948873623
+        observed_entropy = net.network_degree_entropy
+        self.assertAlmostEqual(observed_entropy, known_entropy)
 
 
 class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
@@ -489,9 +503,9 @@ class TestNeworkEntropyEmpirical(unittest.TestCase):
         # full network
         self.network = tigernet.Network(**kwargs)
         self.network.calc_entropy("MTFCC", "s_data")
+        self.network.calc_entropy("degree", "n_data")
 
     def test_network_entropy_variation(self):
-
         known_entropies = {
             "S1630": -0.15869726894257252,
             "S1100": -0.08968927494169666,
@@ -504,6 +518,22 @@ class TestNeworkEntropyEmpirical(unittest.TestCase):
 
         known_entropy = 0.9469505064601262
         observed_entropy = self.network.network_mtfcc_entropy
+        self.assertAlmostEqual(observed_entropy, known_entropy)
+
+    def test_network_node_entropy(self):
+        known_entropies = {
+            3: -0.5144720846413561,
+            5: -0.024261331884622785,
+            4: -0.2796123512080418,
+            1: -0.5148474076720833,
+            2: -0.4433974870650428,
+        }
+        observed_entropies = self.network.degree_entropies
+        for k, v in known_entropies.items():
+            self.assertAlmostEqual(observed_entropies[k], v)
+
+        known_entropy = 1.7765906624711467
+        observed_entropy = self.network.network_degree_entropy
         self.assertAlmostEqual(observed_entropy, known_entropy)
 
 
