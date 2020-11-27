@@ -377,12 +377,12 @@ class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
     def test_network_total_euclidean_distance(self):
         known_distance = 122.91168824543142
         observed_distance = self.net.d_euc
-        self.assertAlmostEqual(observed_distance, known_distance)
+        self.assertAlmostEqual(observed_distance, known_distance, 3)
 
     def test_network_circuity(self):
         known_circuity = 1.17157287525381
         observed_circuity = self.net.circuity
-        self.assertAlmostEqual(observed_circuity, known_circuity)
+        self.assertAlmostEqual(observed_circuity, known_circuity, 3)
 
 
 ##########################################################################################
@@ -593,28 +593,28 @@ class TestNeworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
         known_pair, known_radius = [(130, 147), 9.943247035238207]
         observed_pair, observed_radius = self.network.radius
         self.assertEqual(observed_pair, known_pair)
-        self.assertAlmostEqual(observed_radius, known_radius)
+        self.assertAlmostEqual(observed_radius, known_radius, 3)
 
     def test_network_diameter(self):
         known_pair, known_diameter = [(120, 7), 7519.207911226202]
         observed_pair, observed_diameter = self.network.diameter
         self.assertEqual(observed_pair, known_pair)
-        self.assertAlmostEqual(observed_diameter, known_diameter)
+        self.assertAlmostEqual(observed_diameter, known_diameter, 3)
 
     def test_network_total_network_distance(self):
         known_distance = 223504355.29578546
         observed_distance = self.network.d_net
-        self.assertAlmostEqual(observed_distance, known_distance)
+        self.assertAlmostEqual(observed_distance, known_distance, 3)
 
     def test_network_total_euclidean_distance(self):
         known_distance = 143326889.90408167
         observed_distance = self.network.d_euc
-        self.assertAlmostEqual(observed_distance, known_distance)
+        self.assertAlmostEqual(observed_distance, known_distance, 3)
 
     def test_network_circuity(self):
         known_circuity = 1.5594028130057156
         observed_circuity = self.network.circuity
-        self.assertAlmostEqual(observed_circuity, known_circuity)
+        self.assertAlmostEqual(observed_circuity, known_circuity, 3)
 
 
 if __name__ == "__main__":
