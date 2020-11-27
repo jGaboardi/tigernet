@@ -352,11 +352,37 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
 
 class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
     def setUp(self):
-        pass
+        self.lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
+        self.net = tigernet.Network(s_data=self.lat)
+        self.net.cost_matrix()
+        self.net.calc_net_stats()
 
-        # diameter
-        # radius
-        # circuity
+    def test_network_radius(self):
+        known_pair, known_radius = [(0, 1, 1, 1, 1, 2, 3, 4), 4.5]
+        observed_pair, observed_radius = self.net.radius
+        self.assertEqual(observed_pair, known_pair)
+        self.assertAlmostEqual(observed_radius, known_radius)
+
+    def test_network_diameter(self):
+        known_pair, known_diameter = [(0, 0, 0, 2, 2, 2, 3, 3, 3, 4, 4, 4), 9.0]
+        observed_pair, observed_diameter = self.net.diameter
+        self.assertEqual(observed_pair, known_pair)
+        self.assertAlmostEqual(observed_diameter, known_diameter)
+
+    def test_network_total_network_distance(self):
+        known_distance = 144.0
+        observed_distance = self.net.d_net
+        self.assertAlmostEqual(observed_distance, known_distance)
+
+    def test_network_total_euclidean_distance(self):
+        known_distance = 122.91168824543142
+        observed_distance = self.net.d_euc
+        self.assertAlmostEqual(observed_distance, known_distance)
+
+    def test_network_circuity(self):
+        known_circuity = 1.17157287525381
+        observed_circuity = self.net.circuity
+        self.assertAlmostEqual(observed_circuity, known_circuity)
 
 
 ##########################################################################################
@@ -539,11 +565,56 @@ class TestNeworkEntropyEmpirical(unittest.TestCase):
 
 class TestNeworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        pass
+        # set up the network instantiation parameters
+        discard_segs = None
+        kwargs = {"s_data": roads.copy(), "from_raw": True}
+        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
+        kwargs.update(attr_kws)
+        comp_kws = {"record_components": True, "largest_component": True}
+        kwargs.update(comp_kws)
+        geom_kws = {"record_geom": True, "calc_len": True}
+        kwargs.update(geom_kws)
+        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
+        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
+        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
+        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
+        kwargs.update(mtfcc_kws)
 
-        # diameter
-        # radius
-        # circuity
+        # full network
+        self.network = tigernet.Network(**kwargs)
+
+        # simplified network
+        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
+        self.network.simplify_network(inplace=True, **kws)
+        self.network.cost_matrix()
+        self.network.calc_net_stats()
+
+    def test_network_radius(self):
+        known_pair, known_radius = [(130, 147), 9.943247035238207]
+        observed_pair, observed_radius = self.network.radius
+        self.assertEqual(observed_pair, known_pair)
+        self.assertAlmostEqual(observed_radius, known_radius)
+
+    def test_network_diameter(self):
+        known_pair, known_diameter = [(120, 7), 7519.207911226202]
+        observed_pair, observed_diameter = self.network.diameter
+        self.assertEqual(observed_pair, known_pair)
+        self.assertAlmostEqual(observed_diameter, known_diameter)
+
+    def test_network_total_network_distance(self):
+        known_distance = 223504355.29578546
+        observed_distance = self.network.d_net
+        self.assertAlmostEqual(observed_distance, known_distance)
+
+    def test_network_total_euclidean_distance(self):
+        known_distance = 143326889.90408167
+        observed_distance = self.network.d_euc
+        self.assertAlmostEqual(observed_distance, known_distance)
+
+    def test_network_circuity(self):
+        known_circuity = 1.5594028130057156
+        observed_circuity = self.network.circuity
+        self.assertAlmostEqual(observed_circuity, known_circuity)
 
 
 if __name__ == "__main__":
