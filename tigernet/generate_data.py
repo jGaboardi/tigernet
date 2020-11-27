@@ -13,7 +13,7 @@ __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505)):
     """Read in a prepared dataset for testing/tutorial.
-    
+
     Parameters
     ----------
     f : str
@@ -24,12 +24,12 @@ def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505))
         Filter records by this bounding box. Default is
         ``(-84.279,30.480,-84.245,30.505)``, which corresponds
         to the Waverly Hills area of Tallahassee.
-        
+
     Returns
     -------
     _gdf : geopandas.GeoDataFrame
         The dataset.
-    
+
     """
 
     base = "zip://test_data/%s.zip!%s.shp"
