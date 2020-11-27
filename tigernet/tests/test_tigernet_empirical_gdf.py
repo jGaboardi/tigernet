@@ -7,10 +7,7 @@ import geopandas
 import numpy
 
 # get the roads shapefile as a GeoDataFrame
-bbox = (-84.279, 30.480, -84.245, 30.505)
-f = "zip://test_data/Edges_Leon_FL_2010.zip!Edges_Leon_FL_2010.shp"
-gdf = geopandas.read_file(f, bbox=bbox)
-gdf = gdf.to_crs("epsg:2779")
+gdf = tigernet.testing_data("Edges_Leon_FL_2010")
 
 # filter out only roads
 yes_roads = gdf["ROADFLG"] == "Y"

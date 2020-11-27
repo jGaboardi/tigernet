@@ -11,6 +11,34 @@ from .utils import _get_lat_lines
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
+def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505)):
+    """Read in a prepared dataset for testing/tutorial.
+    
+    Parameters
+    ----------
+    f : str
+        The name of the shapefile/dataset.
+    to_crs : {str, None}
+        Transform to this coordinate reference system. Default is ``'epsg:2779'``.
+    bbox : {tuple, None}
+        Filter records by this bounding box. Default is
+        ``(-84.279,30.480,-84.245,30.505)``, which corresponds
+        to the Waverly Hills area of Tallahassee.
+        
+    Returns
+    -------
+    _gdf : geopandas.GeoDataFrame
+        The dataset.
+    
+    """
+
+    base = "zip://test_data/%s.zip!%s.shp"
+    infile = base % (f, f)
+    _gdf = geopandas.read_file(infile, bbox=bbox)
+    _gdf = _gdf.to_crs(to_crs)
+    return _gdf
+
+
 def generate_sine_lines(sid_name="SegID", mtfcc="MTFCC", mtfcc_label="S1400"):
     """Generate and write out connected, parallel sine functions.
 
