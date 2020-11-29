@@ -132,11 +132,11 @@ class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
 
     def test_network_node2segm(self):
         known_node2segm = {
-            0: [0, 11, 12],
+            0: [0, 5, 9],
             1: [0, 82, 284],
-            2: [1, 11, 135, 139, 284],
-            3: [1, 9, 10],
-            4: [2, 5, 6],
+            2: [1, 5, 135, 139, 284],
+            3: [1, 7, 8],
+            4: [2, 12, 13],
         }
         observed_node2segm = self.network.node2segm
         for known_k, known_v in known_node2segm.items():
@@ -144,11 +144,11 @@ class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
 
     def test_network_segm2segm(self):
         known_segm2segm = {
-            0: [11, 12, 82, 284],
-            1: [135, 9, 10, 11, 139, 284],
-            2: [3, 5, 6, 237, 286],
-            3: [2, 237, 15, 18, 286],
-            4: [17, 5],
+            0: [5, 9, 82, 284],
+            1: [5, 7, 8, 135, 139, 284],
+            2: [3, 12, 13, 237, 286],
+            3: [2, 15, 18, 237, 286],
+            4: [10, 139, 162, 295, 348],
         }
         observed_segm2segm = self.network.segm2segm
         for known_k, known_v in known_segm2segm.items():
@@ -156,11 +156,11 @@ class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
 
     def test_network_node2node(self):
         known_node2node = {
-            0: [1, 2, 13],
+            0: [1, 2, 10],
             1: [0, 2, 63],
-            2: [0, 1, 3, 195, 10],
-            3: [2, 13, 14],
-            4: [8, 9, 5],
+            2: [0, 1, 3, 7, 195],
+            3: [2, 10, 11],
+            4: [5, 13, 14],
         }
         observed_node2node = self.network.node2node
         for known_k, known_v in known_node2node.items():
@@ -181,8 +181,8 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_ccs[known_k], known_v)
 
         known_cc_lens = {
+            74: 74866.5821646358,
             106: 771.0198272868483,
-            131: 74866.5821646358,
             166: 245.73023272135015,
             172: 22.726003850972294,
             312: 159.71061675074486,
@@ -202,7 +202,7 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
     def test_network_sdata_components(self):
-        known_ccs = [131, 131, 131, 131, 131, 106, 106, 131, 106, 131]
+        known_ccs = [74, 74, 74, 74, 74, 106, 106, 74, 106, 74]
         observed_ccs = list(self.network.s_data["CC"])[100:110]
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -218,17 +218,17 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_ccs[known_k], known_v)
 
     def test_network_ndata_components(self):
-        known_ccs = [360, 281, 281, 281, 281]
+        known_ccs = [360, 30, 30, 30, 30]
         observed_ccs = list(self.network.n_data["CC"])[360:]
         self.assertEqual(observed_ccs, known_ccs)
 
     def test_network_segm_components_largest(self):
-        known_ccs = {131: [0, 1, 2, 3, 4]}
+        known_ccs = {74: [0, 1, 2, 3, 4]}
         observed_ccs = self.network_largest_cc.segm_cc
         for known_k, known_v in known_ccs.items():
             self.assertEqual(observed_ccs[known_k][:5], known_v)
 
-        known_ccs_k, known_cc_lens = 131, 74866.5821646358
+        known_ccs_k, known_cc_lens = 74, 74866.5821646358
         observed_cc_lens = self.network_largest_cc.cc_lens
         self.assertAlmostEqual(observed_cc_lens[known_ccs_k], known_cc_lens)
 
@@ -241,7 +241,7 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
     def test_network_sdata_components_largest(self):
-        known_ccs = [131, 131, 131, 131, 131]
+        known_ccs = [74, 74, 74, 74, 74]
         observed_ccs = list(self.network_largest_cc.s_data["CC"])[:5]
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -251,13 +251,13 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertAlmostEqual(o, k)
 
     def test_network_node_components_largest(self):
-        known_ccs = {281: [0, 1, 2, 3, 4]}
+        known_ccs = {30: [0, 1, 2, 3, 4]}
         observed_ccs = self.network_largest_cc.node_cc
         for known_k, known_v in known_ccs.items():
             self.assertEqual(observed_ccs[known_k][:5], known_v)
 
     def test_network_ndata_components_largest(self):
-        known_ccs = [281, 281, 281, 281, 281]
+        known_ccs = [30, 30, 30, 30, 30]
         observed_ccs = list(self.network_largest_cc.n_data["CC"])[:5]
 
 
@@ -323,7 +323,7 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         self.assertEqual(observed_node2degree, known_node2degree)
 
     def test_ndata_degree(self):
-        known_degree = [3, 3, 5, 3, 3, 4, 3, 1, 3, 1, 3, 4, 1, 3, 2]
+        known_degree = [3, 3, 5, 3, 3, 4, 3, 3, 4, 1, 3, 2, 1, 3, 1]
         observed_degree = list(self.network.n_data["degree"])[:15]
         self.assertEqual(observed_degree, known_degree)
 
@@ -426,7 +426,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_elements[k], v)
 
     def test_simplify_copy_segm_cc(self):
-        known_root, known_ccs = 72, [340, 341, 342, 343, 344]
+        known_root, known_ccs = 64, [340, 341, 342, 343, 344]
         observed_ccs = self.graph.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -459,7 +459,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_elements[k], v)
 
     def test_simplify_copy_node_cc(self):
-        known_root, known_ccs = 89, [281, 282, 283, 284, 285]
+        known_root, known_ccs = 29, [281, 282, 283, 284, 285]
         observed_ccs = self.graph.node_cc[known_root]
         self.assertEqual(observed_ccs[-5:], known_ccs)
 
@@ -527,7 +527,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_elements[k], v)
 
     def test_simplify_inplace_segm_cc(self):
-        known_root, known_ccs = 72, [340, 341, 342, 343, 344]
+        known_root, known_ccs = 64, [340, 341, 342, 343, 344]
         observed_ccs = self.network.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -560,7 +560,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_elements[k], v)
 
     def test_simplify_inplace_node_cc(self):
-        known_root, known_ccs = 89, [281, 282, 283, 284, 285]
+        known_root, known_ccs = 29, [281, 282, 283, 284, 285]
         observed_ccs = self.network.node_cc[known_root]
         self.assertEqual(observed_ccs[-5:], known_ccs)
 

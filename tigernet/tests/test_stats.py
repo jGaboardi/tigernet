@@ -386,7 +386,7 @@ class TestNetworkStatsEmpirical(unittest.TestCase):
             1.0,
             1.0002181434117707,
             1.000964242197008,
-            1.0025264664243565,
+            1.1293480862834322,
         ]
         observed_sinuosity = list(self.network.s_data["sinuosity"][:5])
         for k, o in zip(known_sinuosity, observed_sinuosity):
@@ -501,7 +501,7 @@ class TestNetworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
         self.assertAlmostEqual(observed_radius, known_radius, 3)
 
     def test_network_diameter(self):
-        known_pair, known_diameter = [(120, 7), 7519.207911226202]
+        known_pair, known_diameter = [(120, 11), 7519.207911226202]
         observed_pair, observed_diameter = self.network.diameter
         self.assertEqual(observed_pair, known_pair)
         self.assertAlmostEqual(observed_diameter, known_diameter, 3)

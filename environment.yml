@@ -2,7 +2,7 @@
  channels:
    - conda-forge
  dependencies:
-   - python=3.8
+   - python=3.9
    - black
    - descartes
    - geopandas>=0.8.0
@@ -19,5 +19,5 @@
    - shapely>=1.7.1
    - watermark
    - pip:
-     - git+https://github.com/jGaboardi/tigernet.git@master
+     - git+https://github.com/jGaboardi/tigernet.git@main
      - handcalcs

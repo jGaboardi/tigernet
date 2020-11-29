@@ -407,7 +407,7 @@ def associate(
 
         for idx in df.index:
             neigh = [ss[net.tnidf][idx], ss[net.tnidt][idx]]
-            segm_dict[ss[net.attr2][idx]] = neigh
+            segm_dict[ss[net.attr2][idx]] = sorted(list(neigh))
 
         # get nodes
         ss_nodes = set()
@@ -422,6 +422,7 @@ def associate(
             for seg_idx, nodes_idx in list(segm_dict.items()):
                 if node_idx in nodes_idx:
                     node_dict[node_idx].add(seg_idx)
+            node_dict = {k: sorted(list(v)) for k, v in node_dict.items()}
 
         return segm_dict, node_dict
 
@@ -447,7 +448,7 @@ def associate(
                 if p10s10 or p10s11:
                     secondary_idxs.append(secondary_idx)
 
-            topos_dict[primary_idx].extend(secondary_idxs)
+            topos_dict[primary_idx].extend(sorted(secondary_idxs))
 
     return topos_dict
 
@@ -479,7 +480,7 @@ def get_neighbors(x2y, y2x, valtype=set()):
             x2x[k].update(y2x[v])
             x2x[k].discard(k)
     if valtype != set:
-        x2x = {k: list(v) for k, v in x2x.items()}
+        x2x = {k: sorted(list(v)) for k, v in x2x.items()}
 
     return x2x
 
@@ -578,6 +579,7 @@ def get_roots(adj):
     root = {i: (i, 0) for i, neighs in adj.items()}
 
     # 2. iterate through each combination of neighbors
+    adj = {k: sorted(v) for k, v in adj.items()}
     for i, neighs in adj.items():
         for j in neighs:
 
