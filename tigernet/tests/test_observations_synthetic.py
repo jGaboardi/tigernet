@@ -158,7 +158,8 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         ]
         observed_obs2coords = self.net_obs.obs2coords
         for k, v in known_obs2coords:
-            self.assertAlmostEqual(observed_obs2coords[k], v)
+            obs = numpy.array(observed_obs2coords[k])
+            numpy.testing.assert_array_almost_equal(obs, numpy.array(v))
 
     def test_obs2segm(self):
         known_obs2segm = [(495, 150), (496, 230), (497, 84), (498, 91), (499, 105)]
@@ -166,26 +167,34 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         self.assertEqual(observed_obs2segm, known_obs2segm)
 
     def test_snapped_points_df_dist_a(self):
-        known_dist_a = [
-            210.40526565933823,
-            118.30357725098324,
-            34.12778222322711,
-            120.39577375386378,
-            0.0,
-        ]
+        known_dist_a = numpy.array(
+            [
+                210.40526565933823,
+                118.30357725098324,
+                34.12778222322711,
+                120.39577375386378,
+                0.0,
+            ]
+        )
         observed_dist_a = list(self.net_obs.snapped_points["dist_a"])[-5:]
-        self.assertAlmostEqual(observed_dist_a, known_dist_a)
+        numpy.testing.assert_array_almost_equal(
+            numpy.array(observed_dist_a), known_dist_a
+        )
 
     def test_snapped_points_df_dist_b(self):
-        known_dist_b = [
-            342.6965551431302,
-            0.0,
-            86.50490751040633,
-            58.25005873237134,
-            152.0185068774602,
-        ]
+        known_dist_b = numpy.array(
+            [
+                342.6965551431302,
+                0.0,
+                86.50490751040633,
+                58.25005873237134,
+                152.0185068774602,
+            ]
+        )
         observed_dist_b = list(self.net_obs.snapped_points["dist_b"])[-5:]
-        self.assertAlmostEqual(observed_dist_b, known_dist_b)
+        numpy.testing.assert_array_almost_equal(
+            numpy.array(observed_dist_b), known_dist_b
+        )
 
     def test_snapped_points_df_node_a(self):
         known_node_a = [186, 86, 122, 132, 151]
@@ -198,15 +207,19 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
         self.assertEqual(observed_node_b, known_node_b)
 
     def test_snapped_points_df_dist2line(self):
-        known_dist2line = [
-            147.05576410321171,
-            298.0459114928476,
-            2.914177304108527,
-            160.72592517096817,
-            300.2025615374258,
-        ]
+        known_dist2line = numpy.array(
+            [
+                147.05576410321171,
+                298.0459114928476,
+                2.914177304108527,
+                160.72592517096817,
+                300.2025615374258,
+            ]
+        )
         observed_dist2line = list(self.net_obs.snapped_points["dist2line"])[-5:]
-        self.assertAlmostEqual(observed_dist2line, known_dist2line)
+        numpy.testing.assert_array_almost_equal(
+            numpy.array(observed_dist2line), known_dist2line
+        )
 
 
 class TestSyntheticObservationsNodeRandomEmpirical(unittest.TestCase):
