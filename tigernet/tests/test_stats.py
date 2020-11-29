@@ -1,29 +1,17 @@
 """Testing for tigernet.py
 """
 
-import tigernet
+import copy
 import unittest
 import numpy
 import geopandas
 from shapely.geometry import LineString
 
-# get the roads shapefile as a GeoDataFrame
-gdf = tigernet.testing_data("Edges_Leon_FL_2010")
 
-# filter out only roads
-yes_roads = gdf["ROADFLG"] == "Y"
-roads = gdf[yes_roads].copy()
-
-# Tiger attributes primary and secondary
-ATTR1, ATTR2 = "MTFCC", "TLID"
-
-# segment welding and splitting stipulations --------------------------------------------
-INTRST = "S1100"  # interstates mtfcc code
-RAMP = "S1630"  # ramp mtfcc code
-SERV_DR = "S1640"  # service drive mtfcc code
-SPLIT_GRP = "FULLNAME"  # grouped by this variable
-SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
-SKIP_RESTR = True  # no weld retry if still MLS
+import tigernet
+from .network_objects import network_empirical_lcc
+from .network_objects import network_empirical_simplified
+from .network_objects import network_empirical_simplified_wcm
 
 
 ##########################################################################################
@@ -31,7 +19,7 @@ SKIP_RESTR = True  # no weld retry if still MLS
 ##########################################################################################
 
 
-class TestNeworkStatsBarb(unittest.TestCase):
+class TestNetworkStatsBarb(unittest.TestCase):
     def setUp(self):
         lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
         lat = lat[~lat["SegID"].isin([3, 5, 8])]
@@ -131,7 +119,7 @@ class TestNeworkStatsBarb(unittest.TestCase):
         self.assertEqual(observed_std, known_std)
 
 
-class TestNeworkStatsSineLine(unittest.TestCase):
+class TestNetworkStatsSineLine(unittest.TestCase):
     def setUp(self):
         sine = tigernet.generate_sine_lines()
         sine = tigernet.generate_sine_lines()
@@ -231,7 +219,7 @@ class TestNeworkStatsSineLine(unittest.TestCase):
         self.assertEqual(observed_std, known_std)
 
 
-class TestNeworkConnectivityLattice1x1(unittest.TestCase):
+class TestNetworkConnectivityLattice1x1(unittest.TestCase):
     def setUp(self):
         lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         kws = {"n_hori_lines": 1, "n_vert_lines": 1, "bounds": [6, 6, 8, 8]}
@@ -302,7 +290,7 @@ class TestNeworkConnectivityLattice1x1(unittest.TestCase):
         self.assertEqual(observed_eta, known_eta)
 
 
-class TestNeworkEntropyLattice1x1(unittest.TestCase):
+class TestNetworkEntropyLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
 
@@ -347,7 +335,7 @@ class TestNeworkEntropyLattice1x1(unittest.TestCase):
         self.assertAlmostEqual(observed_entropy, known_entropy)
 
 
-class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
+class TestNetworkDistanceMetricsLattice1x1(unittest.TestCase):
     def setUp(self):
         self.lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
         self.net = tigernet.Network(s_data=self.lat)
@@ -387,31 +375,9 @@ class TestNeworkDistanceMetricsLattice1x1(unittest.TestCase):
 ##########################################################################################
 
 
-class TestNeworkStatsEmpirical(unittest.TestCase):
+class TestNetworkStatsEmpirical(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # full network
-        self.network = tigernet.Network(**kwargs)
-
-        # simplified network
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network.simplify_network(inplace=True, **kws)
-        self.network.cost_matrix()
+        self.network = copy.deepcopy(network_empirical_simplified_wcm)
         self.network.calc_net_stats()
 
     def test_network_sinuosity(self):
@@ -461,29 +427,9 @@ class TestNeworkStatsEmpirical(unittest.TestCase):
         self.assertAlmostEqual(observed_std, known_std)
 
 
-class TestNeworkConnectivityEmpirical(unittest.TestCase):
+class TestNetworkConnectivityEmpirical(unittest.TestCase):
     def setUp(self):
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # full network
-        self.network = tigernet.Network(**kwargs)
-
-        # simplified network
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network.simplify_network(inplace=True, **kws)
+        self.network = copy.deepcopy(network_empirical_simplified)
         with self.assertWarns(UserWarning):
             self.network.calc_net_stats(conn_stat="all")
 
@@ -505,26 +451,9 @@ class TestNeworkConnectivityEmpirical(unittest.TestCase):
         self.assertAlmostEqual(observed_eta, known_eta)
 
 
-class TestNeworkEntropyEmpirical(unittest.TestCase):
+class TestNetworkEntropyEmpirical(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # full network
-        self.network = tigernet.Network(**kwargs)
+        self.network = copy.deepcopy(network_empirical_lcc)
         self.network.calc_entropy("MTFCC", "s_data")
         self.network.calc_entropy("degree", "n_data")
 
@@ -560,30 +489,9 @@ class TestNeworkEntropyEmpirical(unittest.TestCase):
         self.assertAlmostEqual(observed_entropy, known_entropy)
 
 
-class TestNeworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
+class TestNetworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # full network
-        self.network = tigernet.Network(**kwargs)
-
-        # simplified network
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network.simplify_network(inplace=True, **kws)
-        self.network.cost_matrix()
+        self.network = copy.deepcopy(network_empirical_simplified_wcm)
         self.network.calc_net_stats()
 
     def test_network_radius(self):

@@ -1,50 +1,19 @@
 """Empirical data testing from a geopandas.GeoDataFrame.
 """
 
-import tigernet
+import copy
 import unittest
-import geopandas
 import numpy
 
-# get the roads shapefile as a GeoDataFrame
-gdf = tigernet.testing_data("Edges_Leon_FL_2010")
-
-# filter out only roads
-yes_roads = gdf["ROADFLG"] == "Y"
-roads = gdf[yes_roads].copy()
-
-# Tiger attributes primary and secondary
-ATTR1, ATTR2 = "MTFCC", "TLID"
-
-# segment welding and splitting stipulations --------------------------------------------
-INTRST = "S1100"  # interstates mtfcc code
-RAMP = "S1630"  # ramp mtfcc code
-SERV_DR = "S1640"  # service drive mtfcc code
-SPLIT_GRP = "FULLNAME"  # grouped by this variable
-SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
-SKIP_RESTR = True  # no weld retry if still MLS
+from .network_objects import network_empirical_lcc
+from .network_objects import network_empirical_full
+from .network_objects import graph_empirical_simplified
+from .network_objects import network_empirical_simplified
 
 
 class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # create a network instance
-        self.network = tigernet.Network(**kwargs)
+        self.network = copy.deepcopy(network_empirical_lcc)
 
     def test_network_sdata(self):
         known_segments = 407
@@ -147,23 +116,7 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
 
 class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # create a network isntance
-        self.network = tigernet.Network(**kwargs)
+        self.network = copy.deepcopy(network_empirical_lcc)
 
     def test_network_segm2node(self):
         known_segm2node = {
@@ -216,28 +169,10 @@ class TestNeworkTopologyEmpiricalGDF(unittest.TestCase):
 
 class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
         # full network
-        self.network = tigernet.Network(**kwargs)
-
+        self.network = copy.deepcopy(network_empirical_full)
         # largest component network
-        kwargs.update({"largest_component": True})
-        self.network_largest_cc = tigernet.Network(**kwargs)
+        self.network_largest_cc = copy.deepcopy(network_empirical_lcc)
 
     def test_network_segm_components(self):
         known_ccs = {106: [105, 106, 108, 110, 263, 264]}
@@ -328,23 +263,7 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
 
 class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # network
-        self.network = tigernet.Network(**kwargs)
+        self.network = copy.deepcopy(network_empirical_lcc)
 
     def test_network_segm2geom(self):
         known_type = "LineString"
@@ -411,25 +330,7 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
 
 class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        graph_elems_kws = {"def_graph_elems": True}
-        kwargs.update(graph_elems_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # create a network isntance
-        self.network = tigernet.Network(**kwargs)
+        self.network = copy.deepcopy(network_empirical_lcc)
 
     def test_network_segm2elem(self):
         known_element_keys = [414, 415, 416, 417]
@@ -460,31 +361,11 @@ class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
 
 class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # network
-        self.network = tigernet.Network(**kwargs)
-
         # copy testing
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.graph = self.network.simplify_network(**kws)
+        self.graph = copy.deepcopy(graph_empirical_simplified)
 
         # inplace
-        self.network.simplify_network(inplace=True, **kws)
+        self.network = copy.deepcopy(network_empirical_simplified)
 
     def test_simplify_copy_segm2xyid(self):
         known_id = 344

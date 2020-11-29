@@ -1,4 +1,4 @@
-"""Testing for tigernet.py
+"""Testing information retrieval in tigernet.py
 """
 
 import tigernet
@@ -6,9 +6,6 @@ import unittest
 
 
 class TestInformationRetrieval(unittest.TestCase):
-    def setUp(self):
-        pass
-
     def test_get_discard_mtfcc_by_desc(self):
         observed_discard_mtfcc_types = tigernet.get_discard_mtfcc_by_desc()
         walkways = "Walkway/Pedestrian Trail"

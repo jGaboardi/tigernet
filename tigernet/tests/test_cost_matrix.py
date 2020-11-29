@@ -1,50 +1,50 @@
 """Cost matrix and shorted path tree testing.
 """
 
-import tigernet
+
+import copy
 import unittest
 import numpy
-import geopandas
+
+from .network_objects import network_lattice_1x1_wcm_attr
+from .network_objects import network_lattice_1x1_wpaths_attr
+from .network_objects import network_lattice_1x1_wcm_var
+from .network_objects import network_lattice_1x1_wpaths_var
+
+from .network_objects import network_lattice_2x1x1_wcm_attr
+from .network_objects import network_lattice_2x1x1_wpaths_attr
+from .network_objects import network_lattice_2x1x1_wcm_var
+from .network_objects import network_lattice_2x1x1_wpaths_var
+
+from .network_objects import graph_barb_wcm_copy_attr
+from .network_objects import graph_barb_wpaths_copy_attr
+from .network_objects import graph_barb_wcm_copy_var
+from .network_objects import graph_barb_wpaths_copy_var
+
+from .network_objects import network_barb_wcm_inplace_attr
+from .network_objects import network_barb_wpaths_inplace_attr
+from .network_objects import network_barb_wcm_inplace_var
+from .network_objects import network_barb_wpaths_inplace_var
+
+from .network_objects import network_empirical_simplified_wcm
+
 
 inf = numpy.inf
 
 
-# get the roads shapefile as a GeoDataFrame
-gdf = tigernet.testing_data("Edges_Leon_FL_2010")
-
-# filter out only roads
-yes_roads = gdf["ROADFLG"] == "Y"
-roads = gdf[yes_roads].copy()
-
-# Tiger attributes primary and secondary
-ATTR1, ATTR2 = "MTFCC", "TLID"
-
-# segment welding and splitting stipulations --------------------------------------------
-INTRST = "S1100"  # interstates mtfcc code
-RAMP = "S1630"  # ramp mtfcc code
-SERV_DR = "S1640"  # service drive mtfcc code
-SPLIT_GRP = "FULLNAME"  # grouped by this variable
-SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
-SKIP_RESTR = True  # no weld retry if still MLS
-
-
-class TestNetworkCostMatrixLattice1x1(unittest.TestCase):
+class TestNetworkCostMatrixLattice1x1_1(unittest.TestCase):
     def setUp(self):
-        self.lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-
         # generate cost matrix without paths as an attribute
-        self.network_mtx = tigernet.Network(s_data=self.lattice.copy())
-        self.network_mtx.cost_matrix()
+        self.network_mtx = copy.deepcopy(network_lattice_1x1_wcm_attr)
 
         # generate cost matrix with paths as an attribute
-        self.network_mtx_paths = tigernet.Network(s_data=self.lattice.copy())
-        self.network_mtx_paths.cost_matrix(wpaths=True)
+        self.network_mtx_paths = copy.deepcopy(network_lattice_1x1_wpaths_attr)
 
         # generate cost matrix without paths as an attribute
-        self.matrix = self.network_mtx.cost_matrix(asattr=False)
+        self.matrix = copy.deepcopy(network_lattice_1x1_wcm_var)
 
         # generate cost matrix with paths as an attribute
-        _, self.paths = self.network_mtx_paths.cost_matrix(wpaths=True, asattr=False)
+        self.paths = copy.deepcopy(network_lattice_1x1_wpaths_var)
 
     def test_network_cost_matrix_attr(self):
         known_cost_matrix = numpy.array(
@@ -97,30 +97,17 @@ class TestNetworkCostMatrixLattice1x1(unittest.TestCase):
 
 class TestNetworkCostMatrixLattice1x1_2(unittest.TestCase):
     def setUp(self):
-        lat1 = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        lat2 = tigernet.generate_lattice(
-            n_hori_lines=1, n_vert_lines=1, bounds=[6, 6, 8, 8]
-        )
-        self.lattices = lat1.append(lat2)
-        self.lattices.reset_index(drop=True, inplace=True)
-
         # generate cost matrix without paths as an attribute
-        self.network_mtx = tigernet.Network(
-            s_data=self.lattices.copy(), record_components=True
-        )
-        self.network_mtx.cost_matrix()
+        self.network_mtx = copy.deepcopy(network_lattice_2x1x1_wcm_attr)
 
         # generate cost matrix with paths as an attribute
-        self.network_mtx_paths = tigernet.Network(
-            s_data=self.lattices.copy(), record_components=True
-        )
-        self.network_mtx_paths.cost_matrix(wpaths=True)
+        self.network_mtx_paths = copy.deepcopy(network_lattice_2x1x1_wpaths_attr)
 
         # generate cost matrix without paths as an attribute
-        self.matrix = self.network_mtx.cost_matrix(asattr=False)
+        self.matrix = copy.deepcopy(network_lattice_2x1x1_wcm_var)
 
         # generate cost matrix with paths as an attribute
-        _, self.paths = self.network_mtx_paths.cost_matrix(wpaths=True, asattr=False)
+        self.paths = copy.deepcopy(network_lattice_2x1x1_wpaths_var)
 
     def test_network_cost_matrix_attr(self):
         known_cost_matrix = numpy.array(
@@ -413,47 +400,17 @@ class TestNetworkCostMatrixLattice1x1_2(unittest.TestCase):
 
 class TestNetworkCostMatrixSimplifyBarb(unittest.TestCase):
     def setUp(self):
-        lattice = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1, wbox=True)
-        self.barb = lattice[~lattice["SegID"].isin([1, 2, 5, 7, 9, 10])]
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-
         # ---------------------------------------------------- copy
-        # generate cost matrix without paths as an attribute
-        self.network_mtx_copy = tigernet.Network(s_data=self.barb.copy())
-        self.graph_mtx_copy = self.network_mtx_copy.simplify_network(**kws)
-        self.graph_mtx_copy.cost_matrix()
-
-        # generate cost matrix with paths as an attribute
-        self.network_mtx_paths_copy = tigernet.Network(s_data=self.barb.copy())
-        self.graph_mtx_paths_copy = self.network_mtx_paths_copy.simplify_network(**kws)
-        self.graph_mtx_paths_copy.cost_matrix(wpaths=True)
-
-        # generate cost matrix without paths as an attribute
-        self.graph_matrix_copy = self.graph_mtx_copy.cost_matrix(asattr=False)
-
-        # generate cost matrix with paths as an attribute
-        _, self.graph_paths_copy = self.graph_mtx_copy.cost_matrix(
-            wpaths=True, asattr=False
-        )
+        self.graph_mtx_copy = graph_barb_wcm_copy_attr
+        self.graph_mtx_paths_copy = graph_barb_wpaths_copy_attr
+        self.graph_matrix_copy = graph_barb_wcm_copy_var
+        self.graph_paths_copy = graph_barb_wpaths_copy_var
 
         # ---------------------------------------------------- inplace
-        # generate cost matrix without paths as an attribute
-        self.network_mtx_inplace = tigernet.Network(s_data=self.barb.copy())
-        self.network_mtx_inplace.simplify_network(inplace=True, **kws)
-        self.network_mtx_inplace.cost_matrix()
-
-        # generate cost matrix with paths as an attribute
-        self.network_mtx_paths_inplace = tigernet.Network(s_data=self.barb.copy())
-        self.network_mtx_paths_inplace.simplify_network(inplace=True, **kws)
-        self.network_mtx_paths_inplace.cost_matrix(wpaths=True)
-
-        # generate cost matrix without paths as an attribute
-        self.network_matrix_inplace = self.network_mtx_inplace.cost_matrix(asattr=False)
-
-        # generate cost matrix with paths as an attribute
-        _, self.network_paths_inplace = self.network_mtx_inplace.cost_matrix(
-            wpaths=True, asattr=False
-        )
+        self.network_mtx_inplace = network_barb_wcm_inplace_attr
+        self.network_mtx_paths_inplace = network_barb_wpaths_inplace_attr
+        self.network_matrix_inplace = network_barb_wcm_inplace_var
+        self.network_paths_inplace = network_barb_wpaths_inplace_var
 
     def test_graph_copy_cost_matrix_attr(self):
         known_cost_matrix = numpy.array(
@@ -522,34 +479,11 @@ class TestNetworkCostMatrixSimplifyBarb(unittest.TestCase):
 
 class TestNetworkCostMatrixEmpircalGDF(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # create a network instance
-        self.network = tigernet.Network(**kwargs)
-
-        # simplify network
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network.simplify_network(inplace=True, **kws)
-
         # cost matrix
-        self.matrix = self.network.cost_matrix(asattr=False)
+        self.matrix = network_empirical_simplified_wcm.n2n_matrix
 
         # shortest path trees
-        _, self.paths = self.network.cost_matrix(wpaths=True, asattr=False)
+        self.paths = network_empirical_simplified_wcm.n2n_paths
 
     def test_network_cost_matrix(self):
         known_cost_matrix = numpy.array(

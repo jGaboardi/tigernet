@@ -1,31 +1,12 @@
-"""Testing for tigernet.py
+"""Data generation for testing for tigernet.py
 """
 
-import tigernet
 import unittest
 import numpy
-import geopandas
 
-
-# get the roads shapefile as a GeoDataFrame
-gdf = tigernet.testing_data("Edges_Leon_FL_2010")
-
-# filter out only roads
-# yes_roads = gdf["ROADFLG"] == "Y"
-# roads = gdf[yes_roads].copy()
-yes_roads = gdf["MTFCC"].str.startswith("S")
-roads = gdf[yes_roads].copy()
-
-# Tiger attributes primary and secondary
-ATTR1, ATTR2 = "MTFCC", "TLID"
-
-# segment welding and splitting stipulations --------------------------------------------
-INTRST = "S1100"  # interstates mtfcc code
-RAMP = "S1630"  # ramp mtfcc code
-SERV_DR = "S1640"  # service drive mtfcc code
-SPLIT_GRP = "FULLNAME"  # grouped by this variable
-SPLIT_BY = [RAMP, SERV_DR]  # split interstates by ramps & service
-SKIP_RESTR = True  # no weld retry if still MLS
+import tigernet
+from .network_objects import network_lattice_1x1_no_args
+from .network_objects import network_empirical_simplified
 
 
 class TestNetworkDataGeneration(unittest.TestCase):
@@ -66,8 +47,7 @@ class TestNetworkDataGeneration(unittest.TestCase):
 
 class TestObservationDataGenerationSynthetic(unittest.TestCase):
     def setUp(self):
-        lat = tigernet.generate_lattice(n_hori_lines=1, n_vert_lines=1)
-        self.network = tigernet.Network(s_data=lat)
+        self.network = network_lattice_1x1_no_args
 
     def test_generate_observations_totalbounds(self):
         n_obs = 5
@@ -110,28 +90,7 @@ class TestObservationDataGenerationSynthetic(unittest.TestCase):
 
 class TestObservationDataGenerationEmpirical(unittest.TestCase):
     def setUp(self):
-
-        # set up the network instantiation parameters
-        discard_segs = None
-        kwargs = {"s_data": roads.copy(), "from_raw": True}
-        attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-        kwargs.update(attr_kws)
-        comp_kws = {"record_components": True, "largest_component": True}
-        kwargs.update(comp_kws)
-        geom_kws = {"record_geom": True, "calc_len": True}
-        kwargs.update(geom_kws)
-        mtfcc_kws = {"discard_segs": discard_segs, "skip_restr": SKIP_RESTR}
-        mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
-        mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
-        mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
-        kwargs.update(mtfcc_kws)
-
-        # create a network instance
-        self.network = tigernet.Network(**kwargs)
-
-        # simplify network
-        kws = {"record_components": True, "record_geom": True, "def_graph_elems": True}
-        self.network.simplify_network(inplace=True, **kws)
+        self.network = network_empirical_simplified
 
     def test_generate_observations_totalbounds(self):
 
