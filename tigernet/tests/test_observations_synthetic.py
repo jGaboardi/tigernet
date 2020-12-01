@@ -17,7 +17,7 @@ from .network_objects import network_empirical_simplified
 
 class TestSyntheticObservationsSegmentRandomLattice1x1(unittest.TestCase):
     def setUp(self):
-        network = network_lattice_1x1_geomelem
+        network = copy.deepcopy(network_lattice_1x1_geomelem)
 
         # generate synthetic observations
         obs = tigernet.generate_obs(5, network.s_data)
@@ -103,7 +103,7 @@ class TestSyntheticObservationsSegmentRandomLattice1x1(unittest.TestCase):
 
 class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
     def setUp(self):
-        network = network_lattice_1x1_geomelem
+        network = copy.deepcopy(network_lattice_1x1_geomelem)
 
         # generate synthetic observations
         obs = tigernet.generate_obs(5, network.s_data)
@@ -154,7 +154,7 @@ class TestSyntheticObservationsNodeRandomLattice1x1(unittest.TestCase):
 
 class TestSyntheticObservationsSegmentRandomLattice1x1Restricted(unittest.TestCase):
     def setUp(self):
-        network = network_lattice_1x1_geomelem
+        network = copy.deepcopy(network_lattice_1x1_geomelem)
         network.s_data.loc[1, "MTFCC"] = "S1100"
         network.s_data.loc[3, "MTFCC"] = "S1100"
 
@@ -243,7 +243,7 @@ class TestSyntheticObservationsSegmentRandomLattice1x1Restricted(unittest.TestCa
 
 class TestSyntheticObservationsNodeRandomLattice1x1Restricted(unittest.TestCase):
     def setUp(self):
-        network = network_lattice_1x1_geomelem
+        network = copy.deepcopy(network_lattice_1x1_geomelem)
         network.s_data.loc[1, "MTFCC"] = "S1100"
         network.s_data.loc[3, "MTFCC"] = "S1100"
 
