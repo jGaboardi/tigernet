@@ -1,6 +1,7 @@
 """Synthetic data testing.
 """
 
+import copy
 import unittest
 from .network_objects import network_lattice_1x1_no_args
 from .network_objects import network_lattice_2x1x1_all
@@ -182,7 +183,7 @@ class TestNetworkComponentsLattice1x1(unittest.TestCase):
 
 class TestNetworkAssociationsLattice1x1(unittest.TestCase):
     def setUp(self):
-        self.network = network_lattice_1x1_geomelem
+        self.network = copy.deepcopy(network_lattice_1x1_geomelem)
 
     def test_lattice_network_segm2geom(self):
         known_type = "LineString"
@@ -240,7 +241,7 @@ class TestNetworkAssociationsLattice1x1(unittest.TestCase):
 
 class TestNetworkDefineGraphElementsLattice1x1(unittest.TestCase):
     def setUp(self):
-        self.network = network_lattice_1x1_geomelem
+        self.network = copy.deepcopy(network_lattice_1x1_geomelem)
 
     def test_lattice_network_segm2elem(self):
         known_elements = {0: "leaf", 1: "leaf", 2: "leaf", 3: "leaf"}

@@ -63,6 +63,8 @@ network_lattice_2x1x1_largest = tigernet.Network(s_data=lattice, **kws)
 #       - test_errors.TestObservationsErrors
 #       - test_observations_synthetic.TestSyntheticObservationsSegmentRandomLattice1x1
 #       - test_observations_synthetic.TestSyntheticObservationsNodeRandomLattice1x1
+#       - test_observations_synthetic.TestSyntheticObservationsSegmentRandomLattice1x1Restricted
+#       - test_observations_synthetic.TestSyntheticObservationsNodeRandomLattice1x1Restricted
 lattice = tigernet.generate_lattice(**h1v1)
 kws = {"record_geom": True, "def_graph_elems": True}
 network_lattice_1x1_geomelem = tigernet.Network(s_data=lattice, **kws)

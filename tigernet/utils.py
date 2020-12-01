@@ -2191,6 +2191,103 @@ def _check_symmetric(a, tol=1e-8):
 ###############################################################################
 
 
+def remove_restricted(net, restr=None, col=None):
+    """Subset the unrestricted segments and update adjacencies and
+    return (1) the geodataframe of unrestricted segments, and (2) the
+    network object with updated adjacency values. Used for snapping points
+    to appropriate network segments
+
+    Parameters
+    ----------
+    net : tigernet.Network
+    restr : list
+        Restricted segment types. Default is ``None``.
+    col : str
+        Column name for segment restriction stipulation. Default is ``None``.
+
+    Returns
+    -------
+    net : tigernet.Network
+        The updated network object.
+
+    """
+
+    def _remove_segm_ids(n2s, restr):
+        """Remove restricted segment ids from node to segment adjacency.
+
+        Parameters
+        ----------
+        n2s : dict
+            Node to segment adjacency.
+        restr : list
+            Restricted segment ids.
+
+        Returns
+        -------
+        n2s : dict
+            Updated node to segment adjacency.
+
+        """
+
+        update_n2s = {}
+
+        for node, segms in list(n2s.items()):
+            updated_segms = []
+
+            for segm in segms:
+                if segm not in restr:
+                    updated_segms.append(segm)
+            update_n2s[node] = updated_segms
+
+        n2s = update_n2s
+
+        return n2s
+
+    # records all node and segment ids
+    df, full_node_ids, full_segm_ids = net.s_data, net.n_ids, net.s_ids
+
+    # get restricted segment ids
+    restricted_segm_ids = list(df[df[col].isin(restr)].index)
+
+    # subset unrestricted segments dataframe
+    unrestrict_segm_df = df[~df[col].isin(restr)]
+
+    # remove restricted segment ids from the segment id list
+    net.s_ids = list(unrestrict_segm_df.index)
+
+    # update segm2node
+    net.segm2node = remove_adj(net.segm2node, restricted_segm_ids)
+
+    # update segm2geom
+    net.segm2geom = remove_adj(net.segm2geom, restricted_segm_ids)
+
+    # remove restricted node ids from the node id list
+    unrestrict_node_ids = set()
+    for seg, nodes in list(net.segm2node.items()):
+        unrestrict_node_ids.update(nodes)
+    net.n_ids = sorted(list(unrestrict_node_ids))
+
+    # record restricted nodes: these are nodes that fall ONLY on
+    # restricted segments (e.g. node incident with 2 restricted
+    # segments). Node that are incident with 1 restricted and 1
+    # unrestricted segment are NOT restricted but the node2segm
+    # adjacency for the restricted segment will be removed in below.
+    restricted_node_ids = [node for node in full_node_ids if node not in net.n_ids]
+
+    # update node2coords
+    net.node2coords = remove_adj(net.node2coords, restricted_node_ids)
+
+    # update node2geom
+    net.node2geom = remove_adj(net.node2geom, restricted_node_ids)
+
+    # update node2segm adjacency by removing restricted
+    # segments from nodes that are incident with both
+    # restricted and unrestricted segments
+    net.node2segm = _remove_segm_ids(net.node2segm, restricted_segm_ids)
+
+    return net
+
+
 def get_obs2coords(obs):
     """Create an observation to coordinate xwalk.
 
@@ -2204,11 +2301,6 @@ def get_obs2coords(obs):
         Observations to coordinates lookup.
 
     """
-
-    # o2c = [[(ix, pp.df.loc[ix, pp.df_key]),\
-    #        (pp.df.loc[ix, pp.geo_col].x,
-    #         pp.df.loc[ix, pp.geo_col].y)]\
-    #                 for ix in pp.df.index]
 
     o2c = {
         (ix, obs.df.loc[ix, obs.df_key]): (
@@ -2406,13 +2498,6 @@ def snap_to_nearest(obs, net):
             snpts[idx] = spinfo
 
         return snpts
-
-    # within `remove_restricted()` this is converted to a dictionary
-    # so convert back to dict if not been already
-    # if type(net.node2segm) == list:
-    #    net.node2segm = _convert_to_dict(net.node2segm)
-    # if type(net.segm2geom) == list:
-    #    net.segm2geom = _convert_to_dict(net.segm2geom)
 
     sframe = net.s_data
 

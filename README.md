@@ -9,7 +9,7 @@ Network Topology via TIGER/Line Shapefiles
 ### Important
 After some consideration, this repo will serve as a stub for the `tigernet` implementation developed for Gaboardi (2019), which can be cited in future publications through its [DOI](https://zenodo.org/record/3378057#.Xh5oli3MzVo). Currently, some of the concepts are already being incorporated into [`spaghetti`](https://github.com/pysal/spaghetti), with more of the functionality in the original `tigernet` potential (such as network measures [`pysal/spaghetti#126`](https://github.com/pysal/spaghetti/issues/126)).
 
-* **Gaboardi, James D**. 2019. *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
+* **Gaboardi, James D.** (2019). *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
 
 -------------
 
@@ -43,7 +43,7 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
 
 ## Citations
 
-* **James D. Gaboardi**. *[jGaboardi/tigernet](https://github.com/jGaboardi/tigernet)*. Zenodo. 2019. [![DOI](https://zenodo.org/badge/204572461.svg)](https://zenodo.org/badge/latestdoi/204572461)
+* **James D. Gaboardi** (2019). *[jGaboardi/tigernet](https://github.com/jGaboardi/tigernet)*. Zenodo. [![DOI](https://zenodo.org/badge/204572461.svg)](https://zenodo.org/badge/latestdoi/204572461)
 
 ```tex
 @misc{tigernet_gaboardi_2019,
@@ -55,3 +55,11 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
   url     = {https://github.com/jGaboardi/tigernet}
   }
 ```
+
+## References
+* The original method for `tigernet` is described in Chapter 1 of Gaboardi (2019).
+  * **James D. Gaboardi** (2019). *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
+* The results of secondary analysis (spatial representions of population) were presented in Gaboardi (2020) and can also be found in Chapter 3 of Gaboardi (2019).
+  * **James D. Gaboardi** (2020, November). *Validation of Abstract Population Representations*. Presented at the 2019 Atlanta Research Data Center Annual Research Conference at Vanderbilt University (ARDC), Nashville, Tennessee: Zenodo. [![DOI](https://zenodo.org/badge/204572461.svg)](https://zenodo.org/badge/latestdoi/204572461)
+* The [`WeightedParcels_Leon_FL_2010`](https://github.com/jGaboardi/tigernet/blob/main/test_data/) dataset is based on that used in Gaboardi (2019), which was produced in Strode et al. (2018).
+  * **Georgianna Strode, Victor Mesev, and Juliana Maantay** (2018). Improving Dasymetric Population Estimates for Land Parcels: Data Pre-processing Steps. Southeastern Geographer 58 (3), 300–316. doi: [10.1353/sgo.2018.0030](https://muse.jhu.edu/article/705475).
