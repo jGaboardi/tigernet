@@ -347,5 +347,81 @@ class TestEmpiricalObservationsNodeEmpiricalRestricted(unittest.TestCase):
         self.assertAlmostEqual(observed_dist2node_mean, known_dist2node_mean)
 
 
+####################################################################################
+######################### Segment-to-Population ####################################
+####################################################################################
+
+
+class TestEmpiricalObservationsSegm2Pop(unittest.TestCase):
+    def setUp(self):
+        network = copy.deepcopy(network_empirical_simplified)
+
+        # generate synthetic observations ---------------------------------------- 1
+        self.obs1 = tigernet.testing_data("WeightedParcels_Leon_FL_2010")
+
+        # associate observations with the network
+        args = network, self.obs1.copy()
+        kwargs = {"df_name": "obs1", "df_key": "PARCEL_ID", "snap_to": "segments"}
+        kwargs.update({"obs_pop": "SUM_EST_PO", "restrict_col": "MTFCC"})
+        kwargs.update({"remove_restricted": ["S1100", "S1630", "S1640"]})
+        self.net_obs1 = tigernet.Observations(*args, **kwargs)
+
+        # generate synthetic observations ---------------------------------------- 2
+        self.obs2 = tigernet.testing_data("CensusBlocks_Leon_FL_2010")
+
+        # associate observations with the network
+        args = network, self.obs2.copy()
+        kwargs = {"df_name": "obs2", "df_key": "GEOID", "snap_to": "segments"}
+        kwargs.update({"obs_pop": "POP100", "restrict_col": "MTFCC"})
+        kwargs.update({"remove_restricted": ["S1100", "S1630", "S1640"]})
+        self.net_obs2 = tigernet.Observations(*args, **kwargs)
+
+    def test_segm2pop_1(self):
+        known_segm2pop = [
+            (335, 4.85357142857),
+            (336, 27.62499999998),
+            (337, 0.0),
+            (338, 1.8),
+            (339, 20.85714285714),
+            (340, 19.710526315760003),
+            (341, 9.904761904760003),
+            (342, 46.666666666600015),
+            (343, 11.666666666649999),
+            (344, 12.125),
+        ]
+        observed_segm2pop = self.net_obs1.segm2pop
+        for k, v in known_segm2pop:
+            self.assertAlmostEqual(observed_segm2pop[k], v)
+
+        known_pop_sum = self.obs1["SUM_EST_PO"].sum()
+        known_segm2pop_sum = 4874.156151922997
+        observed_segm2pop_sum = sum(self.net_obs1.segm2pop.values())
+        self.assertAlmostEqual(known_pop_sum, known_segm2pop_sum)
+        self.assertAlmostEqual(observed_segm2pop_sum, known_segm2pop_sum)
+
+    def test_segm2pop_2(self):
+        known_segm2pop = [
+            (335, 0),
+            (336, 31),
+            (337, 0),
+            (338, 0),
+            (339, 0),
+            (340, 0),
+            (341, 52),
+            (342, 0),
+            (343, 189),
+            (344, 0),
+        ]
+        observed_segm2pop = self.net_obs2.segm2pop
+        for k, v in known_segm2pop:
+            self.assertAlmostEqual(observed_segm2pop[k], v)
+
+        known_pop_sum = self.obs2["POP100"].sum()
+        known_segm2pop_sum = 3791
+        observed_segm2pop_sum = sum(self.net_obs2.segm2pop.values())
+        self.assertAlmostEqual(known_pop_sum, known_segm2pop_sum)
+        self.assertAlmostEqual(observed_segm2pop_sum, known_segm2pop_sum)
+
+
 if __name__ == "__main__":
     unittest.main()

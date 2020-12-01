@@ -750,23 +750,20 @@ class Observations:
         Dataframe name. Default is ``None``.
     df_key : {str, int}
         Dataframe key column name. Default is ``'index'``.
-    df_pop : ...........
-        .......................... find where this is used..........#########################
     simulated : bool
         Empir. or sim. points along network segments. Default is ``False``.
     restrict_col : str
         Column name for segment restriction stipulation. Default is ``None``.
     remove_restricted : list
         Restricted segment types. Default is ``None``.
+    obs_pop : str
+        Population column of the observations dataframe. Default is ``None``.
     k : int
         Number of nearest neighbors to query. Default is ``5``.
     tol : float
         Snapping to line tolerance. Default is ``.01``.
     snap_to : str
         Snap points to either segments of nodes. Default is ``'segments'``.
-    no_pop : list ###########################################################################
-        Observations that do not include a population measure.
-        Default is ``['FireStations', 'FireStationsSynthetic']``.
 
     Methods : Attributes
     --------------------
@@ -795,11 +792,11 @@ class Observations:
         simulated=False,
         restrict_col=None,
         remove_restricted=None,
+        obs_pop=None,
         k=5,
         tol=0.01,
         snap_to="segments",
         geo_col="geometry",
-        # no_pop=["FireStations", "FireStationsSynthetic", "SegmMidpoints"],
     ):
 
         if not hasattr(net, "segm2geom"):
@@ -814,6 +811,12 @@ class Observations:
             msg = "The 'snap_to' parameter is set to '%s'. " % snap_to
             msg += "Valid values are: %s." % valid_snap_values
             raise ValueError(msg)
+
+        ########################################################################
+        ############### ------------- this would be better as 'label_restricted'
+        ############### --- actually removing the network segments is bad design
+        ############### --- ... the segments ARE still part of the network......
+        ########################################################################
 
         # remove restricted network segments
         if remove_restricted:
@@ -848,23 +851,12 @@ class Observations:
             k, n = self.snapped_points[self.df_key], self.snapped_points["assoc_node"]
             self.obs2node = dict(zip(k, n))
 
-        # if not self.df_name in no_pop:
-        #
-        #    try:
-        #        self.snapped_points[df_pop] = self.df[df_pop]
-        #    except KeyError:
-        #        try:
-        #            df_pop = "POP100_syn"
-        #            self.snapped_points[df_pop] = self.df[df_pop]
-        #        except KeyError:
-        #            df_pop = "synth_pop"
-        #            self.snapped_points[df_pop] = self.df[df_pop]
-        #
-        #    # create a segment-to-population tracker
-        #    # this will vary with each different method employed
-        #    self.segm2pop = {
-        #        seg: self.snapped_points.loc[
-        #            (self.snapped_points["assoc_segm"] == seg), df_pop
-        #        ].sum()
-        #        for seg in net.s_ids
-        #    }
+        # create a segment-to-population tracker
+        if self.snap_to == "segments" and obs_pop:
+            self.snapped_points[obs_pop] = self.df[obs_pop]
+            self.segm2pop = {
+                seg: self.snapped_points.loc[
+                    (self.snapped_points["assoc_segm"] == seg), obs_pop
+                ].sum()
+                for seg in net.s_ids
+            }
