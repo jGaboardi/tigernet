@@ -746,40 +746,42 @@ class Observations:
         Network object.
     df : geopandas.GeoDataFrame
         Observation points dataframe.
-    kd_tree : scipy.spatial.kdtree.KDTree
-        All network nodes lookup.
     df_name : str
         Dataframe name. Default is ``None``.
     df_key : {str, int}
         Dataframe key column name. Default is ``'index'``.
     df_pop : ...........
-        .......................... find where this is used..........
+        .......................... find where this is used..........#########################
     simulated : bool
         Empir. or sim. points along network segments. Default is ``False``.
+    restrict_col : str
+        Column name for segment restriction stipulation. Default is ``None``.
+    remove_restricted : list
+        Restricted segment types. Default is ``None``.
     k : int
         Number of nearest neighbors to query. Default is ``5``.
     tol : float
         Snapping to line tolerance. Default is ``.01``.
     snap_to : str
         Snap points to either segments of nodes. Default is ``'segments'``.
-    no_pop : list ########################################################################
+    no_pop : list ###########################################################################
         Observations that do not include a population measure.
         Default is ``['FireStations', 'FireStationsSynthetic']``.
 
     Methods : Attributes
     --------------------
     study_area : str
-        study area within county
+        Study area within county.
     sid_name : str
-        segment id column name.
+        Segment id column name.
     xyid : str
-        combined x-coord + y-coords string ID
+        Combined x-coord + y-coords string ID.
     obs2coords : list
-        observation index and attribute id lookup of coordinates.
+        Observation index and attribute id lookup of coordinates.
     snapped_points : geopandas.GeoDataFrame
-        snapped point representation
+        Snapped point representation.
     obs2segm : dict
-        observation id (key) to segment id
+        Observation id (key) to segment id.
 
     """
 
@@ -787,11 +789,12 @@ class Observations:
         self,
         net,
         df,
-        kd_tree,
         df_name=None,
         df_key=None,
         df_pop=None,
         simulated=False,
+        restrict_col=None,
+        remove_restricted=None,
         k=5,
         tol=0.01,
         snap_to="segments",
@@ -811,6 +814,14 @@ class Observations:
             msg = "The 'snap_to' parameter is set to '%s'. " % snap_to
             msg += "Valid values are: %s." % valid_snap_values
             raise ValueError(msg)
+
+        # remove restricted network segments
+        if remove_restricted:
+            kws = {"restr": remove_restricted, "col": restrict_col}
+            net = utils.remove_restricted(net, **kws)
+
+        # build kdtree
+        kd_tree = net.nodes_kdtree()
 
         self.sid_name = net.sid_name
         self.df = df
