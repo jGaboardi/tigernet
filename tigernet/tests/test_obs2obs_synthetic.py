@@ -39,7 +39,11 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
-        kwargs = {"dest_obs": None, "snap_dist": False, "distance_type": "network"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": False,
+            "distance_type": "network",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -57,7 +61,11 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
-        kwargs = {"dest_obs": None, "snap_dist": True, "distance_type": "network"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": True,
+            "distance_type": "network",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -75,7 +83,11 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
-        kwargs = {"dest_obs": None, "snap_dist": False, "distance_type": "euclidean"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": False,
+            "distance_type": "euclidean",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -93,7 +105,11 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
-        kwargs = {"dest_obs": None, "snap_dist": True, "distance_type": "euclidean"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": True,
+            "distance_type": "euclidean",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -130,7 +146,11 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
             ]
         )
         args = self.net_obs, self.network
-        kwargs = {"dest_obs": None, "snap_dist": False, "distance_type": "network"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": False,
+            "distance_type": "network",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -148,7 +168,11 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
             ]
         )
         args = self.net_obs, self.network
-        kwargs = {"dest_obs": None, "snap_dist": True, "distance_type": "network"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": True,
+            "distance_type": "network",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -166,7 +190,11 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
             ]
         )
         args = self.net_obs, self.network
-        kwargs = {"dest_obs": None, "snap_dist": False, "distance_type": "euclidean"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": False,
+            "distance_type": "euclidean",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -184,7 +212,11 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
             ]
         )
         args = self.net_obs, self.network
-        kwargs = {"dest_obs": None, "snap_dist": True, "distance_type": "euclidean"}
+        kwargs = {
+            "destination_observations": None,
+            "snap_dist": True,
+            "distance_type": "euclidean",
+        }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
@@ -231,7 +263,7 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": False,
             "distance_type": "network",
         }
@@ -254,7 +286,7 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": True,
             "distance_type": "network",
         }
@@ -277,7 +309,7 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": False,
             "distance_type": "euclidean",
         }
@@ -300,7 +332,7 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": True,
             "distance_type": "euclidean",
         }
@@ -350,7 +382,7 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
         )
         args = self.net_obs1, self.network
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": False,
             "distance_type": "network",
         }
@@ -373,7 +405,7 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
         )
         args = self.net_obs1, self.network
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": True,
             "distance_type": "network",
         }
@@ -396,7 +428,7 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
         )
         args = self.net_obs1, self.network
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": False,
             "distance_type": "euclidean",
         }
@@ -419,7 +451,7 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
         )
         args = self.net_obs1, self.network
         kwargs = {
-            "dest_obs": self.net_obs2,
+            "destination_observations": self.net_obs2,
             "snap_dist": True,
             "distance_type": "euclidean",
         }

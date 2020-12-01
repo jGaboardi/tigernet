@@ -873,13 +873,13 @@ def obs2obs_cost_matrix(
 
     Parameters
     ----------
-    orig : tigernet.Observations
-    net : tigernet.Network
-    dest : tigernet.Observations
+    origin_observations : tigernet.Observations
+    network : tigernet.Network
+    destination_observations : tigernet.Observations
         Destination observations. Default is ``None``.
     snap_dist : str
         Include the distance to observations from the network. Default is ``True``.
-    dist_type : str
+    distance_type : str
         Type of distance cost matrix. Default is ``'network'``.
         Option is ``'euclidean'``.
 
@@ -892,27 +892,27 @@ def obs2obs_cost_matrix(
 
     # ensure the network object has an associated cost matrix
     mtx_str = "n2n_matrix"
-    if not hasattr(net, mtx_str):
+    if not hasattr(network, mtx_str):
         msg = "The 'Network' has no '%s' attribute. " % mtx_str
         msg += "Run 'cost_matrix()' and try again."
         raise AttributeError(msg)
     else:
-        network_matrix = getattr(net, mtx_str)
+        network_matrix = getattr(network, mtx_str)
 
     # set the origin point dataframe
-    orig_obs = orig.snapped_points
+    orig_obs = origin_observations.snapped_points
 
     # set cost matrix as symmetric if no destination pattern is specified
-    if not dest:
-        orig_obs = orig_obs
+    if not destination_observations:
+        dest_obs = orig_obs
         symmetric = True
     else:
-        dest_obs = dest.snapped_points
+        dest_obs = destination_observations.snapped_points
         symmetric = False
 
     # determine whether calculating distance from
     # segments locations or from the nearest node
-    assoc = orig.snap_to
+    assoc = origin_observations.snap_to
     if assoc == "nodes":
         assoc_col = "assoc_node"
         from_nodes = True
@@ -935,7 +935,7 @@ def obs2obs_cost_matrix(
         numeric_cols += [snap_dist]
 
     # set the xy-id name from the ``Network``
-    xyid = net.xyid
+    xyid = network.xyid
 
     # generate the cost matrix
     n2m_matrix = utils.obs2obs_costs(
@@ -946,7 +946,7 @@ def obs2obs_cost_matrix(
         xyid=xyid,
         from_nodes=from_nodes,
         snap_dist=snap_dist,
-        dist_type=dist_type,
+        dist_type=distance_type,
         assoc_col=assoc_col,
         numeric_cols=numeric_cols,
     )

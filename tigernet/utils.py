@@ -2534,7 +2534,7 @@ def obs2obs_costs(
     from_nodes,
     snap_dist,
     assoc_col,
-    distance_type,
+    dist_type,
     xyid,
     numeric_cols,
 ):
@@ -2557,7 +2557,7 @@ def obs2obs_costs(
         Column name to use for distance to observation from the network.
     assoc_col : str
         Column name for network geometry snapping.
-    distance_type : str
+    dist_type : str
         Type of distance cost matrix.
         Options are 'network_pp2n' and 'euclidean'. Default is None.
     xyid : str
@@ -2748,7 +2748,7 @@ def obs2obs_costs(
     n2m_matrix = numpy.zeros((orig.shape[0], dest.shape[0]))
 
     # Euclidean observation nodes distance matrix
-    if distance_type == "euclidean":
+    if dist_type == "euclidean":
         for ix in orig.index:
             for jx in dest.index:
                 i, j = orig[xyid][ix], dest[xyid][jx]
