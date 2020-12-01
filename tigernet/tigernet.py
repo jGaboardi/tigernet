@@ -860,3 +860,95 @@ class Observations:
                 ].sum()
                 for seg in net.s_ids
             }
+
+
+def obs2obs_cost_matrix(
+    origin_observations,
+    network,
+    destination_observations=None,
+    snap_dist=True,
+    distance_type="network",
+):
+    """Calculate a cost matrix from (n) observations to (m) observations.
+
+    Parameters
+    ----------
+    orig : tigernet.Observations
+    net : tigernet.Network
+    dest : tigernet.Observations
+        Destination observations. Default is ``None``.
+    snap_dist : str
+        Include the distance to observations from the network. Default is ``True``.
+    dist_type : str
+        Type of distance cost matrix. Default is ``'network'``.
+        Option is ``'euclidean'``.
+
+    Returns
+    -------
+    n2m_matrix : numpy.ndarray
+        'nXm' cost matrix.
+
+    """
+
+    # ensure the network object has an associated cost matrix
+    mtx_str = "n2n_matrix"
+    if not hasattr(net, mtx_str):
+        msg = "The 'Network' has no '%s' attribute. " % mtx_str
+        msg += "Run 'cost_matrix()' and try again."
+        raise AttributeError(msg)
+    else:
+        network_matrix = getattr(net, mtx_str)
+
+    # set the origin point dataframe
+    orig_obs = orig.snapped_points
+
+    # set cost matrix as symmetric if no destination pattern is specified
+    if not dest:
+        orig_obs = orig_obs
+        symmetric = True
+    else:
+        dest_obs = dest.snapped_points
+        symmetric = False
+
+    # determine whether calculating distance from
+    # segments locations or from the nearest node
+    assoc = orig.snap_to
+    if assoc == "nodes":
+        assoc_col = "assoc_node"
+        from_nodes = True
+    else:
+        assoc_col = "assoc_segm"
+        from_nodes = False
+
+    # declare distance to the network (if desired)
+    if snap_dist:
+        if from_nodes:
+            snap_dist = "dist2node"
+        else:
+            snap_dist = "dist2line"
+
+    # declare columns that should be checked for numerical values
+    numeric_cols = [assoc_col]
+    if not from_nodes:
+        numeric_cols += ["dist_a", "dist_b"]
+    if snap_dist:
+        numeric_cols += [snap_dist]
+
+    # set the xy-id name from the ``Network``
+    xyid = net.xyid
+
+    # generate the cost matrix
+    n2m_matrix = utils.obs2obs_costs(
+        orig_obs,
+        dest=dest_obs,
+        symmetric=symmetric,
+        network_matrix=network_matrix,
+        xyid=xyid,
+        from_nodes=from_nodes,
+        snap_dist=snap_dist,
+        dist_type=dist_type,
+        assoc_col=assoc_col,
+        numeric_cols=numeric_cols,
+    )
+
+    return n2m_matrix
