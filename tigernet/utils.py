@@ -2,17 +2,11 @@
 """
 
 from ast import literal_eval
-import copy
+import copy, re
 
 import geopandas
 import numpy
 import pandas
-from shapely.geometry import Point, MultiPoint
-from shapely.geometry import LineString, MultiLineString
-from shapely.geometry import GeometryCollection
-from shapely.ops import linemerge
-
-
 from shapely.geometry import Point, MultiPoint
 from shapely.geometry import LineString, MultiLineString
 from shapely.geometry import GeometryCollection
@@ -2530,3 +2524,302 @@ def snap_to_nearest(obs, net):
     snp_pts_df = fill_frame(snp_pts_df, idx="index", col=obs.xyid, data=node2xyid)
 
     return snp_pts_df
+
+
+def obs2obs_costs(
+    orig,
+    dest,
+    symmetric,
+    network_matrix,
+    from_nodes,
+    snap_dist,
+    assoc_col,
+    dist_type,
+    xyid,
+    numeric_cols,
+):
+    """Internal function to calculate a cost matrix
+    from (n) observations to (m) observations.
+
+    Parameters
+    ----------
+    orig : geopandas.GeoDataFrame
+        Origin observations.
+    dest : geopandas.GeoDataFrame
+        Destination observations.
+    symmetric : bool
+        Calculate an observation nXn cost matrix.
+    network_matrix : numpy.ndarray
+        'nXn' network nodes cost matrix.
+    from_nodes : bool
+        Calculate cost matrix from network nodes only.
+    snap_dist : str
+        Column name to use for distance to observation from the network.
+    assoc_col : str
+        Column name for network geometry snapping.
+    dist_type : str
+        Type of distance cost matrix.
+        Options are 'network_pp2n' and 'euclidean'. Default is None.
+    xyid : str
+        String xyID column name
+    numeric_cols : list
+        Columns to preprocess to ensure numeric values.
+
+    Returns
+    -------
+    n2m_matrix : numpy.ndarray
+        'nXm' cost matrix.
+
+    """
+
+    def _ensure_numeric(o, d, cols):
+        """Make sure dataframe columns are in proper numeric format.
+
+        Parameters
+        ----------
+        o : geopandas.GeoDataFrame
+            Origin observations.
+        d : geopandas.GeoDataFrame
+            Destination observations.
+        cols : list
+            Columns to preprocess to ensure numeric values.
+
+        Returns
+        -------
+        o : geopandas.GeoDataFrame
+            Origin observations.
+        d : geopandas.GeoDataFrame
+            Destination observations.
+
+        """
+
+        # having trouble keeping the integers and floats in numeric form
+        types = [int, float, numpy.int64, numpy.float64]
+
+        for col in cols:
+
+            if type(o[col][0]) not in types:
+                o[col] = o[col].apply(lambda x: literal_eval(x))
+
+            if type(d[col][0]) not in types:
+                d[col] = d[col].apply(lambda x: literal_eval(x))
+
+        return o, d
+
+    def _dist_calc(
+        o, i, isg, d, j, jsg, matrix, na="node_a", nb="node_b", da="dist_a", db="dist_b"
+    ):
+        """Get the cheapest cost route from snapped pt1 to snapped pt 2
+
+        Parameters
+        ----------
+        o : geopandas.GeoDataFrame
+            Origin observations.
+        i : int
+            Origin index.
+        isg : int
+            Segment associated with i.
+        d : geopandas.GeoDataFrame
+            Destination observations.
+        j : int
+            Destination index.
+        jsg : int
+            Segment associated with j.
+        matrix : numpy.ndarray
+            All node-to-all node network cost matrix.
+        na : str
+            Right node label (may actually be to the visual left).
+            Default is ``'R_node'``.
+        nb : str
+            left node label (may actually be to the visual right).
+            Default is ``'L_node'``.
+        da : str
+            Distance label to ``'rn'``. Default is ``'R_dist'``.
+        db : str
+            Distance label to ``'ln'``. Default is ``'L_dist'``.
+
+        Returns
+        -------
+        initial_dist : float or int
+            Distance from snapped point to snapped point.
+
+        """
+
+        # get node indices
+        ai, bi = o[na][i], o[nb][i]
+        aj, bj = d[na][j], d[nb][j]
+
+        # origin right and left distance
+        ai_dist, bi_dist = o[da][i], o[db][i]
+
+        # destination right and left distance
+        aj_dist, bj_dist = d[da][j], d[db][j]
+
+        # if observation nodes are snapped to the same segment
+        if (ai, bi) == (aj, bj) and isg == jsg:
+
+            # if the ORIGIN 'right' distance is greater than
+            # (or equal to) the DESTINATION 'right' distance then
+            # subtract the DESTINATION from the ORIGIN distance...
+            if ai_dist >= aj_dist:
+                initial_dist = ai_dist - aj_dist
+
+            # ... otherwise subtract the 'right' ORIGIN from
+            # the DESTINATION distance
+            else:
+                initial_dist = aj_dist - ai_dist
+
+        # observation nodes are snapped to different segments
+        else:
+            # get all combinations of potential distance
+            a2a = matrix[ai, aj]
+            a2b = matrix[ai, bj]
+            b2b = matrix[bi, bj]
+            b2a = matrix[bi, aj]
+
+            # create distance lookup dictionary
+            lookup = {
+                (ai, aj, "ai", "aj"): a2a,
+                (ai, bj, "ai", "bj"): a2b,
+                (bi, bj, "bi", "bj"): b2b,
+                (bi, aj, "bj", "aj"): b2a,
+            }
+
+            # get minimum distances and associated nodes ids
+            (n1, n2, pos_i, pos_j) = min(lookup, key=lookup.get)
+            initial_dist = min(lookup.values())
+
+            # evaulate the cheapest cost
+            # if the lookup decides the 'right' node for ORIGIN and the
+            # 'right' distance is lower than the 'left' distance add the
+            #'right' distance to the initial distance
+            if pos_i == "ai":
+                initial_dist += ai_dist
+
+            # otherwise add the 'left' distance to the initial distance
+            else:
+                initial_dist += bi_dist
+
+            # if the lookup decides the 'right' node for DESTINATION and
+            # the 'right' distance is lower than the 'left' distance
+            # add the 'right' distance to the initial distance
+            if pos_j == "aj":
+                initial_dist += aj_dist
+
+            # otherwise add the left distance to the initial distance
+            else:
+                initial_dist += bj_dist
+
+        return initial_dist
+
+    def _return_coords(xyid):
+        """Convert string (list) xyid into a tuple of (x,y) coordinates.
+
+        Parameters
+        ----------
+        xyid : str
+            String xy ID.
+
+        Returns
+        -------
+        coords : tuple
+            (x,y) coordinates.
+
+        """
+
+        # coerce the id into a plain string if in another text format
+        # and do literal evaluation to tease out ID from list (if list)
+        xyid = str(literal_eval(str(xyid))[0])
+
+        # characters to split by and ignore
+        chars = ["x", "y", ""]
+
+        # return numeric x and y coordinate split at 'x' and 'y'
+        coords = [float(c) for c in re.split("(x|y)", xyid) if c not in chars]
+        coords = tuple(coords)
+
+        return coords
+
+    # set matrix style
+    if symmetric:
+        dest = copy.deepcopy(orig)
+
+    # instantiate empty matrix
+    n2m_matrix = numpy.zeros((orig.shape[0], dest.shape[0]))
+
+    # Euclidean observation nodes distance matrix
+    if dist_type == "euclidean":
+        for ix in orig.index:
+            for jx in dest.index:
+                i, j = orig[xyid][ix], dest[xyid][jx]
+                p1, p2 = _return_coords(i), _return_coords(j)
+                n2m_matrix[ix, jx] = _euc_dist(p1, p2)
+
+    # network-style cost matrices
+    else:
+
+        # make sure node indices and distances are set to
+        # numeric values in dataframe columns
+        orig, dest = _ensure_numeric(orig, dest, numeric_cols)
+
+        # Network (from 'network nodes') distance matrix
+        if from_nodes:
+
+            for i in orig.index:
+
+                for j in dest.index:
+
+                    # if i and j are the same observation
+                    # there is no distance
+                    if i == j and symmetric:
+                        n2m_matrix[i, j] = 0.0
+
+                    else:
+                        I = orig.loc[i, assoc_col]  # i network node ID
+                        J = dest.loc[j, assoc_col]  # j network node ID
+                        # network i to j dist
+                        net_dist = network_matrix[I, J]
+
+                        # add in distance from observation to network
+                        if snap_dist:
+                            # snapped i dist
+                            from_i = orig[snap_dist][i]
+                            # snapped j dist
+                            from_j = dest[snap_dist][j]
+                            net_dist = from_i + from_j + net_dist
+
+                        n2m_matrix[i, j] = net_dist
+
+        # Network (from snapped point) distance matrix
+        else:
+
+            # complete distance
+            # start p1 --> snap point --> nearest node -->
+            # furtherst(closest) node --> snap point --> goal p2
+            for i in orig.index:
+
+                for j in dest.index:
+
+                    # if i and j are the same observation
+                    # there is no distance
+                    if i == j and symmetric:
+                        n2m_matrix[i, j] = 0.0
+
+                    else:
+                        # network segments associated with i and j
+                        isegm, jsegm = orig[assoc_col][i], dest[assoc_col][j]
+
+                        # calculate network distance from i to j
+                        network_dist = _dist_calc(
+                            orig, i, isegm, dest, j, jsegm, network_matrix
+                        )
+                        # add in distance from observation to network
+                        if snap_dist:
+                            orig_snap = orig[snap_dist][i]
+                            dest_snap = dest[snap_dist][j]
+                            dist_snap = orig_snap + dest_snap
+                            network_dist += dist_snap
+
+                        n2m_matrix[i, j] = network_dist
+
+    return n2m_matrix

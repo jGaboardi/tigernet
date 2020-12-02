@@ -120,6 +120,18 @@ _, network_barb_wpaths_inplace_var = copy.deepcopy(network_barb).cost_matrix(
     wpaths=True, asattr=False
 )
 
+# --------------------------------------------------------------------------
+# One 1x1 lattice network with smaller bounds
+#   used in:
+#       - test_obs2obs_synthetic.TestSyntheticObservationsOrigToXXXXSegments
+#       - test_obs2obs_synthetic.TestSyntheticObservationsOrigToXXXXNodes
+#       - test_obs2obs_synthetic.TestSyntheticObservationsOrigToDestSegments
+#       - test_obs2obs_synthetic.TestSyntheticObservationsOrigToDestNodes
+h1v1 = {"n_hori_lines": 1, "n_vert_lines": 1}
+lattice = tigernet.generate_lattice(bounds=[0, 0, 4, 4], **h1v1)
+network_lattice_1x1_small = tigernet.Network(s_data=lattice, **kws)
+network_lattice_1x1_small.cost_matrix()
+
 
 ###############################################################################
 ############################### Empirical networks ############################
@@ -199,5 +211,9 @@ network_empirical_simplified.simplify_network(inplace=True, **kws)
 #       - test_stats.TestNetworkStatsEmpirical
 #       - test_stats.TestNetworkDistanceMetricsEmpiricalGDF
 #       - test_cost_matrix.TestNetworkCostMatrixEmpircalGDF
+#       - test_observations_empirical.TestEmpiricalObservationsOrigToXXXXSegments
+#       - test_observations_empirical.TestEmpiricalObservationsOrigToXXXXNodes
+#       - test_observations_empirical.
+#       - test_observations_empirical.
 network_empirical_simplified_wcm = copy.deepcopy(network_empirical_simplified)
 network_empirical_simplified_wcm.cost_matrix(wpaths=True)
