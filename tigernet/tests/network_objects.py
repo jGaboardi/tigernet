@@ -211,5 +211,9 @@ network_empirical_simplified.simplify_network(inplace=True, **kws)
 #       - test_stats.TestNetworkStatsEmpirical
 #       - test_stats.TestNetworkDistanceMetricsEmpiricalGDF
 #       - test_cost_matrix.TestNetworkCostMatrixEmpircalGDF
+#       - test_observations_empirical.TestEmpiricalObservationsOrigToXXXXSegments
+#       - test_observations_empirical.TestEmpiricalObservationsOrigToXXXXNodes
+#       - test_observations_empirical.
+#       - test_observations_empirical.
 network_empirical_simplified_wcm = copy.deepcopy(network_empirical_simplified)
 network_empirical_simplified_wcm.cost_matrix(wpaths=True)
