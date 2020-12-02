@@ -46,7 +46,7 @@ class TestEmpiricalObservationsOrigToXXXXSegments(unittest.TestCase):
 
         known_mtx_sum = 22144649.49077968
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
@@ -68,7 +68,7 @@ class TestEmpiricalObservationsOrigToXXXXSegments(unittest.TestCase):
 
         known_mtx_sum = 23283690.15943207
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
 
 ####################################################################################
@@ -108,7 +108,7 @@ class TestEmpiricalObservationsOrigToXXXXNodes(unittest.TestCase):
 
         known_mtx_sum = 22077455.792563077
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
@@ -130,7 +130,7 @@ class TestEmpiricalObservationsOrigToXXXXNodes(unittest.TestCase):
 
         known_mtx_sum = 23904433.77183481
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
 
 ####################################################################################
@@ -177,7 +177,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
 
         known_mtx_sum = 470126303.68085647
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
@@ -199,7 +199,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
 
         known_mtx_sum = 489927946.32060623
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
 
 ####################################################################################
@@ -246,7 +246,7 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
 
         known_mtx_sum = 467758744.4634375
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
@@ -268,7 +268,7 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
 
         known_mtx_sum = 503078065.92697436
         observed_mtx_sum = observed_mtx.sum()
-        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
+        self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
 
 if __name__ == "__main__":
