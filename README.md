@@ -1,5 +1,5 @@
 # TigerNet
-Network Topology via TIGER/Line Shapefiles
+Network Topology via TIGER/Line Edges
 
 [![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub) 
 [![unittests](https://github.com/jGaboardi/tigernet/workflows/.github/workflows/unittests.yml/badge.svg)](https://github.com/jGaboardi/tigernet/actions?query=workflow%3A.github%2Fworkflows%2Funittests.yml) [![codecov](https://codecov.io/gh/jGaboardi/tigernet/branch/main/graph/badge.svg)](https://codecov.io/gh/jGaboardi/tigernet) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
@@ -15,7 +15,7 @@ After some consideration, this repo will serve as a stub for the `tigernet` impl
 
 ## What is TigerNet and how does it work?
 
-TigerNet is a Python library that addresses concerns in topology and builds accurate spatial network representations from [TIGER/Line® shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html), specifically [TIGER/Line edges](https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2017/TGRSHP2017_TechDoc_Ch4.pdf). This is achieved through a 7-step process that roughly is as follows:
+TigerNet is a Python library that addresses concerns in topology and builds accurate spatial network representations from [TIGER/Line® data](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html), specifically [TIGER/Line edges](https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2017/TGRSHP2017_TechDoc_Ch4.pdf). This is achieved through a 7-step process that roughly is as follows:
 
 1. creation of initial TIGER/Line edges subset (features with a road-type [MTFCC](https://www.census.gov/library/reference/code-lists/mt-feature-class-codes.html))
 2. creation of initial segments subset (retain only specified road-type MTFCCs)

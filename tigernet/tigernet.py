@@ -1,4 +1,4 @@
-"""
+"""Network topology via TIGER/Line Edges.
 """
 
 from . import utils
@@ -17,16 +17,13 @@ __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 class Network:
     def __init__(
         self,
-        network_instance=None,
-        s_data=None,
-        n_data=None,
+        s_data,
         from_raw=False,
-        tiger_edges=True,
         sid_name="SegID",
         nid_name="NodeID",
         geo_col="geometry",
-        xyid="xyid",
         len_col="length",
+        xyid="xyid",
         tnid="TNID",
         tnidf="TNIDF",
         tnidt="TNIDT",
@@ -35,7 +32,6 @@ class Network:
         mtfcc_types=None,
         mtfcc_discard=None,
         discard_segs=None,
-        edge_subsets=None,
         mtfcc_split=None,
         mtfcc_intrst=None,
         mtfcc_ramp=None,
@@ -53,6 +49,20 @@ class Network:
         """
         Parameters
         ----------
+        s_data : geopandas.GeoDataFrame
+            Segments dataframe.
+        from_raw : bool
+            Input ``s_data`` is raw TIGER/Line Edge data. Default is ``False``.
+        sid_name : str
+            Segment column name. Default is ``'SegID'``.
+        nid_name : str
+            Node column name. Default is ``'NodeID'``.
+        geo_col : str
+            Geometry column name. Default is ``'geometry'``.
+        len_col : str
+            Length column name. Default is ``'length'``.
+        xyid : str
+            Combined x-coord + y-coords string ID. Default is ``'xyid'``.
         tnid : str
             TIGER/Line node ID variable used for working with
             TIGER/Line edges. Default is ``'TNID'``.
@@ -62,25 +72,6 @@ class Network:
         tnidt : str
              TIGER/Line 'To Node' variable used for building topology in
              TIGER/Line edges. Default is ``'TNIDT'``.
-        s_data : {str, geopandas.GeoDataFrame}
-            Path to segments data or a dataframe itself.
-        n_data : {str, geopandas.GeoDataFrame, None}
-            Nodes data. Default is ``None``.
-        sid_name : str
-            Segment column name. Default is ``'SegID'``.
-        nid_name : str
-            Node column name. Default is ``'NodeID'``.
-
-
-
-
-
-        geo_col
-
-        from_raw
-
-
-
         attr1 : str
             Auxillary variable being used. Default is ``None``.
         attr2 : str
@@ -95,78 +86,140 @@ class Network:
         discard_segs : list
             specifc segment ids to discard. Default is ``None``.
             from [utils.discard_troublemakers()]
-        xyid : str
-            Combined x-coord + y-coords string ID. Default is ``'xyid'``.
-        len_col : str
-            Length column name. Default is ``'length'``.
-        tiger_edges : bool
-            Using TIGER/Line edges file. Default is ``True``.
-        edge_subsets : list
-            {type:{'col':column, 'oper':operator, 'val':value}}
-            i.e. -- {'edge': {'col':'ROADFLG', 'val':'Y'}}
         mtfcc_split : str
             MTFCC codes for segments to weld and then split during the
-            line splitting process. Default is None.
+            line splitting process. Default is ``None``.
         mtfcc_intrst : str
-            MTFCC codes for interstates. Default is None.
+            MTFCC codes for interstates. Default is ``None``.
         mtfcc_ramp : str
-            MTFCC codes for on ramps. Default is None.
+            MTFCC codes for on ramps. Default is ``None``.
         mtfcc_serv : str
-            MTFCC codes for service drives. Default is None.
-        mtfcc_split_grp : str
-            after subseting this road type, group by this attribute
-            before welding. Default is None.
+            MTFCC codes for service drives. Default is ``None``.
         mtfcc_split_by : list
             MTFCC codes to eventually split the segments of
-            `mtfcc_no_split` with. Default is None.
+            `mtfcc_no_split` with. Default is ``None``.
+        mtfcc_split_grp : str
+            After subseting this road type, group by this attribute
+            before welding. Default is ``None``.
         skip_restr : bool
-            skip re-welding restricted segments. Used when woring with
-            TIGER/Lines. Default is False.
+            Skip re-welding restricted segments. Default is ``False``.
         calc_len : bool
-            calculated length and add column. Default is False.
+            Calculate length and add column. Default is ``False``.
         record_components : bool
             Record connected components in graph. This is used for teasing out the
             largest connected component. Default is ``False``.
+        record_geom : bool
+            Create associated between IDs and shapely geometries.
+            Default is ``False``.
         largest_component : bool
             Keep only the largest connected component in the graph. Default is ``False``.
-        record_geom : bool
-            create associated between IDs and shapely geometries.
-            Default is False.
         calc_stats : bool
-            calculate network stats. Default is False.
+            Calculate network stats. Default is ``False``.
         def_graph_elems : bool
-            define graph elements. Default is False.
+            Define graph elements. Default is ``False``.
 
-        Methods : Attributes
-        --------------------
-        __init__ : s_data
-        build_network : --
-        build_base : n_data, segm2xyid, node2xyid
-        build_topology : segm2node, node2segment, segm2segm, node2node
-        build_components : segm_cc, cc_lens, node_cc, longest_segm_cc,
-            largest_segm_cc, largest_node_cc, n_ccs
-        build_associations : s_ids, n_ids, n_segm, n_node, segm2len,
-            network_length, node2degree, segm2tlid
-        define_graph_elements : segm2elem, node2elem
-        simplify_network : --
-        add_node : --
-        add_edge : --
-
-        network_cost_matrix : diameter, radius, d_net, d_euc, circuity,
-            n2n_euclidean, n2n_algo, n2n_matrix, n2n_paths
-        calc_net_stats : max_sinuosity, min_sinuosity,
-            net_mean_sinuosity, net_std_sinuosity, max_node_degree,
-            min_node_degree, mean_node_degree, std_node_degree, alpha,
-            beta, gamma, eta, entropies_mtfcc, entropy_mtfcc
-
-        ############### sauce.setup_raw : raw_data_info
-        ############### sauce.ring_correction : corrected_rings
-        ############### sauce.line_splitter : lines_split
-        ############### sauce.seg_welder : welded_mls
-        ############### sauce.cleanse_supercycle : cleanse_cycles, scrubbed
-        ############### sauce.geom_assoc : segm2geom, node2geom
-        ############### sauce.coords_assoc : segm2coords, node2coords
-        ############### sauce.get_stats_frame : network_stats
+        Attributes
+        ----------
+        segm2xyid : dict
+            Segment to xyID lookup.
+        node2xyid : dict
+            Node to xyID lookup.
+        segm2node : dict
+            Segment to node lookup.
+        node2segm : dict
+            Node to segment lookup.
+        segm2segm : dict
+            Segment to segment lookup.
+        node2node : dict
+            Node to node lookup.
+        segm_cc : dict
+            Root segment ID to connected component segment IDs lookup.
+        cc_lens : dict
+            Root segment ID to connected component length lookup.
+        node_cc : dict
+            Root node ID to connected component node IDs lookup.
+        largest_segm_cc : dict
+            Root segment ID to largest connected component segment IDs lookup.
+        largest_node_cc : dict
+            Root node ID to largest connected component node IDs lookup.
+        n_ccs : int
+            The number of connected components.
+        s_ids : list
+            Segment IDs.
+        n_ids : list
+            Node IDs.
+        n_segm : int
+            Network segment count.
+        n_node : int
+            Network node count.
+        segm2len : dict
+            Segment to segment length lookup.
+        network_length : float
+            Full network length.
+        node2degree : dict
+            Node to node degree lookup.
+        segm2tlid : dict
+            Segment to TIGER/Line ID lookup.
+        segm2elem : dict
+            Segment to network element lookup.
+        node2elem : dict
+            Node to network element lookup.
+        diameter : float
+            The longest shortest path between two nodes in the network.
+        radius : float
+            The shortest path between two nodes in the network.
+        d_net : float
+            Cumulative network diameter.
+        d_euc : float
+            Cumulative euclidean diameter.
+        circuity : float
+            Network circuity. See ``stats.circuity()``.
+        n2n_matrix : numpy.array
+            All node-to-node shortest path lengths in the network.
+        n2n_paths : dict
+            All node-to-node shortest paths in the network.
+        max_sinuosity : float
+            Maximum segment sinuosity.
+        min_sinuosity : float
+            Minimum segment sinuosity.
+        net_mean_sinuosity : float
+            Network segment sinuosity mean.
+        net_std_sinuosity : float
+            Network segment sinuosity standard deviation.
+        max_node_degree : int
+            Maximum node degree.
+        min_node_degree : int
+            Minimum node degree.
+        mean_node_degree : float
+            Network node degree mean.
+        std_node_degree : float
+            Network node degree standard deviation.
+        alpha : float
+            Network alpha measure. See ``stats.connectivity()``.
+        beta : float
+            Network beta measure. See ``stats.connectivity()``.
+        gamma : float
+            Network gamma measure. See ``stats.connectivity()``.
+        eta : float
+            Network eta measure. See ``stats.connectivity()``.
+        entropies_{} : dict
+            Segment/Node ID to {variable/attribute} entropies.
+        network_entropy_{} : float
+            Network {variable/attribute} entropy.
+        corrected_rings : int
+            Number of corrected rings in the network.
+        lines_split : int
+            Number of split lines in the network.
+        welded_mls : int
+            Number of welded multilinestrings in the network.
+        segm2geom : dict
+            Segment to geometry lookup.
+        node2geom : dict
+            Node to geometry lookup.
+        segm2coords : dict
+            Segment to endpoint coordinates lookup.
+        node2coords : dict
+            Node to coordinates lookup.
 
         Examples
         --------
@@ -210,72 +263,39 @@ class Network:
         """
 
         self.s_data = s_data
-        self.is_gdf = hasattr(self.s_data, "geometry")
-        IS_TIGEREDGES = hasattr(self.s_data, "MTFCC") or tiger_edges == True
-        if IS_TIGEREDGES:
-            self.tiger_edges = True
-        else:
-            self.tiger_edges = False
+        self.xyid, self.from_raw = xyid, from_raw
+        self.sid_name, self.nid_name = sid_name, nid_name
+        self.geo_col, self.len_col = geo_col, len_col
 
-        if not self.is_gdf and not self.s_data and not network_instance:
-            msg = "The 'segmdata' parameters must be set, "
-            msg += "either as a 'str' or 'geopandas.GeoDataFrame', *OR* "
-            msg += "the 'network_instance' parameter must be set."
-            raise ValueError(msg)
+        # TIGER variable attributes
+        self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
+        self.attr1, self.attr2, self.tlid = attr1, attr2, attr2
 
-        if network_instance:
-            self = network_instance
-        else:
-            self.xyid, self.from_raw = xyid, from_raw
-            self.sid_name, self.nid_name = sid_name, nid_name
-            self.geo_col, self.len_col = geo_col, len_col
+        self.mtfcc_types = info.get_mtfcc_types()
+        self.mtfcc_discard = info.get_discard_mtfcc_by_desc()
+        self.discard_segs = discard_segs
 
-            #########################################################################
-            # self.tiger_edges = tiger_edges
-            # if self.tiger_edges:
-            #    self.census_data = True
-            # else:
-            #    self.census_data = False
-            #########################################################################
+        # This reads in and prepares/cleans a segments geodataframe
+        if self.from_raw:
+            self.mtfcc_split = mtfcc_split
+            self.mtfcc_intrst = mtfcc_intrst
+            self.mtfcc_ramp = mtfcc_ramp
+            self.mtfcc_serv = mtfcc_serv
+            self.mtfcc_split_grp = mtfcc_split_grp
+            self.mtfcc_split_by = mtfcc_split_by
+            self.skip_restr = skip_restr
 
-            if IS_TIGEREDGES:
+            # freshly cleaned segments
+            utils.tiger_netprep(self, calc_len)
 
-                # TIGER variable attributes
-                self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
-                self.attr1, self.attr2, self.tlid = attr1, attr2, attr2
-
-                self.mtfcc_types = info.get_mtfcc_types()
-                self.mtfcc_discard = info.get_discard_mtfcc_by_desc()
-                self.discard_segs = discard_segs
-
-                # This reads in and prepares/cleans a segments geodataframe
-                if self.from_raw:
-                    if self.is_gdf or self.s_data.endswith(".shp"):
-                        # self.edge_subsets = edge_subsets
-
-                        # ---------- make these something like ``mtfcc_kwargs``
-                        self.mtfcc_split = mtfcc_split
-                        self.mtfcc_intrst = mtfcc_intrst
-                        self.mtfcc_ramp = mtfcc_ramp
-                        self.mtfcc_serv = mtfcc_serv
-                        self.mtfcc_split_grp = mtfcc_split_grp
-                        self.mtfcc_split_by = mtfcc_split_by
-                        self.skip_restr = skip_restr
-
-                    else:
-                        raise RuntimeError("Unknown line data.")
-
-                    # freshly cleaned segments
-                    utils.tiger_netprep(self, calc_len=calc_len)
-
-            # build a network object from segments
-            self.build_network(
-                self.s_data,
-                record_components=record_components,
-                largest_component=largest_component,
-                record_geom=record_geom,
-                def_graph_elems=def_graph_elems,
-            )
+        # build a network object from segments
+        self.build_network(
+            self.s_data,
+            record_components=record_components,
+            largest_component=largest_component,
+            record_geom=record_geom,
+            def_graph_elems=def_graph_elems,
+        )
 
     ###########################################################################
     ########################    end __init__    ###############################
@@ -323,7 +343,7 @@ class Network:
 
     def build_base(self, s_data):
         """Extract nodes from segment endpoints and relate
-        segments and nodes to a location ID (``xyid``)
+        segments and nodes to a location ID (``xyid``).
 
         Parameters
         ----------
@@ -477,18 +497,12 @@ class Network:
         self.n_data["degree"] = self.n_data[self.nid_name].map(self.node2degree)
 
         # Create segment to TIGER/Line ID lookup
-        try:
-            if self.tiger_edges:
-                self.segm2tlid = utils.xwalk(
-                    self.s_data, c1=self.sid_name, c2=self.tlid
-                )
-        except KeyError:
-            pass
+        if self.tlid:
+            self.segm2tlid = utils.xwalk(self.s_data, c1=self.sid_name, c2=self.tlid)
 
     def define_graph_elements(self):
-        """Define all segments and nodes as either a leaf (incident with
-        one other element) or a branch (incident with more than one
-        other grpah elemet).
+        """Define all segments and nodes as either a leaf (incident with one other
+        element) or a branch (incident with more than one other graph element).
         """
 
         self.segm2elem = utils.branch_or_leaf(self, geom_type="segm")
@@ -658,7 +672,7 @@ class Network:
         attr_name = "network_%s_entropy" % ent_col.lower()
         setattr(self, attr_name, network_entropy)
 
-    def cost_matrix(self, wpaths=False, asattr=True, validate_symmetry=True):
+    def cost_matrix(self, wpaths=False, asattr=True):
         """Network node-to-node cost matrix calculation with options for generating
         shortest paths along tree. For best results the network should be simplified
         prior to running this method.
@@ -670,8 +684,6 @@ class Network:
         asattr : bool
             Set ``n2n_matrix`` and ``paths`` as attributes of ``Network`` if ``True``,
             otherwise return them. Default is ``True``.
-        validate_symmetry : bool
-            Validate matrix symmetry. Default is ``False``.
 
         Returns
         -------
@@ -692,14 +704,8 @@ class Network:
             msg += "Simplify the network and try again."
             raise IndexError(msg)
 
+        # calculate shortest path length and records paths if desired
         n2n_matrix, paths = utils.shortest_path(self, gp=wpaths)
-
-        if validate_symmetry:
-            # validate symmetry
-            if n2n_matrix[0][0] == 0.0:
-                if not utils._check_symmetric(n2n_matrix, tol=1e-8):
-                    msg = "The all-to-all cost matrix is not symmetric."
-                    raise ValueError(msg)
 
         if asattr:
             self.n2n_matrix = n2n_matrix
@@ -765,8 +771,8 @@ class Observations:
     snap_to : str
         Snap points to either segments of nodes. Default is ``'segments'``.
 
-    Methods : Attributes
-    --------------------
+    Attributes
+    ----------
     study_area : str
         Study area within county.
     sid_name : str
