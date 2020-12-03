@@ -11,7 +11,7 @@ from .utils import _get_lat_lines
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
-def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505)):
+def testing_data(f, to_crs="epsg:2779", bbox="general"):
     """Read in a prepared dataset for testing/tutorial.
 
     Parameters
@@ -20,9 +20,14 @@ def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505))
         The name of the shapefile/dataset.
     to_crs : {str, None}
         Transform to this coordinate reference system. Default is ``'epsg:2779'``.
-    bbox : {tuple, None}
-        Filter records by this bounding box. Default is
-        ``(-84.279,30.480,-84.245,30.505)``, which corresponds
+    bbox : {str, list, tuple, None}
+        Filter records by this bounding box. If ``str``, this should be one 
+        of the following: ``'general'``, .......
+        
+        If ``list`` or ``tuple`` this must be four coordinates in the form
+        (minx, miny, maxx, maxy).
+        If ``None``, the complete data file will be read in.
+        Default is ``'general'``, which corresponds
         to the Waverly Hills area of Tallahassee.
 
     Returns
@@ -31,6 +36,30 @@ def testing_data(f, to_crs="epsg:2779", bbox=(-84.279, 30.480, -84.245, 30.505))
         The dataset.
 
     """
+
+    if type(bbox) == str:
+        if bbox == "general":
+            bbox = (-84.279, 30.480, -84.245, 30.505)
+        else:
+            msg = "'bbox' value of '%s' not supported." % bbox
+            raise ValueError(msg)
+    else:
+        if bbox:
+            good_coords = False
+            is_iterable = True if type(bbox) in [tuple, list] else False
+            try:
+                has_4_elements = True if len(bbox) == 4 else False
+            except TypeError:
+                has_4_elements = False
+            if is_iterable and has_4_elements:
+                float_coords = [type(c) == float for c in bbox]
+                coords_are_floats = True if all(float_coords) else False
+                if coords_are_floats:
+                    bbox = bbox
+                    good_coords = True
+            if not good_coords:
+                msg = "There is a problem with the 'bbox' values: %s" % bbox
+                raise ValueError(msg)
 
     base = "zip://test_data/%s.zip!%s.shp"
     infile = base % (f, f)
