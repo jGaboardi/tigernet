@@ -1298,19 +1298,19 @@ def _euc_dist(p1, p2):
 ###############################################################################
 
 
-def tiger_netprep(net, in_file=None, calc_len=False):
+def tiger_netprep(net, calc_len):
     """Scrub a raw TIGER/Line EDGES file at the county level to prep for network.
 
     Parameters
     ----------
     net : tigernet.Network
     calc_len : bool
-        Calculate length and add column. Default is ``False``.
+        Calculate length and add column.
 
     """
 
     # Reproject roads and subset by road type
-    initial_subset(net, net.s_data, calc_len=calc_len)
+    initial_subset(net, calc_len)
 
     # Correcting ring roads
     net.s_data = ring_correction(net, net.s_data)
@@ -1320,21 +1320,16 @@ def tiger_netprep(net, in_file=None, calc_len=False):
     net.s_data = cleanse_supercycle(net, net.s_data, **cleanse_kws)
 
 
-def initial_subset(net, raw_file, calc_len=False):
+def initial_subset(net, calc_len):
     """Initalize a network data cleanse from raw tiger line files
 
     Parameters
     ----------
     net : tigernet.Network
-    raw_data : str
-        Directory and file name for to find raw tiger data
     calc_len : bool
+        Calculate and record the length of segments.
 
     """
-
-    # Read in raw TIGER street data
-    if not net.is_gdf:
-        net.s_data = geopandas.read_file(net.s_data)
 
     if calc_len:
         net.s_data = add_length(net.s_data, len_col=net.len_col, geo_col=net.geo_col)
@@ -2156,28 +2151,6 @@ def generate_tree(pred):
         tree[i] = path
 
     return tree
-
-
-def _check_symmetric(a, tol=1e-8):
-    """Validate matrix symmetry for nXn matrices.
-
-    Parameters
-    ----------
-    a : numpy.ndarray
-        Cost matrix.
-    tol : float
-        Tolerance. Default is ``1e-8``.
-
-    Returns
-    -------
-    symmetric : bool
-        Symmetric (``True``) or not (``False``).
-
-    """
-
-    symmetric = numpy.allclose(a, a.T, atol=tol)
-
-    return symmetric
 
 
 ###############################################################################

@@ -19,7 +19,7 @@ import tigernet
 #       - test_errors.TestStatsErrors
 h1v1 = {"n_hori_lines": 1, "n_vert_lines": 1}
 lattice = tigernet.generate_lattice(**h1v1)
-network_lattice_1x1_no_args = tigernet.Network(s_data=lattice)
+network_lattice_1x1_no_args = tigernet.Network(lattice)
 
 # --------------------------------------------------------------------------
 # Two 1x1 lattices network (both components)
@@ -30,7 +30,7 @@ lattice2 = tigernet.generate_lattice(bounds=[6, 6, 8, 8], **h1v1)
 lattice = lattice1.append(lattice2)
 lattice.reset_index(drop=True, inplace=True)
 kws = {"record_components": True}
-network_lattice_2x1x1_all = tigernet.Network(s_data=lattice, **kws)
+network_lattice_2x1x1_all = tigernet.Network(lattice, **kws)
 
 # --------------------------------------------------------------------------
 # Two 1x1 lattices network (both components) with a calculated cost matrix (and paths)
@@ -52,7 +52,7 @@ _, network_lattice_2x1x1_wpaths_var = copy.deepcopy(
 #   used in:
 #       - test_tigernet_synthetic.TestNetworkComponentsLattice1x1
 kws.update({"largest_component": True})
-network_lattice_2x1x1_largest = tigernet.Network(s_data=lattice, **kws)
+network_lattice_2x1x1_largest = tigernet.Network(lattice, **kws)
 
 # --------------------------------------------------------------------------
 # One 1x1 lattice network (with recorded geometry and defined graph elements)
@@ -67,7 +67,7 @@ network_lattice_2x1x1_largest = tigernet.Network(s_data=lattice, **kws)
 #       - test_observations_synthetic.TestSyntheticObservationsNodeRandomLattice1x1Restricted
 lattice = tigernet.generate_lattice(**h1v1)
 kws = {"record_geom": True, "def_graph_elems": True}
-network_lattice_1x1_geomelem = tigernet.Network(s_data=lattice, **kws)
+network_lattice_1x1_geomelem = tigernet.Network(lattice, **kws)
 
 # --------------------------------------------------------------------------
 # # One 1x1 lattice network with a calculated cost matrix (and paths)
@@ -92,7 +92,7 @@ _, network_lattice_1x1_wpaths_var = copy.deepcopy(
 barb = tigernet.generate_lattice(wbox=True, **h1v1)
 barb = barb[~barb["SegID"].isin([1, 2, 5, 7, 9, 10])]
 kws.update({"record_components": True})
-network_barb = tigernet.Network(s_data=barb, **kws)
+network_barb = tigernet.Network(barb, **kws)
 # copy
 graph_barb = network_barb.simplify_network(**kws)
 # inplace
@@ -129,7 +129,7 @@ _, network_barb_wpaths_inplace_var = copy.deepcopy(network_barb).cost_matrix(
 #       - test_obs2obs_synthetic.TestSyntheticObservationsOrigToDestNodes
 h1v1 = {"n_hori_lines": 1, "n_vert_lines": 1}
 lattice = tigernet.generate_lattice(bounds=[0, 0, 4, 4], **h1v1)
-network_lattice_1x1_small = tigernet.Network(s_data=lattice, **kws)
+network_lattice_1x1_small = tigernet.Network(lattice, **kws)
 network_lattice_1x1_small.cost_matrix()
 
 
@@ -161,9 +161,7 @@ SKIP_RESTR = True  # no weld retry if still MLS
 #   used in:
 #       - test_tigernet_empirical_gdf.TestNetworkComponentsEmpiricalGDF
 discard_segs = None
-kwargs = {"s_data": roads.copy(), "from_raw": True}
-attr_kws = {"attr1": ATTR1, "attr2": ATTR2}
-kwargs.update(attr_kws)
+kwargs = {"from_raw": True, "attr1": ATTR1, "attr2": ATTR2}
 comp_kws = {"record_components": True}
 kwargs.update(comp_kws)
 geom_kws = {"record_geom": True, "calc_len": True}
@@ -173,7 +171,7 @@ mtfcc_kws.update({"mtfcc_split": INTRST, "mtfcc_intrst": INTRST})
 mtfcc_kws.update({"mtfcc_split_grp": SPLIT_GRP, "mtfcc_ramp": RAMP})
 mtfcc_kws.update({"mtfcc_split_by": SPLIT_BY, "mtfcc_serv": SERV_DR})
 kwargs.update(mtfcc_kws)
-network_empirical_full = tigernet.Network(**kwargs)
+network_empirical_full = tigernet.Network(roads.copy(), **kwargs)
 
 # --------------------------------------------------------------------------
 # Full empirical network (all args, largest component)
@@ -184,7 +182,7 @@ network_empirical_full = tigernet.Network(**kwargs)
 #       - test_tigernet_empirical_gdf.TestNetworkComponentsEmpiricalGDF
 #       - test_erros.TestCostMatrixErrors
 kwargs.update({"largest_component": True, "def_graph_elems": True})
-network_empirical_lcc = tigernet.Network(**kwargs)
+network_empirical_lcc = tigernet.Network(roads.copy(), **kwargs)
 
 # --------------------------------------------------------------------------
 # Simplified empirical network (all args, largest component)

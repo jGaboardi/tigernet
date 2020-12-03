@@ -13,12 +13,6 @@ from .network_objects import network_lattice_1x1_geomelem
 from .network_objects import network_empirical_lcc
 
 
-class TestNeworkErrors(unittest.TestCase):
-    def test_no_segmdata(self):
-        with self.assertRaises(ValueError):
-            tigernet.Network(s_data=None)
-
-
 class TestObservationsErrors(unittest.TestCase):
     def test_no_segm2geom(self):
         network = copy.deepcopy(network_lattice_1x1_no_args)

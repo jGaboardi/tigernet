@@ -14,7 +14,7 @@ setup_requires = ["pytest-runner"] if needs_pytest else []
 with open(package + "/__init__.py", "r") as f:
     exec(f.readline())
 
-description = "Network Topology via TIGER/Line Shapefiles"
+description = "Network Topology via TIGER/Line Edges"
 
 # Fetch README.md for the `long_description`
 with open("README.md", "r", encoding="utf-8") as file:
@@ -65,7 +65,7 @@ def setup_package():
         maintainer_email="jgaboardi@gmail.com",
         setup_requires=setup_requires,
         tests_require=["pytest"],
-        keywords="network-topology, tiger-line, python, graph-theory, shapefiles",
+        keywords="network-topology, tiger-line, python, graph-theory",
         classifiers=[
             "Development Status :: 1 - Planning",
             "Intended Audience :: Science/Research",
