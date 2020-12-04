@@ -1037,10 +1037,6 @@ def _weld_MultiLineString(multilinestring, weld_multi=True, skip_restr=True):
                 sp1, ep1 = L1.boundary[0], L1.boundary[1]
                 sp2, ep2 = L2.boundary[0], L2.boundary[1]
 
-                # if equal move along
-                if ep1.equals(sp2) or sp1.equals(ep2):
-                    continue
-
                 # if either sets are almost equal pass along the
                 # altered first line and the original second line
                 if ep1.almost_equals(sp2) or sp1.almost_equals(ep2):

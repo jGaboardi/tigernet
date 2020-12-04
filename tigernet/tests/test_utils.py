@@ -23,6 +23,14 @@ class TestUtils(unittest.TestCase):
         observed_weld_wkt = utils._weld_MultiLineString(mls).wkt
         self.assertEqual(observed_weld_wkt, known_weld_wkt)
 
+    def test__weld_MultiLineString_3(self):
+        known_weld_wkt = "LINESTRING (1 0, 1 1, 0 1, 0 0)"
+        mls = MultiLineString(
+            (((0, 1.00000001), (0, 0)), ((1, 1), (0, 1)), ((1, 0), (1, 1)))
+        )
+        observed_weld_wkt = utils._weld_MultiLineString(mls).wkt
+        self.assertEqual(observed_weld_wkt, known_weld_wkt)
+
 
 if __name__ == "__main__":
     unittest.main()
