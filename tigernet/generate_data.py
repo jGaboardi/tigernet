@@ -11,7 +11,7 @@ from .utils import _get_lat_lines
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
 
-def testing_data(f, to_crs="epsg:2779", bbox="general"):
+def testing_data(f, to_crs="epsg:2779", bbox="general", direc="test_data"):
     """Read in a prepared dataset for testing/tutorial.
 
     Parameters
@@ -21,14 +21,15 @@ def testing_data(f, to_crs="epsg:2779", bbox="general"):
     to_crs : {str, None}
         Transform to this coordinate reference system. Default is ``'epsg:2779'``.
     bbox : {str, list, tuple, None}
-        Filter records by this bounding box. If ``str``, this should be one 
-        of the following: ``'general'``, .......
-        
+        Filter records by this bounding box. If ``str``, this should be one
+        of the following: ``'general'``,``'discard'``, ***********************************
         If ``list`` or ``tuple`` this must be four coordinates in the form
         (minx, miny, maxx, maxy).
         If ``None``, the complete data file will be read in.
         Default is ``'general'``, which corresponds
         to the Waverly Hills area of Tallahassee.
+    direc : str
+        File directory. Default is ``'test_data'``.
 
     Returns
     -------
@@ -40,6 +41,10 @@ def testing_data(f, to_crs="epsg:2779", bbox="general"):
     if type(bbox) == str:
         if bbox == "general":
             bbox = (-84.279, 30.480, -84.245, 30.505)
+        elif bbox == "discard":
+            bbox = (-84.2525, 30.4412, -84.2472, 30.4528)
+        elif bbox == "bad_ring":
+            pass
         else:
             msg = "'bbox' value of '%s' not supported." % bbox
             raise ValueError(msg)
@@ -61,8 +66,8 @@ def testing_data(f, to_crs="epsg:2779", bbox="general"):
                 msg = "There is a problem with the 'bbox' values: %s" % bbox
                 raise ValueError(msg)
 
-    base = "zip://test_data/%s.zip!%s.shp"
-    infile = base % (f, f)
+    base = "zip://%s/%s.zip!%s.shp"
+    infile = base % (direc, f, f)
     _gdf = geopandas.read_file(infile, bbox=bbox)
     _gdf = _gdf.to_crs(to_crs)
     return _gdf

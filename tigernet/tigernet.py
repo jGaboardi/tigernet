@@ -271,6 +271,11 @@ class Network:
         self.tnid, self.tnidf, self.tnidt = tnid, tnidf, tnidt
         self.attr1, self.attr2, self.tlid = attr1, attr2, attr2
 
+        # discard segments if desired
+        if discard_segs:
+            ds = info.get_discard_segms(*discard_segs)
+            self.s_data = self.s_data[~self.s_data[self.tlid].isin(ds)]
+
         self.mtfcc_types = info.get_mtfcc_types()
         self.mtfcc_discard = info.get_discard_mtfcc_by_desc()
         self.discard_segs = discard_segs
