@@ -137,3 +137,61 @@ def get_mtfcc_types() -> dict:
     }
 
     return mtfcc_types
+
+
+def get_discard_segms(year, state_fips, county_fips):
+    """This function provides a catalogue of known troublemaker TIGER/Line
+    Edges stored at year --> state --> county level. Currently, only
+    2010 TIGER/Line Edges for Leon County, Florida are supported.
+
+    Parameters
+    ----------
+    year : str
+        TIGER/Line Edges year.
+    state_fips : str
+        State FIPS code.
+    county_fips : str
+        County FIPS code.
+
+    Returns
+    -------
+    discard : list
+        Network segments that are known to be troublemakers.
+
+    """
+
+    catalogue = {
+        "2010": {
+            "12": {
+                "073": [
+                    618799725,
+                    618799786,
+                    618799785,
+                    634069404,
+                    618799771,
+                    618799763,
+                    610197711,
+                    82844664,
+                    82844666,
+                    82844213,
+                    82844669,
+                    82844657,
+                    82844670,
+                    82844652,
+                    82844673,
+                ]
+            }
+        }
+    }
+
+    params = year, state_fips, county_fips
+    msg = "There was a problem with the query. Check parameters: %s, %s, %s"
+    msg += msg % params
+    try:
+        discard = catalogue[year][state_fips][county_fips]
+        if not discard:
+            raise KeyError
+    except KeyError:
+        raise KeyError(msg)
+
+    return discard

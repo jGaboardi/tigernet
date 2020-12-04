@@ -13,6 +13,36 @@ from .network_objects import network_lattice_1x1_geomelem
 from .network_objects import network_empirical_lcc
 
 
+class TestCostMatrixErrors(unittest.TestCase):
+    def setUp(self):
+        self.network = copy.deepcopy(network_empirical_lcc)
+
+    def test_non_sequential_ids(self):
+        with self.assertRaises(IndexError):
+            self.network.cost_matrix()
+
+
+class TestDataGenerationErrors(unittest.TestCase):
+    def setUp(self):
+        self.dset = "Edges_Leon_FL_2010"
+
+    def test_read_data_bbox_bad_str(self):
+        with self.assertRaises(ValueError):
+            tigernet.testing_data(self.dset, bbox="bad_description")
+
+    def test_read_data_bbox_not_iterable(self):
+        with self.assertRaises(ValueError):
+            tigernet.testing_data(self.dset, bbox=2020)
+
+    def test_read_data_bbox_5_coords(self):
+        with self.assertRaises(ValueError):
+            tigernet.testing_data(self.dset, bbox=[1.0, 1.0, 2.0, 2.0, 2.0])
+
+    def test_read_data_bbox_int_coords(self):
+        with self.assertRaises(ValueError):
+            tigernet.testing_data(self.dset, bbox=[1, 1, 2, 2, 2])
+
+
 class TestObservationsErrors(unittest.TestCase):
     def test_no_segm2geom(self):
         network = copy.deepcopy(network_lattice_1x1_no_args)
@@ -23,15 +53,6 @@ class TestObservationsErrors(unittest.TestCase):
         network = copy.deepcopy(network_lattice_1x1_geomelem)
         with self.assertRaises(ValueError):
             tigernet.Observations(network, None, None, snap_to="network")
-
-
-class TestCostMatrixErrors(unittest.TestCase):
-    def setUp(self):
-        self.network = copy.deepcopy(network_empirical_lcc)
-
-    def test_non_sequential_ids(self):
-        with self.assertRaises(IndexError):
-            self.network.cost_matrix()
 
 
 class TestStatsErrors(unittest.TestCase):
