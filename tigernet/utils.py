@@ -302,7 +302,7 @@ def extract_nodes(net):
                     scanned.update(drop)
                 scanned.add(n)
 
-        ndf = _drop_geoms(net, ndf, drop, series=True)
+        ndf = _drop_geoms(ndf, drop, series=True)
         ndf = add_ids(ndf, id_name=net.nid_name)
 
         return ndf
