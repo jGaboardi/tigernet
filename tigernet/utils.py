@@ -1113,14 +1113,18 @@ def ring_correction(net, df):
         i_geoms = get_intersecting_geoms(net, df1=df, geom1=idx, wbool=False)
         i_geoms = i_geoms[i_geoms.index != idx]
 
+        """ ################################################ ### Why did I have this here?
         # rings that are not connected to the network will be removed
         if i_geoms.shape[0] < 1:
             continue
+        """
         node = i_geoms[net.geo_col][:1].intersection(LOI).values[0]
 
+        """ ################################################ ### Why did I have this here?
         # if pre cleaned and segments still overlap
         if type(node) != Point:
             continue
+        """
 
         node_coords = list(zip(node.xy[0], node.xy[1]))
         line_coords = list(zip(LOI.coords.xy[0], LOI.coords.xy[1]))
