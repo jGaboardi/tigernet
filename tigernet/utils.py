@@ -224,12 +224,11 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
     return frame
 
 
-def _drop_geoms(net, gdf, geoms, series=False):
+def _drop_geoms(gdf, geoms, series=False):
     """Drop a subset of geometries from a geopandas dataframe.
 
     Parameters
     ----------
-    net : tigernet.Network
     gdf : geopandas.GeoDataFrame
         Dataframe of geometries to search.
     geoms : list
