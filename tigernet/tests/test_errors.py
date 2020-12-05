@@ -43,6 +43,16 @@ class TestDataGenerationErrors(unittest.TestCase):
             tigernet.testing_data(self.dset, bbox=[1, 1, 2, 2, 2])
 
 
+class TestInfoErrors(unittest.TestCase):
+    def test_get_discard_segms_bad_year(self):
+        with self.assertRaises(KeyError):
+            tigernet.get_discard_segms("1500", "12", "073")
+
+    def test_get_discard_segms_no_info(self):
+        with self.assertRaises(KeyError):
+            tigernet.get_discard_segms("2000", "12", "073")
+
+
 class TestObservationsErrors(unittest.TestCase):
     def test_no_segm2geom(self):
         network = copy.deepcopy(network_lattice_1x1_no_args)

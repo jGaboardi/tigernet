@@ -181,17 +181,18 @@ def get_discard_segms(year, state_fips, county_fips):
                     82844673,
                 ]
             }
-        }
+        },
+        "2000": {"12": {"073": []}},
     }
 
-    params = year, state_fips, county_fips
-    msg = "There was a problem with the query. Check parameters: %s, %s, %s"
-    msg += msg % params
     try:
         discard = catalogue[year][state_fips][county_fips]
         if not discard:
             raise KeyError
     except KeyError:
+        params = year, state_fips, county_fips
+        msg = "There was a problem with the query. Check parameters: %s, %s, %s"
+        msg += msg % params
         raise KeyError(msg)
 
     return discard
