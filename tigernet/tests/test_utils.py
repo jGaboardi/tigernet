@@ -10,10 +10,15 @@ import unittest
 from shapely.geometry import MultiLineString
 
 
-class TestUtilsWeldingFuncs(unittest.TestCase):
-    def setUp(self):
-        pass
+class TestUtilsDropGeoms(unittest.TestCase):
+    def test__drop_geoms(self):
+        known_values = numpy.array([["c"], ["e"]])
+        geom_df = pandas.DataFrame({"points": ["a", "b", "c", "d", "e"]})
+        observed_values = utils._drop_geoms(geom_df, [[0, 1], [None, 3]]).values
+        numpy.testing.assert_array_equal(observed_values, known_values)
 
+
+class TestUtilsWeldingFuncs(unittest.TestCase):
     def test__weld_MultiLineString_1(self):
         known_weld_wkt = "LINESTRING (0 0, 0 1, 1 1)"
         mls = MultiLineString((((0, 0), (0, 1)), ((0, 1), (1, 1))))
