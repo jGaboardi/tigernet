@@ -43,8 +43,6 @@ def testing_data(f, to_crs="epsg:2779", bbox="general", direc="test_data"):
             bbox = (-84.279, 30.480, -84.245, 30.505)
         elif bbox == "discard":
             bbox = (-84.2525, 30.4412, -84.2472, 30.4528)
-        elif bbox == "bad_ring":
-            pass
         else:
             msg = "'bbox' value of '%s' not supported." % bbox
             raise ValueError(msg)

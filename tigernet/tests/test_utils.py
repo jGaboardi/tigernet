@@ -3,11 +3,14 @@
 
 from .. import utils
 
+import copy
 import numpy
 import operator
 import pandas
 import unittest
 from shapely.geometry import MultiLineString
+
+from .network_objects import network_lattice_1x1_no_args
 
 
 class TestUtilsDropGeoms(unittest.TestCase):
@@ -69,6 +72,24 @@ class TestUtilsFilterFuncs(unittest.TestCase):
         kws = {"column": "v2", "sval": "a", "oper": operator.eq}
         observed_values = utils.record_filter(self.df.copy(), **kws).values
         numpy.testing.assert_array_equal(observed_values, known_values)
+
+
+class TestUtilRsestrictionWelder(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_restriction_welder_key_error_synth(self):
+        known_return = None
+        _net = copy.deepcopy(network_lattice_1x1_no_args)
+        ATTR1, ATTR2, SPLIT_GRP, SKIP_RESTR = "MTFCC", "TLID", "FULLNAME", True
+        INTRST, RAMP, SERV_DR = "S1100", "S1630", "S1640"
+        SPLIT_BY = [RAMP, SERV_DR]
+        _net.attr1, _net.attr2, _net.skip_restr = ATTR1, ATTR2, SKIP_RESTR
+        _net.mtfcc_split, _net.mtfcc_intrst = INTRST, INTRST
+        _net.mtfcc_split_grp, _net.mtfcc_ramp = SPLIT_GRP, RAMP
+        _net.mtfcc_split_by, _net.mtfcc_serv = SPLIT_BY, SERV_DR
+        observed_return = utils.restriction_welder(_net)
+        self.assertEqual(observed_return, known_return)
 
 
 if __name__ == "__main__":
