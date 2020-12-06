@@ -9,7 +9,7 @@ from .network_objects import network_lattice_1x1_no_args
 from .network_objects import network_empirical_simplified
 
 
-class TestNetworkDataGeneration(unittest.TestCase):
+class TestNetworkDataGenerationCreation(unittest.TestCase):
     def setUp(self):
         b1133, nh, nv = [-1, -1, 3, 3], 3, 4
         self._34_kws = {"bounds": b1133, "n_hori_lines": nh, "n_vert_lines": nv}
@@ -43,6 +43,17 @@ class TestNetworkDataGeneration(unittest.TestCase):
         observed_length = lat.length.sum()
         known_length = 44.2
         self.assertEqual(observed_length, known_length)
+
+
+class TestNetworkDataGenerationRead(unittest.TestCase):
+    def setUp(self):
+        self.dset = "Edges_Leon_FL_2010"
+
+    def test_good_read_from_coords(self):
+        known_recs = 4
+        bbox = (-84.34, 30.4935, -84.3378, 30.494)
+        observed_recs = tigernet.testing_data(self.dset, bbox=bbox).shape[0]
+        self.assertEqual(observed_recs, known_recs)
 
 
 class TestObservationDataGenerationSynthetic(unittest.TestCase):

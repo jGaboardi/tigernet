@@ -38,7 +38,11 @@ class TestDataGenerationErrors(unittest.TestCase):
         with self.assertRaises(ValueError):
             tigernet.testing_data(self.dset, bbox=[1.0, 1.0, 2.0, 2.0, 2.0])
 
-    def test_read_data_bbox_int_coords(self):
+    def test_read_data_bbox_4_int_coords(self):
+        with self.assertRaises(ValueError):
+            tigernet.testing_data(self.dset, bbox=[1, 1, 2, 2])
+
+    def test_read_data_bbox_5_int_coords(self):
         with self.assertRaises(ValueError):
             tigernet.testing_data(self.dset, bbox=[1, 1, 2, 2, 2])
 
