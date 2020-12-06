@@ -1,6 +1,7 @@
 """Testing for tigernet/utils.py
 """
 
+import tigernet
 from .. import utils
 
 import copy
@@ -11,6 +12,17 @@ import unittest
 from shapely.geometry import MultiLineString
 
 from .network_objects import network_lattice_1x1_no_args
+
+
+class TestUtilsAddLength(unittest.TestCase):
+    def test_add_length(self):
+        known_length = 18.0
+        h1v1 = {"n_hori_lines": 1, "n_vert_lines": 1}
+        gdf = tigernet.generate_lattice(**h1v1)
+        gdf["length"] = gdf.geometry.length
+        gdf = utils.add_length(gdf, len_col="length", geo_col="geometry")
+        observed_length = gdf["length"].sum()
+        self.assertEqual(observed_length, known_length)
 
 
 class TestUtilsDropGeoms(unittest.TestCase):

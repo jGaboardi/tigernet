@@ -4,6 +4,7 @@
 
 import copy
 import geopandas
+from shapely.geometry import Point
 import unittest
 
 import tigernet
@@ -71,8 +72,13 @@ class TestObservationsErrors(unittest.TestCase):
 
 class TestObs2ObsErrors(unittest.TestCase):
     def test_no_cost_matrix(self):
-        observations = tigernet.testing_data("CensusBlocks_Leon_FL_2010")
-        network = copy.deepcopy(network_empirical_lcc)
+        network = copy.deepcopy(network_lattice_1x1_geomelem)
+        pts = [Point(1, 1), Point(3, 1), Point(1, 3), Point(3, 3)]
+        od_data = {"obs_id": ["a", "b", "c", "d"]}
+        obs = geopandas.GeoDataFrame(od_data, geometry=pts)
+        args = network, obs.copy()
+        kwargs = {"df_name": "obs1", "df_key": "obs_id"}
+        observations = tigernet.Observations(*args, **kwargs)
         with self.assertRaises(AttributeError):
             self.obs2obs_cost_matrix(observations, network)
 
