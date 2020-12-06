@@ -49,6 +49,12 @@ class TestNetworkDataGenerationRead(unittest.TestCase):
     def setUp(self):
         self.dset = "Edges_Leon_FL_2010"
 
+    def test_good_read_no_bbox(self):
+        known_recs = 37798
+        bbox = None
+        observed_recs = tigernet.testing_data(self.dset, bbox=bbox).shape[0]
+        self.assertEqual(observed_recs, known_recs)
+
     def test_good_read_from_coords(self):
         known_recs = 4
         bbox = (-84.34, 30.4935, -84.3378, 30.494)

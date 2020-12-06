@@ -12,83 +12,10 @@ from shapely.geometry import LineString, MultiLineString
 from shapely.geometry import GeometryCollection
 from shapely.ops import linemerge, polygonize
 
+from .generate_data import generate_xyid
+
 # used to supress warning in addIDX()
 geopandas.pd.set_option("mode.chained_assignment", None)
-
-
-def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
-    """Generate line segments for a lattice.
-
-    Parameters
-    ----------
-    hspace : list
-        Horizontal spacing.
-    vspace : list
-        Vertical spacing.
-    withbox : bool
-        Include outer rim.
-    bounds : list
-        area bounds in the form of ``[x1,y1,x2,y2]``.
-    hori : bool
-        Generate horizontal line segments.
-        Default is ``True``. ``False`` generates vertical segments.
-
-    Returns
-    -------
-    lines : list
-        All vertical or horizontal line segments in the grid.
-    """
-
-    # Initialize starting and ending horizontal indices
-    h_start_at, h_end_at = 0, len(hspace)
-
-    # Initialize starting and ending vertical indices
-    v_start_at, v_end_at = 0, len(vspace)
-
-    # set inital index track back to 0
-    y_minus = 0
-    x_minus = 0
-
-    if hori:  # start track back at 1 for horizontal lines
-        x_minus = 1
-        if not withbox:  # do not include borders
-            v_start_at += 1
-            v_end_at -= 1
-
-    else:  # start track back at 1 for vertical lines
-        y_minus = 1
-        if not withbox:  # do not include borders
-            h_start_at += 1
-            h_end_at -= 1
-
-    # Create empty line list and fill
-    lines = []
-
-    # for element in the horizontal index
-    for hplus in range(h_start_at, h_end_at):
-
-        # for element in the vertical index
-        for vplus in range(v_start_at, v_end_at):
-
-            # ignore if a -1 index
-            if hplus - x_minus == -1 or vplus - y_minus == -1:
-                continue
-            else:
-                # Point 1 (start point + previous slot in
-                #          horizontal or vertical space index)
-                p1x = bounds[0] + hspace[hplus - x_minus]
-                p1y = bounds[1] + vspace[vplus - y_minus]
-                p1 = Point(p1x, p1y)
-
-                # Point 2 (start point + current slot in
-                #          horizontal or vertical space index)
-                p2x = bounds[0] + hspace[hplus]
-                p2y = bounds[1] + vspace[vplus]
-                p2 = Point(p2x, p2y)
-
-                # LineString
-                lines.append(LineString((p1, p2)))
-    return lines
 
 
 def add_ids(frame, id_name=None):
@@ -114,63 +41,15 @@ def add_ids(frame, id_name=None):
     return frame
 
 
-def generate_xyid(df=None, geom_type="node", geo_col=None):
-    """Create a string xy id.
-
-    Parameters
-    ----------
-    df : geopandas.GeoDataFrame
-        Geometry dataframe. Default is ``None``.
-    geom_type : str
-        Either ``'node'`` of ``'segm'``. Default is ``'node'``.
-    geo_col : str
-        Geometry column name. Default is ``None``.
-
-    Returns
-    -------
-    xyid : dict
-        List of combined x-coord + y-coords strings.
-
-    """
-
-    xyid = {}
-
-    for idx, geom in enumerate(df[geo_col]):
-
-        if geom_type == "segm":
-            xys = ["x" + str(x) + "y" + str(y) for (x, y) in geom.coords[:]]
-            xyid[idx] = xys
-
-        # try to make the xyid from a polygon
-        if geom_type == "node":
-            try:
-                xy = "x" + str(geom.centroid.x) + "y" + str(geom.centroid.y)
-
-            # if the geometry is not polygon, but already point
-            except AttributeError:
-                try:
-                    xy = "x" + str(geom.x) + "y" + str(geom.y)
-                except:
-                    print("geom:", type(geom))
-                    print(dir(geom))
-                    raise AttributeError(
-                        "geom has neither attribute:\n"
-                        + "\t\t- `.centroid.[coord]`\n"
-                        + "\t\t- `.[coord]`"
-                    )
-
-            xyid[idx] = [xy]
-
-    return xyid
-
-
-def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0):
+def fill_frame(frame, data, full=False, idx="index", col=None, add_factor=0):
     """Fill a dataframe with a column of data.
 
     Parameters
     ----------
     frame : geopandas.GeoDataFrame
         Geometry dataframe.
+    data : dict
+        ``dict`` of data to fill the records.
     full : bool
         Create a new column (``False``) or a new frame (``True``).
         Default is ``False``.
@@ -178,10 +57,6 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
         Index column name. Default is ``'index'``.
     col : str or list
          New column name(s). Default is ``None``.
-    data : list *OR* dict
-        List of data to fill the column. Default is ``None``.
-        *OR*
-        dict of data to fill the records. Default is ``None``.
     add_factor : int
         Used when dataframe index does not start at ``0``.
         Default is ``0``.
@@ -200,26 +75,16 @@ def fill_frame(frame, full=False, idx="index", col=None, data=None, add_factor=0
     # write a single column in a geopandas.GeoDataFrame
     else:
         frame[col] = numpy.nan
-
-        data_type = type(data)
-        if data_type == dict:
-            for k, v in data.items():
-                k += add_factor
-
-                if col == "CC":
-                    frame.loc[frame[idx].isin(v), col] = k
-
-                elif idx == "index":
-                    frame.loc[k, col] = str(v)
-
-                else:
-                    frame.loc[(frame[idx] == k), col] = str(v)
-
+        for k, v in data.items():
+            k += add_factor
             if col == "CC":
-                frame[col] = frame[col].astype("category").astype(int)
-        else:
-            msg = "The 'data' parameter is a '%s' but must be a 'dict'."
-            raise TypeError(msg % data_type)
+                frame.loc[frame[idx].isin(v), col] = k
+            elif idx == "index":
+                frame.loc[k, col] = str(v)
+            else:
+                frame.loc[(frame[idx] == k), col] = str(v)
+        if col == "CC":
+            frame[col] = frame[col].astype("category").astype(int)
 
     return frame
 
@@ -327,7 +192,7 @@ def extract_nodes(net):
 
     # Give an initial string 'xy' ID
     prelim_xy_id = generate_xyid(df=nodedf, geom_type="node", geo_col=net.geo_col)
-    nodedf = fill_frame(nodedf, idx=net.nid_name, col=net.xyid, data=prelim_xy_id)
+    nodedf = fill_frame(nodedf, prelim_xy_id, idx=net.nid_name, col=net.xyid)
 
     # drop all node but the top in the stack
     nodedf = _drop_covered_nodes(net, nodedf)
@@ -1142,7 +1007,7 @@ def ring_correction(net, df):
 
     # add updated xyid
     segm2xyid = generate_xyid(df=df, geom_type="segm", geo_col=net.geo_col)
-    df = fill_frame(df, col=net.xyid, data=segm2xyid)
+    df = fill_frame(df, segm2xyid, col=net.xyid)
 
     # corrected ring road count
     net.corrected_rings = corrected_rings
@@ -1354,7 +1219,7 @@ def initial_subset(net, calc_len):
 
     # create segment xyID
     segm2xyid = generate_xyid(df=net.s_data, geom_type="segm", geo_col=net.geo_col)
-    net.s_data = fill_frame(net.s_data, col=net.xyid, data=segm2xyid)
+    net.s_data = fill_frame(net.s_data, segm2xyid, col=net.xyid)
 
 
 def add_length(frame, len_col=None, geo_col=None):
@@ -1663,7 +1528,7 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
 
     # add updated xyid
     segm2xyid = generate_xyid(df=split_lines, geom_type="segm", geo_col=net.geo_col)
-    split_lines = fill_frame(split_lines, col=net.xyid, data=segm2xyid)
+    split_lines = fill_frame(split_lines, segm2xyid, col=net.xyid)
     split_lines = label_rings(split_lines, geo_col=net.geo_col)
 
     # number of lines split
@@ -2489,11 +2354,11 @@ def snap_to_nearest(obs, net):
         cols = [obs.df_key, "assoc_node", "dist2node", obs.geo_col]
 
     # create dataframe
-    snp_pts_df = fill_frame(obs.df, full=True, col=cols, data=snapped_pts)
+    snp_pts_df = fill_frame(obs.df, snapped_pts, full=True, col=cols)
 
     # add xyid
     node2xyid = generate_xyid(df=snp_pts_df, geom_type="node", geo_col=obs.geo_col)
-    snp_pts_df = fill_frame(snp_pts_df, idx="index", col=obs.xyid, data=node2xyid)
+    snp_pts_df = fill_frame(snp_pts_df, node2xyid, idx="index", col=obs.xyid)
 
     return snp_pts_df
 

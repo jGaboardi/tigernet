@@ -5,8 +5,6 @@ import geopandas
 import numpy
 from shapely.geometry import Point, LineString
 
-from .utils import _get_lat_lines
-
 
 __author__ = "James D. Gaboardi <jgaboardi@gmail.com>"
 
@@ -69,6 +67,37 @@ def testing_data(f, to_crs="epsg:2779", bbox="general", direc="test_data"):
     _gdf = geopandas.read_file(infile, bbox=bbox)
     _gdf = _gdf.to_crs(to_crs)
     return _gdf
+
+
+def generate_xyid(df=None, geom_type="node", geo_col=None):
+    """Create a string xy id.
+
+    Parameters
+    ----------
+    df : geopandas.GeoDataFrame
+        Geometry dataframe. Default is ``None``.
+    geom_type : str
+        Either ``'node'`` of ``'segm'``. Default is ``'node'``.
+    geo_col : str
+        Geometry column name. Default is ``None``.
+
+    Returns
+    -------
+    xyid : dict
+        List of combined x-coord + y-coords strings.
+
+    """
+
+    xyid = {}
+    for idx, geom in enumerate(df[geo_col]):
+        if geom_type == "segm":
+            xys = ["x" + str(x) + "y" + str(y) for (x, y) in geom.coords[:]]
+            xyid[idx] = xys
+        if geom_type == "node":
+            xy = "x" + str(geom.centroid.x) + "y" + str(geom.centroid.y)
+            xyid[idx] = [xy]
+
+    return xyid
 
 
 def generate_sine_lines(sid_name="SegID", mtfcc="MTFCC", mtfcc_label="S1400"):
@@ -212,6 +241,81 @@ def generate_lattice(
     lat_arcs[mtfcc] = [mtfcc_label] * lat_arcs.shape[0]
 
     return lat_arcs
+
+
+def _get_lat_lines(hspace, vspace, withbox, bounds, hori=True):
+    """Generate line segments for a lattice.
+
+    Parameters
+    ----------
+    hspace : list
+        Horizontal spacing.
+    vspace : list
+        Vertical spacing.
+    withbox : bool
+        Include outer rim.
+    bounds : list
+        area bounds in the form of ``[x1,y1,x2,y2]``.
+    hori : bool
+        Generate horizontal line segments.
+        Default is ``True``. ``False`` generates vertical segments.
+
+    Returns
+    -------
+    lines : list
+        All vertical or horizontal line segments in the grid.
+    """
+
+    # Initialize starting and ending horizontal indices
+    h_start_at, h_end_at = 0, len(hspace)
+
+    # Initialize starting and ending vertical indices
+    v_start_at, v_end_at = 0, len(vspace)
+
+    # set inital index track back to 0
+    y_minus = 0
+    x_minus = 0
+
+    if hori:  # start track back at 1 for horizontal lines
+        x_minus = 1
+        if not withbox:  # do not include borders
+            v_start_at += 1
+            v_end_at -= 1
+
+    else:  # start track back at 1 for vertical lines
+        y_minus = 1
+        if not withbox:  # do not include borders
+            h_start_at += 1
+            h_end_at -= 1
+
+    # Create empty line list and fill
+    lines = []
+
+    # for element in the horizontal index
+    for hplus in range(h_start_at, h_end_at):
+
+        # for element in the vertical index
+        for vplus in range(v_start_at, v_end_at):
+
+            # ignore if a -1 index
+            if hplus - x_minus == -1 or vplus - y_minus == -1:
+                continue
+            else:
+                # Point 1 (start point + previous slot in
+                #          horizontal or vertical space index)
+                p1x = bounds[0] + hspace[hplus - x_minus]
+                p1y = bounds[1] + vspace[vplus - y_minus]
+                p1 = Point(p1x, p1y)
+
+                # Point 2 (start point + current slot in
+                #          horizontal or vertical space index)
+                p2x = bounds[0] + hspace[hplus]
+                p2y = bounds[1] + vspace[vplus]
+                p2 = Point(p2x, p2y)
+
+                # LineString
+                lines.append(LineString((p1, p2)))
+    return lines
 
 
 def generate_obs(npts, s_df, near_net=None, restrict=None, seed=0):

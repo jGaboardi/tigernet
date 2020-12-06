@@ -69,6 +69,14 @@ class TestObservationsErrors(unittest.TestCase):
             tigernet.Observations(network, None, None, snap_to="network")
 
 
+class TestObs2ObsErrors(unittest.TestCase):
+    def test_no_cost_matrix(self):
+        observations = tigernet.testing_data("CensusBlocks_Leon_FL_2010")
+        network = copy.deepcopy(network_empirical_lcc)
+        with self.assertRaises(AttributeError):
+            self.obs2obs_cost_matrix(observations, network)
+
+
 class TestStatsErrors(unittest.TestCase):
     def setUp(self):
         self.network = copy.deepcopy(network_lattice_1x1_no_args)

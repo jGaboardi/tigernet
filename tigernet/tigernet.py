@@ -4,6 +4,7 @@
 from . import utils
 from . import stats
 from . import info
+from .generate_data import generate_xyid
 
 import copy
 import warnings
@@ -366,22 +367,22 @@ class Network:
             self.s_data[self.len_col] = getattr(self.s_data, self.len_col)
 
         # create segment xyid
-        self.segm2xyid = utils.generate_xyid(
+        self.segm2xyid = generate_xyid(
             df=self.s_data, geom_type="segm", geo_col=self.geo_col
         )
-        _skws = {"idx": self.sid_name, "col": self.xyid, "data": self.segm2xyid}
-        self.s_data = utils.fill_frame(self.s_data, **_skws)
+        _skws = {"idx": self.sid_name, "col": self.xyid}
+        self.s_data = utils.fill_frame(self.s_data, self.segm2xyid, **_skws)
 
         # Instantiate nodes dataframe as part of NetworkClass
         self.n_data = utils.extract_nodes(self)
         self.n_data.reset_index(drop=True, inplace=True)
 
         # create permanent node xyid
-        self.node2xyid = utils.generate_xyid(
+        self.node2xyid = generate_xyid(
             df=self.n_data, geom_type="node", geo_col=self.geo_col
         )
-        _nkws = {"idx": self.nid_name, "col": self.xyid, "data": self.node2xyid}
-        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+        _nkws = {"idx": self.nid_name, "col": self.xyid}
+        self.n_data = utils.fill_frame(self.n_data, self.node2xyid, **_nkws)
 
         # set segment & node ID lists and counts elements
         utils.set_ids(self)
@@ -410,20 +411,20 @@ class Network:
         self = utils.assert_2_neighs(self)
 
         # fill dataframe with seg2seg
-        _skws = {"idx": self.sid_name, "col": "s_neigh", "data": self.segm2segm}
-        self.s_data = utils.fill_frame(self.s_data, **_skws)
+        _skws = {"idx": self.sid_name, "col": "s_neigh"}
+        self.s_data = utils.fill_frame(self.s_data, self.segm2segm, **_skws)
 
         # fill dataframe with seg2node
-        _skws = {"idx": self.sid_name, "col": "n_neigh", "data": self.segm2node}
-        self.s_data = utils.fill_frame(self.s_data, **_skws)
+        _skws = {"idx": self.sid_name, "col": "n_neigh"}
+        self.s_data = utils.fill_frame(self.s_data, self.segm2node, **_skws)
 
         # fill dataframe with node2seg
-        _nkws = {"idx": self.nid_name, "col": "s_neigh", "data": self.node2segm}
-        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+        _nkws = {"idx": self.nid_name, "col": "s_neigh"}
+        self.n_data = utils.fill_frame(self.n_data, self.node2segm, **_nkws)
 
         # fill dataframe with node2node
-        _nkws = {"idx": self.nid_name, "col": "n_neigh", "data": self.node2node}
-        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+        _nkws = {"idx": self.nid_name, "col": "n_neigh"}
+        self.n_data = utils.fill_frame(self.n_data, self.node2node, **_nkws)
 
     def build_components(self, largest_cc=False):
         """Find the rooted connected components of the graph (either largest or longest).
@@ -441,8 +442,8 @@ class Network:
         ### Segms -- Connected Components
         # -- Count
         self.segm_cc = utils.get_roots(self.segm2segm)
-        _skws = {"idx": self.sid_name, "col": "CC", "data": self.segm_cc}
-        self.s_data = utils.fill_frame(self.s_data, **_skws)
+        _skws = {"idx": self.sid_name, "col": "CC"}
+        self.s_data = utils.fill_frame(self.s_data, self.segm_cc, **_skws)
 
         # -- Length
         # fill connected component len column in dataframe and return dict
@@ -450,8 +451,8 @@ class Network:
 
         ### Node -- Connected Components
         self.node_cc = utils.get_roots(self.node2node)
-        _nkws = {"idx": self.nid_name, "col": "CC", "data": self.node_cc}
-        self.n_data = utils.fill_frame(self.n_data, **_nkws)
+        _nkws = {"idx": self.nid_name, "col": "CC"}
+        self.n_data = utils.fill_frame(self.n_data, self.node_cc, **_nkws)
 
         # Extract largest CCs
         if largest_cc:
@@ -511,12 +512,12 @@ class Network:
         """
 
         self.segm2elem = utils.branch_or_leaf(self, geom_type="segm")
-        _kws = {"idx": self.sid_name, "col": "graph_elem", "data": self.segm2elem}
-        self.s_data = utils.fill_frame(self.s_data, **_kws)
+        _kws = {"idx": self.sid_name, "col": "graph_elem"}
+        self.s_data = utils.fill_frame(self.s_data, self.segm2elem, **_kws)
 
         self.node2elem = utils.branch_or_leaf(self, geom_type="node")
-        _kws = {"idx": self.nid_name, "col": "graph_elem", "data": self.node2elem}
-        self.n_data = utils.fill_frame(self.n_data, **_kws)
+        _kws = {"idx": self.nid_name, "col": "graph_elem"}
+        self.n_data = utils.fill_frame(self.n_data, self.node2elem, **_kws)
 
     def simplify_network(
         self,
@@ -564,10 +565,10 @@ class Network:
         simp_segms = utils.ring_correction(simp_net, simp_segms)
 
         # add xyid
-        segm2xyid = utils.generate_xyid(
+        segm2xyid = generate_xyid(
             df=simp_segms, geom_type="segm", geo_col=simp_net.geo_col
         )
-        simp_segms = utils.fill_frame(simp_segms, col=simp_net.xyid, data=segm2xyid)
+        simp_segms = utils.fill_frame(simp_segms, segm2xyid, col=simp_net.xyid)
 
         # build a network object from simplified segments
         simp_net.build_network(
