@@ -1373,6 +1373,8 @@ def restriction_welder(net):
                 index = weld_ss.loc[(weld_ss[net.attr2] == keep_id)].index[0]
                 net.s_data.loc[index, net.geo_col] = weld
 
+            """ ##########      This should actually never occur.
+            ##############      It should be resolved in ``_weld_MultiLineString()``
             # if the weld resulted in a MultiLineString remove ids from
             # from `drop_ids` and set to new for each n+1 new segment.
             if type(weld) == MultiLineString:
@@ -1384,6 +1386,7 @@ def restriction_welder(net):
                 for idx in keeps_ids:
                     if idx in drop_ids:
                         drop_ids.remove(idx)
+            """
 
             # remove original segments used to create the new, welded
             # segment(s) from the full segments dataframe
