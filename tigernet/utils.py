@@ -898,14 +898,12 @@ def _weld_MultiLineString(multilinestring, weld_multi=True, skip_restr=True):
                 sp1, ep1 = L1.boundary[0], L1.boundary[1]
                 sp2, ep2 = L2.boundary[0], L2.boundary[1]
 
-                # if either sets are almost equal pass along the
-                # altered first line and the original second line
-                if ep1.almost_equals(sp2) or sp1.almost_equals(ep2):
-                    if ep1.almost_equals(sp2):
-                        new_line = LineString(L1.coords[:-1] + L2.coords[:1])
-                    if sp1.almost_equals(ep2):
-                        new_line = LineString(L2.coords[-1:] + L1.coords[1:])
-                    new_lines[line1] = new_line
+                if ep1.almost_equals(sp2):
+                    new_line = LineString(L1.coords[:-1] + L2.coords[:1])
+                else:
+                    new_line = LineString(L2.coords[-1:] + L1.coords[1:])
+
+                new_lines[line1] = new_line
 
         # convert welded multiline to list
         welded = list(welded)
@@ -1414,8 +1412,7 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
 
     """
 
-    # it `net.mtfcc_split` is string put it into a list
-    if not hasattr(net.mtfcc_split, "__iter__"):
+    if type(net.mtfcc_split) == str:
         net.mtfcc_split = [net.mtfcc_split]
 
     if net.s_data.crs:
@@ -1423,10 +1420,7 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
 
     # create subset of segments to split and not split
     if net.mtfcc_split_by and net.mtfcc_split:
-        if type(net.mtfcc_split) == list:
-            subset_codes = net.mtfcc_split_by + net.mtfcc_split
-        elif type(net.mtfcc_split) == str:
-            subset_codes = net.mtfcc_split_by + [net.mtfcc_split]
+        subset_codes = net.mtfcc_split_by + net.mtfcc_split
         non_subset = net.s_data[~net.s_data[road_type].isin(subset_codes)]
         net.s_data = net.s_data[net.s_data[road_type].isin(subset_codes)]
 
@@ -1461,26 +1455,6 @@ def line_splitter(net, inherit_attrs=False, calc_len=False, road_type="MTFCC"):
             net, df1=net.s_data, geom1=loi_idx, wbool=False
         )
         intersecting = intersecting[intersecting.index != loi_idx]
-
-        # Working with TIGER/Line *ROADS*
-        if not net.mtfcc_split_by and not net.mtfcc_split:
-
-            # if the LOI is an interstate only pass in
-            # the ramps for splitting
-            if net.s_data[road_type][loi_idx] == net.mtfcc_intrst:
-                intersecting = intersecting[
-                    (intersecting[road_type] == net.mtfcc_ramp)
-                    | (intersecting[road_type] == net.mtfcc_serv)
-                    | (intersecting[road_type] == net.mtfcc_intrst)
-                ]
-
-            # if LOI not ramp and interstates in dataframe
-            # filter them out
-            elif (
-                list(intersecting[road_type]).__contains__(net.mtfcc_intrst)
-                and net.s_data[road_type][loi_idx] != net.mtfcc_ramp
-            ):
-                intersecting = intersecting[intersecting[road_type] != net.mtfcc_intrst]
 
         # if There are no intersecting segments
         if intersecting.shape[0] == 0:
