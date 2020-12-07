@@ -80,7 +80,7 @@ class TestObs2ObsErrors(unittest.TestCase):
         kwargs = {"df_name": "obs1", "df_key": "obs_id"}
         observations = tigernet.Observations(*args, **kwargs)
         with self.assertRaises(AttributeError):
-            self.obs2obs_cost_matrix(observations, network)
+            tigernet.obs2obs_cost_matrix(observations, network)
 
 
 class TestStatsErrors(unittest.TestCase):
