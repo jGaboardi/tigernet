@@ -311,7 +311,7 @@ def associate(
     return topos_dict
 
 
-def get_neighbors(x2y, y2x, valtype=set()):
+def get_neighbors(x2y, y2x):
     """Get all neighboring graph elements of the same type.
 
     Parameters
@@ -320,8 +320,6 @@ def get_neighbors(x2y, y2x, valtype=set()):
         Element type1 to element type2 crosswalk.
     y2x : list or dict
         Element type2 to element type1 crosswalk.
-    valtype : set
-        Datatype of the ``dict`` value if Default is ``set()``.
 
     Returns
     -------
@@ -337,8 +335,7 @@ def get_neighbors(x2y, y2x, valtype=set()):
         for v in vn:
             x2x[k].update(y2x[v])
             x2x[k].discard(k)
-    if valtype != set:
-        x2x = {k: sorted(list(v)) for k, v in x2x.items()}
+    x2x = {k: sorted(list(v)) for k, v in x2x.items()}
 
     return x2x
 

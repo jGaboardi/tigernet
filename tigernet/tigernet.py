@@ -399,12 +399,10 @@ class Network:
         self.node2segm = utils.associate(assoc="node2segm", **_pri_sec)
 
         # Associate segments with neighboring segments
-        _args = self.segm2node, self.node2segm
-        self.segm2segm = utils.get_neighbors(*_args, valtype=list)
+        self.segm2segm = utils.get_neighbors(self.segm2node, self.node2segm)
 
         # Associate nodes with neighboring nodes
-        _args = self.node2segm, self.segm2node
-        self.node2node = utils.get_neighbors(*_args, valtype=list)
+        self.node2node = utils.get_neighbors(self.node2segm, self.segm2node)
 
         # 1. Catch cases w/ >= 3 neighboring nodes for a segment and throw an error.
         # 2. Catch rings and add start & end node.
@@ -602,7 +600,7 @@ class Network:
 
             if (s == "alpha" and not xnccs) or s != "alpha":
                 setter(s)
-            elif s == "alpha" and xnccs:
+            else:
                 msg = "\nConnected components must be calculated"
                 msg += " for alpha connectivity.\nCall the"
                 msg += " 'build_components' method and run again."
