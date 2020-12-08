@@ -1549,11 +1549,12 @@ def _split_line(loi, idx, df=None, geo_col=None, ring_road=False):
 
     if unaltered:
         return unaltered
-
+    """ ############################################### REMOVE AFTER FULL LEON COUNTY TEST
     # Line breaking
     if not type(breaks) == list:
+        print("[breaks]")
         breaks = [breaks]
-
+    """
     new_lines = _create_split_lines(
         breaks=breaks,
         loi=loi,

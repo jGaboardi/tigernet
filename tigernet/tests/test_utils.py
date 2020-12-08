@@ -5,11 +5,12 @@ import tigernet
 from .. import utils
 
 import copy
+import geopandas
 import numpy
 import operator
 import pandas
 import unittest
-from shapely.geometry import MultiLineString
+from shapely.geometry import LineString, MultiLineString
 
 from .network_objects import network_lattice_1x1_no_args
 
@@ -87,9 +88,6 @@ class TestUtilsFilterFuncs(unittest.TestCase):
 
 
 class TestUtilRsestrictionWelder(unittest.TestCase):
-    def setUp(self):
-        pass
-
     def test_restriction_welder_key_error_synth(self):
         known_return = None
         _net = copy.deepcopy(network_lattice_1x1_no_args)
@@ -102,6 +100,19 @@ class TestUtilRsestrictionWelder(unittest.TestCase):
         _net.mtfcc_split_by, _net.mtfcc_serv = SPLIT_BY, SERV_DR
         observed_return = utils.restriction_welder(_net)
         self.assertEqual(observed_return, known_return)
+
+
+class TestUtilSplitLine(unittest.TestCase):
+    def test_split_line_unaltered(self):
+        known_unaltered = LineString(((0, 1), (1, 1)))
+        tgeoms = [LineString(((0, 0), (0, 2)))] + [known_unaltered]
+        tcase = geopandas.GeoDataFrame(geometry=tgeoms)
+        idx, geom = 1, "geometry"
+        loi = tcase.loc[idx, geom]
+        observed_unaltered = utils._split_line(loi, idx, df=tcase, geo_col=geom)
+        for eidx, xy in enumerate(known_unaltered.xy):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(observed_unaltered[0].xy[eidx][cidx], coord)
 
 
 if __name__ == "__main__":
