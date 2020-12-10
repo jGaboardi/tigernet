@@ -972,18 +972,10 @@ def ring_correction(net, df):
         i_geoms = get_intersecting_geoms(net, df1=df, geom1=idx, wbool=False)
         i_geoms = i_geoms[i_geoms.index != idx]
 
-        """ ################################################ ### Why did I have this here?
-        # rings that are not connected to the network will be removed
-        if i_geoms.shape[0] < 1:
+        try:
+            node = i_geoms[net.geo_col][:1].intersection(LOI).values[0]
+        except IndexError:
             continue
-        """
-        node = i_geoms[net.geo_col][:1].intersection(LOI).values[0]
-
-        """ ################################################ ### Why did I have this here?
-        # if pre cleaned and segments still overlap
-        if type(node) != Point:
-            continue
-        """
 
         node_coords = list(zip(node.xy[0], node.xy[1]))
         line_coords = list(zip(LOI.coords.xy[0], LOI.coords.xy[1]))
@@ -1368,21 +1360,6 @@ def restriction_welder(net):
                 index = weld_ss.loc[(weld_ss[net.attr2] == keep_id)].index[0]
                 net.s_data.loc[index, net.geo_col] = weld
 
-            """ ##########      This should actually never occur.
-            ##############      It should be resolved in ``_weld_MultiLineString()``
-            # if the weld resulted in a MultiLineString remove ids from
-            # from `drop_ids` and set to new for each n+1 new segment.
-            if type(weld) == MultiLineString:
-                unique_segs = len(weld)
-                keeps_ids = [keep_id] + drop_ids[: unique_segs - 1]
-                index = list(weld_ss[weld_ss[net.attr2].isin(keeps_ids)].index)
-                for idx, seg in enumerate(weld):
-                    net.s_data.loc[index[idx], net.geo_col] = seg
-                for idx in keeps_ids:
-                    if idx in drop_ids:
-                        drop_ids.remove(idx)
-            """
-
             # remove original segments used to create the new, welded
             # segment(s) from the full segments dataframe
             net.s_data = net.s_data[~net.s_data[net.attr2].isin(drop_ids)]
@@ -1549,12 +1526,7 @@ def _split_line(loi, idx, df=None, geo_col=None, ring_road=False):
 
     if unaltered:
         return unaltered
-    """ ############################################### REMOVE AFTER FULL LEON COUNTY TEST
-    # Line breaking
-    if not type(breaks) == list:
-        print("[breaks]")
-        breaks = [breaks]
-    """
+
     new_lines = _create_split_lines(
         breaks=breaks,
         loi=loi,
