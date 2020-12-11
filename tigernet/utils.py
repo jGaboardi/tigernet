@@ -620,8 +620,6 @@ def calc_valency(net, col=None):
         for s in segs:
             segv = net.s_data[net.sid_name] == s
             neighs = literal_eval(net.s_data.loc[segv, col].values[0])
-            if neighs[0] != neighs[1]:
-                continue
             if neighs[0] == neighs[1]:
                 loops += 1
         degree = len(segs) + loops
