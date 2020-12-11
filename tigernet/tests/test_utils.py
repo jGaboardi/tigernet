@@ -102,6 +102,70 @@ class TestUtilRsestrictionWelder(unittest.TestCase):
         self.assertEqual(observed_return, known_return)
 
 
+class TestUtilGetLargestCCSNoSmallKeys(unittest.TestCase):
+    def test_get_largest_cc_no_small_keys(self):
+        known_largest = {1: [0, 1, 2, 3, 4]}
+        ccs = {0: [0, 1, 2, 3]}
+        ccs.update(known_largest)
+        observed_largest = utils.get_largest_cc(ccs, smallkeys=False)
+        self.assertEqual(observed_largest, known_largest)
+
+
+class TestUtilRingCorrection(unittest.TestCase):
+    def test_ring_correction_no_correction(self):
+        class SynthNetwork:
+            def __init__(self):
+                self.geo_col = "geometry"
+                self.sid_name = "SegID"
+                self.xyid = "xyID"
+
+        known_ring_corrections = 0
+        net = SynthNetwork()
+        line = LineString(((0, 0), (1, 1)))
+        ring = LineString(((2, 2), (3, 2), (2.5, 3), (2, 2)))
+        gdf = geopandas.GeoDataFrame(geometry=[line, ring])
+        gdf["ring"] = ["False", "True"]
+        utils.ring_correction(net, gdf.copy())
+        observed_ring_corrections = net.corrected_rings
+        self.assertEqual(observed_ring_corrections, known_ring_corrections)
+
+
+class TestUtilGetIntersectingGeoms(unittest.TestCase):
+    def test_get_intersecting_geoms_2_dfs_wbool(self):
+        class SynthNetwork:
+            def __init__(self):
+                self.geo_col = "geometry"
+
+        known_len, known_type = 2, tuple
+        net = SynthNetwork()
+        line = LineString(((0, 0), (1, 1)))
+        ring = LineString(((2, 2), (3, 2), (2.5, 3), (2, 2)))
+        gdf1 = geopandas.GeoDataFrame(geometry=[line])
+        gdf2 = geopandas.GeoDataFrame(geometry=[ring])
+        kws = {"df1": gdf1, "geom1": 0, "df2": gdf2, "geom2": 0, "wbool": True}
+        observed = utils.get_intersecting_geoms(net, **kws)
+        observed_len, observed_type = len(observed), type(observed)
+        self.assertEqual(observed_len, known_len)
+        self.assertEqual(observed_type, known_type)
+
+    def test_get_intersecting_geoms_2_dfs_xbool(self):
+        class SynthNetwork:
+            def __init__(self):
+                self.geo_col = "geometry"
+
+        known_len, known_type = 0, geopandas.geodataframe.GeoDataFrame
+        net = SynthNetwork()
+        line = LineString(((0, 0), (1, 1)))
+        ring = LineString(((2, 2), (3, 2), (2.5, 3), (2, 2)))
+        gdf1 = geopandas.GeoDataFrame(geometry=[line])
+        gdf2 = geopandas.GeoDataFrame(geometry=[ring])
+        kws = {"df1": gdf1, "geom1": 0, "df2": gdf2, "geom2": 0, "wbool": False}
+        observed = utils.get_intersecting_geoms(net, **kws)
+        observed_len, observed_type = len(observed), type(observed)
+        self.assertEqual(observed_len, known_len)
+        self.assertEqual(observed_type, known_type)
+
+
 class TestUtilSplitLine(unittest.TestCase):
     def test_split_line_unaltered(self):
         known_unaltered = LineString(((0, 1), (1, 1)))
