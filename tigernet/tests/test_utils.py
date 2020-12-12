@@ -253,16 +253,6 @@ class TestUtilSplitLine(unittest.TestCase):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_horseshoe_split[lidx].xy[cidx]), coord)
 
-    # def test_split_line_case2_horseshoe(self):
-    #    known_horseshoe_split = self.line7
-    #    idx = self.line7_idx
-    #    loi = self.gdf.loc[idx, self.g]
-    #    args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
-    #    observed_horseshoe_split = utils._split_line(*args, **kwargs)
-    #    for eidx, xy in enumerate(known_horseshoe_split.xy):
-    #        for cidx, coord in enumerate(xy):
-    #            self.assertEqual(observed_horseshoe_split[0].xy[eidx][cidx], coord)
-
 
 if __name__ == "__main__":
     unittest.main()
