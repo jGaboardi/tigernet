@@ -167,16 +167,86 @@ class TestUtilGetIntersectingGeoms(unittest.TestCase):
 
 
 class TestUtilSplitLine(unittest.TestCase):
+    def setUp(self):
+        self.g = "geometry"
+        # unaltered
+        self.line1, self.line1_idx = LineString(((10, 11), (11, 11))), 0
+        self.line2, self.line2_idx = LineString(((10, 10), (10, 12))), 1
+        geoms = [self.line1, self.line2]
+        rings = ["False", "False"]
+        # Case 1: basic ring
+        self.line3, self.line3_idx = LineString(((0, 1), (1, 1))), 2
+        self.line4 = LineString(((1, 0.5), (2, 0.5), (2, 2), (1, 2), (1, 0.5)))
+        self.line4_idx = 3
+        geoms += [self.line3, self.line4]
+        rings += ["False", "True"]
+        # Case 1: split
+        self.line5, self.line5_idx = LineString(((0.5, 0), (0.5, 1))), 4
+        self.line6 = LineString(((0.25, 1), (0.25, 1.5), (0.75, 1.5), (0.75, 1)))
+        self.line6_idx = 5
+        geoms += [self.line5, self.line6]
+        rings += ["False", "False"]
+        # Case 2: horseshoe
+        self.line7, self.line7_idx = LineString(((3, 1), (5, 1))), 6
+        self.line8 = LineString(((3.5, 1), (3.5, 0.5), (4.5, 1.5), (4.5, 1)))
+        self.line8_idx = 7
+        geoms += [self.line7, self.line8]
+        rings += ["False", "False"]
+        # Case 2: s-crossover
+
+        # Case 3
+
+        # Case 4
+
+        # Case 5
+
+        self.gdf = geopandas.GeoDataFrame(geometry=geoms)
+        self.gdf["ring"] = rings
+
     def test_split_line_unaltered(self):
-        known_unaltered = LineString(((0, 1), (1, 1)))
-        tgeoms = [LineString(((0, 0), (0, 2)))] + [known_unaltered]
-        tcase = geopandas.GeoDataFrame(geometry=tgeoms)
-        idx, geom = 1, "geometry"
-        loi = tcase.loc[idx, geom]
-        observed_unaltered = utils._split_line(loi, idx, df=tcase, geo_col=geom)
+        known_unaltered = self.line1
+        idx = self.line1_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_unaltered = utils._split_line(*args, **kwargs)
         for eidx, xy in enumerate(known_unaltered.xy):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(observed_unaltered[0].xy[eidx][cidx], coord)
+
+    def test_split_line_case1_basic_ring(self):
+        known_basic_ring_split = self.line4
+        idx = self.line4_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_basic_ring_split = utils._split_line(*args, ring_road=True, **kwargs)
+        for eidx, xy in enumerate(known_basic_ring_split.xy):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(observed_basic_ring_split[0].xy[eidx][cidx], coord)
+
+    def test_split_line_case1_basic_split(self):
+        known_basic_split = [
+            [[0.0, 0.25], [1.0, 1.0]],
+            [[0.25, 0.5], [1.0, 1.0]],
+            [[0.5, 0.75], [1.0, 1.0]],
+            [[0.75, 1.0], [1.0, 1.0]],
+        ]
+        idx = self.line3_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_basic_split = utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_basic_split):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_basic_split[lidx].xy[cidx]), coord)
+
+    # def test_split_line_case2_horseshoe(self):
+    #    known_horseshoe_split = self.line7
+    #    idx = self.line7_idx
+    #    loi = self.gdf.loc[idx, self.g]
+    #    args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+    #    observed_horseshoe_split = utils._split_line(*args, **kwargs)
+    #    for eidx, xy in enumerate(known_horseshoe_split.xy):
+    #        for cidx, coord in enumerate(xy):
+    #            self.assertEqual(observed_horseshoe_split[0].xy[eidx][cidx], coord)
 
 
 if __name__ == "__main__":
