@@ -188,7 +188,10 @@ class TestUtilSplitLine(unittest.TestCase):
         # Case 2: s-crossover
         # ---> # line3, line5
         # Case 3
-
+        self.line6, self.line6_idx = LineString(((2.5, 0.5), (2.5, 1.5))), 5
+        self.line7, self.line7_idx = LineString(((2.5, 1), (2.5, 2))), 6
+        geoms += [self.line6, self.line7]
+        rings += ["False", "False"]
         # Case 4
 
         # Case 5
@@ -252,6 +255,16 @@ class TestUtilSplitLine(unittest.TestCase):
         for lidx, xy in enumerate(known_smp_split):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_smp_split[lidx].xy[cidx]), coord)
+
+    def test_split_line_case3(self):
+        known_case3 = [[[2.5, 2.5], [0.5, 1.0]], [[2.5, 2.5], [1.0, 1.5]]]
+        idx = self.line6_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_case3 = tigernet.utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_case3):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_case3[lidx].xy[cidx]), coord)
 
 
 if __name__ == "__main__":
