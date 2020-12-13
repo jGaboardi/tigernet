@@ -169,7 +169,7 @@ class TestUtilGetIntersectingGeoms(unittest.TestCase):
 class TestUtilSplitLine(unittest.TestCase):
     def setUp(self):
         self.g = "geometry"
-        # unaltered
+        # Case 1: unaltered / Case 1: split
         self.line1, self.line1_idx = LineString(((10, 11), (11, 11))), 0
         self.line2, self.line2_idx = LineString(((10, 10), (10, 12))), 1
         geoms = [self.line1, self.line2]
@@ -180,20 +180,13 @@ class TestUtilSplitLine(unittest.TestCase):
         self.line4_idx = 3
         geoms += [self.line3, self.line4]
         rings += ["False", "True"]
-        # Case 1: split
-        self.line5, self.line5_idx = LineString(((0.5, 0), (0.5, 1))), 4
-        self.line6 = LineString(((0.25, 1), (0.25, 1.5), (0.75, 1.5), (0.75, 1)))
-        self.line6_idx = 5
-        geoms += [self.line5, self.line6]
-        rings += ["False", "False"]
         # Case 2: horseshoe
-        self.line7, self.line7_idx = LineString(((3, 1), (5, 1))), 6
-        self.line8 = LineString(((3.5, 1), (3.5, 0.5), (4.5, 1.5), (4.5, 1)))
-        self.line8_idx = 7
-        geoms += [self.line7, self.line8]
-        rings += ["False", "False"]
+        self.line5 = LineString(((0.25, 1), (0.25, 1.5), (0.75, 1.5), (0.75, 1)))
+        self.line5_idx = 4
+        geoms += [self.line5]
+        rings += ["False"]
         # Case 2: s-crossover
-
+        # ---> # line3, line5
         # Case 3
 
         # Case 4
@@ -203,15 +196,15 @@ class TestUtilSplitLine(unittest.TestCase):
         self.gdf = geopandas.GeoDataFrame(geometry=geoms)
         self.gdf["ring"] = rings
 
-    def test_split_line_unaltered(self):
-        known_unaltered = self.line1
+    def test_split_line_case1_unaltered_line(self):
+        known_unaltered_line = self.line1
         idx = self.line1_idx
         loi = self.gdf.loc[idx, self.g]
         args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
-        observed_unaltered = utils._split_line(*args, **kwargs)
-        for eidx, xy in enumerate(known_unaltered.xy):
+        observed_unaltered_line = utils._split_line(*args, **kwargs)
+        for eidx, xy in enumerate(known_unaltered_line.xy):
             for cidx, coord in enumerate(xy):
-                self.assertEqual(observed_unaltered[0].xy[eidx][cidx], coord)
+                self.assertEqual(observed_unaltered_line[0].xy[eidx][cidx], coord)
 
     def test_split_line_case1_basic_ring(self):
         known_basic_ring_split = self.line4
@@ -225,12 +218,10 @@ class TestUtilSplitLine(unittest.TestCase):
 
     def test_split_line_case1_basic_split(self):
         known_basic_split = [
-            [[0.0, 0.25], [1.0, 1.0]],
-            [[0.25, 0.5], [1.0, 1.0]],
-            [[0.5, 0.75], [1.0, 1.0]],
-            [[0.75, 1.0], [1.0, 1.0]],
+            [[10.0, 10.0], [10.0, 11.0]],
+            [[10.0, 10.0], [11.0, 12.0]],
         ]
-        idx = self.line3_idx
+        idx = self.line2_idx
         loi = self.gdf.loc[idx, self.g]
         args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
         observed_basic_split = utils._split_line(*args, **kwargs)
@@ -239,19 +230,28 @@ class TestUtilSplitLine(unittest.TestCase):
                 self.assertEqual(list(observed_basic_split[lidx].xy[cidx]), coord)
 
     def test_split_line_case2_horseshoe(self):
-        known_horseshoe_split = [
-            [[0.0, 0.25], [1.0, 1.0]],
-            [[0.25, 0.5], [1.0, 1.0]],
-            [[0.5, 0.75], [1.0, 1.0]],
-            [[0.75, 1.0], [1.0, 1.0]],
-        ]
-        idx = self.line3_idx
+        known_horseshoe_split = [[[0.25, 0.25, 0.75, 0.75], [1.0, 1.5, 1.5, 1.0]]]
+        idx = self.line5_idx
         loi = self.gdf.loc[idx, self.g]
         args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
         observed_horseshoe_split = utils._split_line(*args, **kwargs)
         for lidx, xy in enumerate(known_horseshoe_split):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_horseshoe_split[lidx].xy[cidx]), coord)
+
+    def test_split_line_case2_standard_multipoint(self):
+        known_smp_split = [
+            [[0.0, 0.25], [1.0, 1.0]],
+            [[0.25, 0.75], [1.0, 1.0]],
+            [[0.75, 1.0], [1.0, 1.0]],
+        ]
+        idx = self.line3_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_smp_split = utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_smp_split):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_smp_split[lidx].xy[cidx]), coord)
 
 
 if __name__ == "__main__":
