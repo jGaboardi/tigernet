@@ -193,8 +193,19 @@ class TestUtilSplitLine(unittest.TestCase):
         geoms += [self.line6, self.line7]
         rings += ["False", "False"]
         # Case 4
-
+        self.line8, self.line8_idx = LineString(((0, 3), (3, 3))), 7
+        self.line9 = LineString(
+            ((0.5, 3), (1, 3), (1, 3.5), (2, 3.5), (2, 3), (2.5, 3))
+        )
+        self.line9_idx = 8
+        geoms += [self.line8, self.line9]
+        rings += ["False", "False"]
         # Case 5
+        self.line10, self.line10_idx = LineString(((5, 3), (8, 3))), 9
+        self.line11 = LineString(((5.5, 3), (6, 3), (6, 3.5), (7, 3.5), (7, 3)))
+        self.line11_idx = 10
+        geoms += [self.line10, self.line11]
+        rings += ["False", "False"]
 
         self.gdf = geopandas.GeoDataFrame(geometry=geoms)
         self.gdf["ring"] = rings
@@ -265,6 +276,35 @@ class TestUtilSplitLine(unittest.TestCase):
         for lidx, xy in enumerate(known_case3):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_case3[lidx].xy[cidx]), coord)
+
+    def test_split_line_case4(self):
+        known_case4 = [
+            [[0.0, 1.0], [3.0, 3.0]],
+            [[1.0, 2.0], [3.0, 3.0]],
+            [[2.0, 3.0], [3.0, 3.0]],
+        ]
+        idx = self.line8_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_case4 = tigernet.utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_case4):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_case4[lidx].xy[cidx]), coord)
+
+    def test_split_line_case5(self):
+        known_case5 = [
+            [[5.0, 5.5], [3.0, 3.0]],
+            [[5.5, 6.0], [3.0, 3.0]],
+            [[6.0, 7.0], [3.0, 3.0]],
+            [[7.0, 8.0], [3.0, 3.0]],
+        ]
+        idx = self.line10_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_case5 = tigernet.utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_case5):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_case5[lidx].xy[cidx]), coord)
 
 
 if __name__ == "__main__":

@@ -1691,14 +1691,12 @@ def _find_break_locs(loi=None, breaks=None, ring_road=False):
     # road multiple names, etc. for multiple sections of roadway which
     # were then digitized as separate, stacked entities.
     elif intersection_type == MultiLineString:
-        print("... Case 4...")
         breaks = _make_break_locs(loi=loi, breaks=breaks, mline=True)
 
     # Case 5
     # - Complex intersection of points and Lines
     # anomaly in digitization / unclear
     elif intersection_type == GeometryCollection:
-        print("... Case 5...")
         # points and line in the geometry collection
         pts_in_gc = []
         lns_in_gc = []
