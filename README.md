@@ -56,6 +56,15 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
   }
 ```
 
+## Related projects
+* [`osmnx`](https://osmnx.readthedocs.io/en/stable/)
+* [`pandana`](http://udst.github.io/pandana/)
+* [`pyrosm`](https://github.com/HTenkanen/pyrosm)
+* [`sanet`](http://sanet.csis.u-tokyo.ac.jp)
+* [`snkit`](https://github.com/tomalrussell/snkit)
+* [`spaghetti`](https://github.com/pysal/spaghetti)
+
+
 ## References
 * The original method for `tigernet` is described in Chapter 1 of Gaboardi (2019).
   * **James D. Gaboardi** (2019). *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
