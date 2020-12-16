@@ -215,6 +215,15 @@ class TestUtilSplitLine(unittest.TestCase):
         self.line14_idx = 13
         geoms += [self.line12, self.line13, self.line14]
         rings += ["False", "False", "False"]
+        # Case 5: complex intersection - line & line & point
+        self.line15, self.line15_idx = LineString(((5, 6), (8, 6))), 14
+        self.line16, self.line16_idx = LineString(((5, 7), (8, 7))), 15
+        coords17 = [(5.5, 6), (6, 6), (6, 6.5), (7, 6.5)]
+        coords17 += [(7, 7), (7.5, 7), (7.5, 6), (7, 6)]
+        self.line17 = LineString(coords17)
+        self.line17_idx = 16
+        geoms += [self.line15, self.line16, self.line17]
+        rings += ["False", "False", "False"]
 
         self.gdf = geopandas.GeoDataFrame(geometry=geoms)
         self.gdf["ring"] = rings
@@ -328,6 +337,19 @@ class TestUtilSplitLine(unittest.TestCase):
         for lidx, xy in enumerate(known_case52):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_case52[lidx].xy[cidx]), coord)
+
+    def test_split_line_case53(self):
+        known_case53 = [
+            [[5.5, 6.0, 6.0], [6.0, 6.0, 6.0]],
+            [[6.0, 6.0, 7.0, 7.0, 7.5, 7.5, 7.0], [6.0, 6.5, 6.5, 7.0, 7.0, 6.0, 6.0]],
+        ]
+        idx = self.line17_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_case53 = tigernet.utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_case53):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_case53[lidx].xy[cidx]), coord)
 
 
 if __name__ == "__main__":
