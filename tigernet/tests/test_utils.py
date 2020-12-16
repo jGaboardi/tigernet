@@ -224,6 +224,28 @@ class TestUtilSplitLine(unittest.TestCase):
         self.line17_idx = 16
         geoms += [self.line15, self.line16, self.line17]
         rings += ["False", "False", "False"]
+        # Case 5: complex intersection - line & line & line (camel humps)
+        self.line18, self.line18_idx = LineString(((0, 9), (3, 9))), 17
+        self.line19 = LineString(
+            (
+                (0.25, 9),
+                (0.5, 9),
+                (0.5, 9.5),
+                (1, 9.5),
+                (1, 9),
+                (1.5, 9),
+                (1.5, 9.5),
+                (2, 9.5),
+                (2, 9),
+                (2.25, 9),
+                (2.25, 8.5),
+                (2.75, 8.5),
+                (2.75, 9.25),
+            )
+        )
+        self.line19_idx = 17
+        geoms += [self.line18, self.line19]
+        rings += ["False", "False"]
 
         self.gdf = geopandas.GeoDataFrame(geometry=geoms)
         self.gdf["ring"] = rings
@@ -350,6 +372,25 @@ class TestUtilSplitLine(unittest.TestCase):
         for lidx, xy in enumerate(known_case53):
             for cidx, coord in enumerate(xy):
                 self.assertEqual(list(observed_case53[lidx].xy[cidx]), coord)
+
+    def test_split_line_case54(self):
+        known_case54 = [
+            [[0.0, 0.25], [9.0, 9.0]],
+            [[0.25, 0.5], [9.0, 9.0]],
+            [[0.5, 1.0], [9.0, 9.0]],
+            [[1.0, 1.5], [9.0, 9.0]],
+            [[1.5, 2.0], [9.0, 9.0]],
+            [[2.0, 2.25], [9.0, 9.0]],
+            [[2.25, 2.75], [9.0, 9.0]],
+            [[2.75, 3.0], [9.0, 9.0]],
+        ]
+        idx = self.line19_idx
+        loi = self.gdf.loc[idx, self.g]
+        args, kwargs = (loi, idx), {"df": self.gdf, "geo_col": self.g}
+        observed_case54 = tigernet.utils._split_line(*args, **kwargs)
+        for lidx, xy in enumerate(known_case54):
+            for cidx, coord in enumerate(xy):
+                self.assertEqual(list(observed_case54[lidx].xy[cidx]), coord)
 
 
 if __name__ == "__main__":
