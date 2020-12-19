@@ -53,7 +53,7 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
   year    = {2019},
   doi     = {10.5281/zenodo.204572461},
   url     = {https://github.com/jGaboardi/tigernet}
-  }
+}
 ```
 
 ## Related projects
