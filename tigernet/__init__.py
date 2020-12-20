@@ -1,4 +1,4 @@
-__version__ = "v0.1-prealpha"
+__version__ = "0.2.0"
 
 """
 `tigernet` --- "Network Topology via TIGER/Line Shapefiles"

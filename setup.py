@@ -67,7 +67,7 @@ def setup_package():
         tests_require=["pytest"],
         keywords="network-topology, tiger-line, python, graph-theory",
         classifiers=[
-            "Development Status :: 1 - Planning",
+            "Development Status :: 4 - Beta",
             "Intended Audience :: Science/Research",
             "Intended Audience :: Developers",
             "Intended Audience :: Education",
