@@ -676,7 +676,7 @@ class Network:
         attr_name = "network_%s_entropy" % ent_col.lower()
         setattr(self, attr_name, network_entropy)
 
-    def cost_matrix(self, wpaths=False, asattr=True):
+    def cost_matrix(self, wpaths=False, asattr=True, mp_cores=None):
         """Network node-to-node cost matrix calculation with options for generating
         shortest paths along tree. For best results the network should be simplified
         prior to running this method.
@@ -688,6 +688,9 @@ class Network:
         asattr : bool
             Set ``n2n_matrix`` and ``paths`` as attributes of ``Network`` if ``True``,
             otherwise return them. Default is ``True``.
+        mp_cores : {None, int, str}
+            Use this many cores for multiprocessing. Set as ``"all"`` to
+            utilize all available cores. Default is ``None``.
 
         Returns
         -------
@@ -709,7 +712,18 @@ class Network:
             raise IndexError(msg)
 
         # calculate shortest path length and records paths if desired
-        n2n_matrix, paths = utils.shortest_path(self, gp=wpaths)
+        if not mp_cores:
+            # single-core processing
+            n2n_matrix, paths = utils.shortest_path(self, gp=wpaths)
+        else:
+            # multi-core processing
+            """
+            
+            
+            ####################### multiprocessing functionality here
+            
+            
+            """
 
         if asattr:
             self.n2n_matrix = n2n_matrix
