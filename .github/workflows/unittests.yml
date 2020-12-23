@@ -23,6 +23,7 @@
          with:
             miniconda-version: 'latest'
             mamba-version: "*"
+            channels: conda-forge,defaults
             auto-update-conda: true
             auto-activate-base: false
             environment-file: ${{ matrix.environment-file }}
