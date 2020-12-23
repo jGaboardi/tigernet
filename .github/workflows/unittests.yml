@@ -22,6 +22,14 @@
          shell: bash -l {0}
      steps:
        - uses: actions/checkout@v2
+       - name: Cache conda
+         uses: actions/cache@v1
+         env:
+           CACHE_NUMBER: 0
+         with:
+           path: ~/conda_pkgs_dir
+           key:
+             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ matrix.environment-file }}
        - uses: conda-incubator/setup-miniconda@v2
          with:
             miniconda-version: 'latest'
@@ -32,6 +40,7 @@
             auto-activate-base: false
             environment-file: ${{ matrix.environment-file }}
             activate-environment: test
+            use-only-tar-bz2: true
        - run: mamba info --all
        - run: mamba list
        - run: python -m black . --check
