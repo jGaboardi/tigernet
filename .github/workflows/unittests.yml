@@ -15,7 +15,7 @@
      timeout-minutes: 45
      strategy:
        matrix:
-         os: ['ubuntu-latest'] #['macos-latest', 'ubuntu-latest', 'windows-latest']
+         os: ['macos-latest', 'ubuntu-latest', 'windows-latest']
          environment-file: [ci/37.yaml, ci/38.yaml, ci/39.yaml]
      defaults:
        run:
@@ -50,4 +50,3 @@
            token: ${{ secrets.CODECOV_TOKEN }}
            file: ./coverage.xml
            name: tigernet-codecov
-
