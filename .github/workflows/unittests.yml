@@ -31,8 +31,9 @@
              ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(matrix.environment-file) }}
        - uses: conda-incubator/setup-miniconda@v2
          with:
-            miniconda-version: 'latest'
-            mamba-version: "*"
+            miniforge-variant: Mambaforge
+            miniforge-version: 'latest'
+            use-mamba: true
             channels: conda-forge
             channel-priority: true
             auto-update-conda: false
