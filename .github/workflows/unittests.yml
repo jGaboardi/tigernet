@@ -16,7 +16,7 @@
      strategy:
        matrix:
          os: ['macos-latest', 'ubuntu-latest', 'windows-latest']
-         environment-file: [.ci/37.yaml, .ci/38.yaml, .ci/39.yaml]
+         environment-file: [.ci/38.yaml, .ci/39.yaml]
      defaults:
        run:
          shell: bash -l {0}
