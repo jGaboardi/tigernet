@@ -1,7 +1,9 @@
+[![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)  [![PyPI version](https://badge.fury.io/py/tigernet.svg)](https://badge.fury.io/py/tigernet) 
+
+
 # TigerNet
 Network Topology via TIGER/Line Edges
 
-[![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub) 
 [![unittests](https://github.com/jGaboardi/tigernet/workflows/.github/workflows/unittests.yml/badge.svg)](https://github.com/jGaboardi/tigernet/actions?query=workflow%3A.github%2Fworkflows%2Funittests.yml) [![codecov](https://codecov.io/gh/jGaboardi/tigernet/branch/main/graph/badge.svg)](https://codecov.io/gh/jGaboardi/tigernet) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 -----------------
@@ -31,7 +33,15 @@ TigerNet is a Python library that addresses concerns in topology and builds accu
 
 ## Installation
 
-Currently `tigernet` officially supports [3.7](https://docs.python.org/3.7/), [3.8](https://docs.python.org/3.8/), and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.7 environment. Install the most current development version of `tigernet` by running:
+Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
+
+Install the current release from [`PyPI`](https://pypi.org/project/tigernet/) by running:
+
+```
+$ pip install tigernet
+```
+
+Install the most current development version of `tigernet` by running:
 
 ```
 $ pip install git+https://github.com/jGaboardi/tigernet
@@ -43,7 +53,7 @@ If you are having issues, please [create an issue](https://github.com/jGaboardi/
 
 ## License
 
-The project is licensed under the [BSD 3-Clause license](https://github.com/jGaboardi/tigernet/blob/master/LICENSE.txt).
+The project is licensed under the [BSD 3-Clause license](https://github.com/jGaboardi/tigernet/blob/main/LICENSE.txt).
 
 ## Citations
 
