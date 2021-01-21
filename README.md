@@ -33,7 +33,15 @@ TigerNet is a Python library that addresses concerns in topology and builds accu
 
 ## Installation
 
-Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment. Install the most current development version of `tigernet` by running:
+Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
+
+Install the current release from [`PyPI`](https://pypi.org/project/tigernet/) by running:
+
+```
+$ pip install tigernet
+```
+
+Install the most current development version of `tigernet` by running:
 
 ```
 $ pip install git+https://github.com/jGaboardi/tigernet
@@ -45,7 +53,7 @@ If you are having issues, please [create an issue](https://github.com/jGaboardi/
 
 ## License
 
-The project is licensed under the [BSD 3-Clause license](https://github.com/jGaboardi/tigernet/blob/master/LICENSE.txt).
+The project is licensed under the [BSD 3-Clause license](https://github.com/jGaboardi/tigernet/blob/main/LICENSE.txt).
 
 ## Citations
 
