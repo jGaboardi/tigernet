@@ -1,14 +1,7 @@
 from distutils.command.build_py import build_py
-from setuptools import setup
-import sys
+from setuptools import setup, find_packages
 
 package = "tigernet"
-
-# This check resolves conda-forge build failures
-# See the link below for original solution
-# https://github.com/pydata/xarray/pull/2643/files#diff-2eeaed663bd0d25b7e608891384b7298R29-R30
-needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
-setup_requires = ["pytest-runner"] if needs_pytest else []
 
 # Get __version__ from package/__init__.py
 with open(package + "/__init__.py", "r") as f:
@@ -63,8 +56,6 @@ def setup_package():
         download_url="https://pypi.org/project/" + package,
         maintainer="James D. Gaboardi",
         maintainer_email="jgaboardi@gmail.com",
-        setup_requires=setup_requires,
-        tests_require=["pytest"],
         keywords="network-topology, tiger-line, python, graph-theory",
         classifiers=[
             "Development Status :: 4 - Beta",
@@ -80,7 +71,7 @@ def setup_package():
             "Programming Language :: Python :: 3.9",
         ],
         license="3-Clause BSD",
-        packages=[package],
+        packages=find_packages(),
         py_modules=[package],
         install_requires=reqs,
         zip_safe=False,
