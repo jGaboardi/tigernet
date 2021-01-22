@@ -1,4 +1,4 @@
-[![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)  [![PyPI version](https://badge.fury.io/py/tigernet.svg)](https://badge.fury.io/py/tigernet) 
+[![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)  [![PyPI version](https://badge.fury.io/py/tigernet.svg)](https://badge.fury.io/py/tigernet) [![Conda Version](https://img.shields.io/conda/vn/conda-forge/tigernet.svg)](https://anaconda.org/conda-forge/tigernet) [![Conda Recipe](https://img.shields.io/badge/recipe-tigernet-yellow.svg)](https://github.com/conda-forge/tigernet-feedstock)
 
 
 # TigerNet
@@ -6,18 +6,9 @@ Network Topology via TIGER/Line Edges
 
 [![unittests](https://github.com/jGaboardi/tigernet/workflows/.github/workflows/unittests.yml/badge.svg)](https://github.com/jGaboardi/tigernet/actions?query=workflow%3A.github%2Fworkflows%2Funittests.yml) [![codecov](https://codecov.io/gh/jGaboardi/tigernet/branch/main/graph/badge.svg)](https://codecov.io/gh/jGaboardi/tigernet) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
------------------
-
-### Important
-After some consideration, this repo will serve as a stub for the `tigernet` implementation developed for Gaboardi (2019), which can be cited in future publications through its [DOI](https://zenodo.org/record/3378057#.Xh5oli3MzVo). Currently, some of the concepts are already being incorporated into [`spaghetti`](https://github.com/pysal/spaghetti), with more of the functionality in the original `tigernet` potential (such as network measures [`pysal/spaghetti#126`](https://github.com/pysal/spaghetti/issues/126)).
-
-* **Gaboardi, James D.** (2019). *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
-
--------------
-
 ## What is TigerNet and how does it work?
 
-TigerNet is a Python library that addresses concerns in topology and builds accurate spatial network representations from [TIGER/Line® data](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html), specifically [TIGER/Line edges](https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2017/TGRSHP2017_TechDoc_Ch4.pdf). This is achieved through a 7-step process that roughly is as follows:
+TigerNet is an open-source Python library that addresses concerns in topology and builds accurate spatial network representations from [TIGER/Line data](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html), specifically [TIGER/Line edges](https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2017/TGRSHP2017_TechDoc_Ch4.pdf). This is achieved through a 7-step process that roughly is as follows:
 
 1. creation of initial TIGER/Line edges subset (features with a road-type [MTFCC](https://www.census.gov/library/reference/code-lists/mt-feature-class-codes.html))
 2. creation of initial segments subset (retain only specified road-type MTFCCs)
@@ -27,13 +18,18 @@ TigerNet is a Python library that addresses concerns in topology and builds accu
 6. cleansing of the segment data (steps 4 and 5 are repeated until the data is deemed "clean" enough for network instantiation)
 7. building of the network (creation of network topology with the option of further simplification to eliminate all remaining non-articulation points — a pseudo graph-theoretic object — while maintaining spatial accuracy)
 
+### Important
+After some consideration, this repo will serve as a stub for the `tigernet` implementation developed for Gaboardi (2019), which can be cited in future publications through its [DOI](https://zenodo.org/record/3378057#.Xh5oli3MzVo). Currently, some of the concepts are already being incorporated into [`spaghetti`](https://github.com/pysal/spaghetti), with more of the functionality in the original `tigernet` potential (such as network measures [`pysal/spaghetti#126`](https://github.com/pysal/spaghetti/issues/126)).
+
+* **Gaboardi, James D.** (2019). *Populated Polygons to Networks: A Population-Centric Approach to Spatial Network Allocation*. [ProQuest Dissertations Publishing]([https://search.proquest.com/openview/e928368d7bb867bbf067fcad62011de3/1?pq-origsite=gscholar&cbl=18750&diss=y).
+
 ## Examples
 * Demo: [Synthetic lattice and observations](https://github.com/jGaboardi/tigernet/blob/main/examples/synthetic_network_example.ipynb)
 * Applied: [Empirical susbset of roads and observations](https://github.com/jGaboardi/tigernet/blob/main/examples/empirical_network_example.ipynb)
 
 ## Installation
 
-Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
+![Pypi python versions](https://img.shields.io/pypi/pyversions/spaghetti.svg) Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
 
 Install the current release from [`PyPI`](https://pypi.org/project/tigernet/) by running:
 
