@@ -29,7 +29,7 @@ After some consideration, this repo will serve as a stub for the `tigernet` impl
 
 ## Installation
 
-![Pypi python versions](https://img.shields.io/pypi/pyversions/spaghetti.svg) Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
+![Pypi python versions](https://img.shields.io/pypi/pyversions/tigernet.svg) Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/). Please make sure that you are operating in a Python >= 3.8 environment.
 
 Install the current release from [`PyPI`](https://pypi.org/project/tigernet/) by running:
 
