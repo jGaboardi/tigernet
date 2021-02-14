@@ -160,10 +160,10 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
     def test_net_no_snap(self):
         known_mtx = numpy.array(
             [
-                [2308.55782266, 1823.52901858, 1629.12550059, 1597.1534076],
-                [2412.21391635, 2166.96509055, 2869.67781642, 3773.3107486],
-                [3057.23257609, 2604.07173243, 3306.78445831, 4370.86310481],
-                [2295.44379456, 5095.29064061, 4900.88712262, 3105.34260925],
+                [2308.71804518, 1823.15385777, 1629.12550059, 1597.86997059],
+                [2412.05369383, 2167.34025136, 2869.67781642, 3774.02731159],
+                [3057.07235357, 2604.44689325, 3306.78445831, 4371.5796678],
+                [2295.60401708, 5094.9154798, 4900.88712262, 3106.05917224],
             ]
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
@@ -175,17 +175,17 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 470126303.68085647
+        known_mtx_sum = 470118286.1763705
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
             [
-                [2395.75317806, 1918.29966974, 1726.83999895, 1702.36034626],
-                [2489.82100395, 2252.14747391, 2957.80404698, 3868.92941945],
-                [3123.57060632, 2677.98505843, 3383.6416315, 4455.2127183],
-                [2375.92096584, 5183.34310766, 4991.88343687, 3203.8313638],
+                [2396.63085253, 1918.5571568, 1727.08007354, 1702.91268741],
+                [2490.37823338, 2253.15528259, 2958.04412157, 3869.4817606],
+                [3124.12783575, 2678.99286711, 3383.88170609, 4455.76505945],
+                [2376.79864032, 5183.60059472, 4992.12351146, 3204.38370495],
             ]
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
@@ -197,7 +197,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 489927946.32060623
+        known_mtx_sum = 489921658.93952286
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
@@ -244,17 +244,21 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 467758744.4634375
+        known_shape = (92, 1969)
+        observed_shape = observed_mtx.shape
+        self.assertEqual(observed_shape, observed_shape)
+
+        known_mtx_sum = 467769301.614291
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
             [
-                [2335.4438419, 2090.54629746, 1922.77385, 1803.34707265],
-                [2751.23280906, 2394.19654464, 3035.57260641, 3929.58859578],
-                [3299.60027364, 2742.26556972, 3383.6416315, 4600.13590492],
-                [2292.39152184, 5127.85973339, 4960.08728593, 3316.95839949],
+                [2336.13968088, 2090.68486173, 1923.01392459, 1802.63808338],
+                [2751.92864805, 2394.33510891, 3035.812681, 3928.87960652],
+                [3300.29611263, 2742.40413399, 3383.88170609, 4599.42691566],
+                [2293.08736082, 5127.99829766, 4960.32736052, 3316.24941022],
             ]
         )
         args = self.net_obs1, self.network
@@ -266,7 +270,11 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 503078065.92697436
+        known_shape = (92, 1969)
+        observed_shape = observed_mtx.shape
+        self.assertEqual(observed_shape, observed_shape)
+
+        known_mtx_sum = 503082073.90331995
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
