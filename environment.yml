@@ -15,6 +15,7 @@
    - pandas>=1.0
    - pip
    - pre-commit
+   - pyproj=2.6.1.post1
    - scipy
    - shapely>=1.7.1
    - watermark
