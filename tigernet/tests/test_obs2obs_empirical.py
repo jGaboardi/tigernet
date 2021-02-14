@@ -175,7 +175,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 469377899.1102747
+        known_mtx_sum = 470118286.1763705
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
@@ -197,7 +197,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 490443998.692929
+        known_mtx_sum = 489921658.93952286
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
@@ -244,7 +244,11 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 468634197.3593915
+        known_shape = (92, 1969)
+        observed_shape = observed_mtx.shape
+        self.assertEqual(observed_shape, observed_shape)
+
+        known_mtx_sum = 467769301.614291
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
@@ -266,7 +270,11 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx[:4, :4], known_mtx)
 
-        known_mtx_sum = 505014951.9823929
+        known_shape = (92, 1969)
+        observed_shape = observed_mtx.shape
+        self.assertEqual(observed_shape, observed_shape)
+
+        known_mtx_sum = 503082073.90331995
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum, delta=1)
 
