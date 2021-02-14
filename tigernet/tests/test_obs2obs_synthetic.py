@@ -32,10 +32,10 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
     def test_net_no_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 0.0, 2.0, 2.0],
-                [0.0, 0.0, 2.0, 2.0],
-                [2.0, 2.0, 0.0, 0.0],
-                [2.0, 2.0, 0.0, 0.0],
+                [0.0, 2.0, 0.0, 2.0],
+                [2.0, 0.0, 2.0, 2.0],
+                [0.0, 2.0, 0.0, 2.0],
+                [2.0, 2.0, 2.0, 0.0],
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
@@ -47,17 +47,17 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 16.0
+        known_mtx_sum = 20.0
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
     def test_net_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 2.0, 4.0, 4.0],
-                [2.0, 0.0, 4.0, 4.0],
-                [4.0, 4.0, 0.0, 2.0],
-                [4.0, 4.0, 2.0, 0.0],
+                [0.0, 4.0, 2.0, 4.0],
+                [4.0, 0.0, 4.0, 4.0],
+                [2.0, 4.0, 0.0, 4.0],
+                [4.0, 4.0, 4.0, 0.0],
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
@@ -69,17 +69,17 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 40.0
+        known_mtx_sum = 44.0
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
     def test_euc_no_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 0.0, 2.0, 2.0],
-                [0.0, 0.0, 2.0, 2.0],
-                [2.0, 2.0, 0.0, 0.0],
-                [2.0, 2.0, 0.0, 0.0],
+                [0.0, 1.414214, 0.0, 1.414214],
+                [1.414214, 0.0, 1.414214, 2.0],
+                [0.0, 1.414214, 0.0, 1.414214],
+                [1.414214, 2.0, 1.414214, 0.0],
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
@@ -91,17 +91,17 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 16.0
+        known_mtx_sum = 15.31370849898476
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
     def test_euc_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 0.0, 2.0, 2.0],
-                [0.0, 0.0, 2.0, 2.0],
-                [2.0, 2.0, 0.0, 0.0],
-                [2.0, 2.0, 0.0, 0.0],
+                [0.0, 3.41421356, 2.0, 3.41421356],
+                [3.41421356, 0.0, 3.41421356, 4.0],
+                [2.0, 3.41421356, 0.0, 3.41421356],
+                [3.41421356, 4.0, 3.41421356, 0.0],
             ]
         )
         args = copy.deepcopy(self.net_obs), copy.deepcopy(self.network)
@@ -113,7 +113,7 @@ class TestSyntheticObservationsOrigToXXXXSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 16.0
+        known_mtx_sum = 39.31370849898476
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
@@ -205,10 +205,10 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
     def test_euc_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 2.82842712, 2.82842712, 2.82842712],
+                [2.82842712, 0.0, 2.82842712, 2.82842712],
+                [2.82842712, 2.82842712, 0.0, 2.82842712],
+                [2.82842712, 2.82842712, 2.82842712, 0.0],
             ]
         )
         args = self.net_obs, self.network
@@ -220,7 +220,7 @@ class TestSyntheticObservationsOrigToXXXXNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 0.0
+        known_mtx_sum = 33.941125496954285
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
@@ -323,11 +323,11 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
     def test_euc_snap(self):
         known_mtx = numpy.array(
             [
-                [0.02054051, 2.17694135, 2.49140309],
-                [0.97244594, 2.41059601, 1.68165696],
-                [0.29772152, 2.08296224, 2.21422207],
-                [0.68579403, 2.54046208, 3.19773762],
-                [2.05339149, 3.85419354, 2.46956183],
+                [0.54770651, 3.16286507, 4.09963354],
+                [1.48389065, 3.38079845, 3.27416613],
+                [0.93501431, 3.17901275, 3.93257931],
+                [1.26735717, 3.58078294, 4.86036522],
+                [2.85153739, 5.11109718, 4.34877219],
             ]
         )
         args = copy.deepcopy(self.net_obs1), copy.deepcopy(self.network)
@@ -339,7 +339,7 @@ class TestSyntheticObservationsOrigToDestSegments(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 29.14963026553491
+        known_mtx_sum = 46.015578792466535
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 
@@ -442,11 +442,11 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
     def test_euc_snap(self):
         known_mtx = numpy.array(
             [
-                [0.0, 2.0, 2.0],
-                [0.0, 2.0, 2.0],
-                [0.0, 2.0, 2.0],
-                [2.0, 2.82842712, 4.0],
-                [2.0, 4.0, 2.82842712],
+                [0.0, 3.67329521, 4.34307909],
+                [1.3902779, 3.23921971, 3.90900359],
+                [1.60037734, 3.44931915, 4.11910303],
+                [3.44146299, 4.11883193, 5.96018868],
+                [3.43009305, 5.27903486, 4.77724586],
             ]
         )
         args = self.net_obs1, self.network
@@ -458,7 +458,7 @@ class TestSyntheticObservationsOrigToDestNodes(unittest.TestCase):
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(observed_mtx, known_mtx)
 
-        known_mtx_sum = 29.656854249492383
+        known_mtx_sum = 52.73053239487793
         observed_mtx_sum = observed_mtx.sum()
         self.assertAlmostEqual(observed_mtx_sum, known_mtx_sum)
 

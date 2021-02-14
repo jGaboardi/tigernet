@@ -2184,6 +2184,8 @@ def snap_to_nearest(obs, net):
             segms_uu = segms_sub.unary_union
             near_points = []
 
+            segms_uu = sorted(segms_uu, key=lambda line: line.xy)
+
             for line in segms_uu:
                 near_pt = line.interpolate(line.project(opt))
                 near_points.append(near_pt)
@@ -2534,8 +2536,17 @@ def obs2obs_costs(
         for ix in orig.index:
             for jx in dest.index:
                 i, j = orig[xyid][ix], dest[xyid][jx]
-                p1, p2 = _return_coords(i), _return_coords(j)
-                n2m_matrix[ix, jx] = _euc_dist(p1, p2)
+                if i == j and ix == jx:
+                    euc_dist = 0.0
+                else:
+                    p1, p2 = _return_coords(i), _return_coords(j)
+                    euc_dist = _euc_dist(p1, p2)
+                    if snap_dist:
+                        orig_snap = orig[snap_dist][ix]
+                        dest_snap = dest[snap_dist][jx]
+                        dist_snap = orig_snap + dest_snap
+                        euc_dist += dist_snap
+                n2m_matrix[ix, jx] = euc_dist
 
     # network-style cost matrices
     else:
