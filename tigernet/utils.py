@@ -5,6 +5,8 @@ from ast import literal_eval
 import copy, re
 
 import geopandas
+
+geopandas._compat.USE_PYGEOS = False
 import numpy
 import pandas
 from shapely.geometry import Point, MultiPoint

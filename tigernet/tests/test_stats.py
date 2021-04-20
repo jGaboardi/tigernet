@@ -5,6 +5,8 @@ import copy
 import unittest
 import numpy
 import geopandas
+
+geopandas._compat.USE_PYGEOS = False
 from shapely.geometry import LineString
 
 
