@@ -1,7 +1,7 @@
 [![GitHub release](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)](https://img.shields.io/github/v/tag/jGaboardi/tigernet?include_prereleases&logo=GitHub)  [![PyPI version](https://badge.fury.io/py/tigernet.svg)](https://badge.fury.io/py/tigernet) [![Conda Version](https://img.shields.io/conda/vn/conda-forge/tigernet.svg)](https://anaconda.org/conda-forge/tigernet) [![Conda Recipe](https://img.shields.io/badge/recipe-tigernet-yellow.svg)](https://github.com/conda-forge/tigernet-feedstock)
 
 
-# TigerNet
+# TigerNet 
 Network Topology via TIGER/Line Edges
 
 [![unittests](https://github.com/jGaboardi/tigernet/workflows/.github/workflows/unittests.yml/badge.svg)](https://github.com/jGaboardi/tigernet/actions?query=workflow%3A.github%2Fworkflows%2Funittests.yml) [![codecov](https://codecov.io/gh/jGaboardi/tigernet/branch/main/graph/badge.svg)](https://codecov.io/gh/jGaboardi/tigernet) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
