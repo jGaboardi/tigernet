@@ -6,6 +6,8 @@ from .. import utils
 
 import copy
 import geopandas
+
+geopandas._compat.USE_PYGEOS = False
 import numpy
 import operator
 import pandas

@@ -4,6 +4,8 @@
 
 import copy
 import geopandas
+
+geopandas._compat.USE_PYGEOS = False
 from shapely.geometry import Point
 import unittest
 

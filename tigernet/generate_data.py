@@ -2,6 +2,8 @@
 """
 
 import geopandas
+
+geopandas._compat.USE_PYGEOS = False
 import numpy
 from shapely.geometry import Point, LineString
 
