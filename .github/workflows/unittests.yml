@@ -32,6 +32,7 @@
          with:
             auto-activate-base: false
             channels: conda-forge
+            channel-priority: strict
             environment-file: ${{ matrix.environment-file }}
             mamba-version: '*'
             miniforge-variant: Mambaforge
