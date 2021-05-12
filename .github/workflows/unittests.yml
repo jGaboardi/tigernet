@@ -28,7 +28,7 @@
            key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(matrix.environment-file) }}
            path: ~/conda_pkgs_dir
        - uses: actions/checkout@v2.3.4
-       - uses: conda-incubator/setup-miniconda@v2
+       - uses: conda-incubator/setup-miniconda@v2.1.1
          with:
             auto-activate-base: false
             channels: conda-forge
