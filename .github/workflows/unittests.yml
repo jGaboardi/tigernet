@@ -21,7 +21,7 @@
        run:
          shell: bash -l {0}
      steps:
-       - uses: actions/cache@v2
+       - uses: actions/cache@v2.1.5
          env:
            CACHE_NUMBER: 0
          with:
@@ -43,7 +43,7 @@
        - run: python -m black . --check
        - run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
        - name: codecov (${{ matrix.os }}, ${{ matrix.environment-file }})
-         uses: codecov/codecov-action@v1
+         uses: codecov/codecov-action@v1.5.0
          with:
            file: ./coverage.xml
            name: tigernet-codecov
