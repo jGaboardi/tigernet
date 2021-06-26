@@ -5,9 +5,9 @@ dependencies:
   - python=3.8
   # required
   - geopandas>=0.9.0
-  - libpysal>=4.4
-  - numpy>=1.21
-  - pandas>=1.2
+  - libpysal
+  - numpy
+  - pandas
   - shapely>=1.7.1
   # testing
   - black

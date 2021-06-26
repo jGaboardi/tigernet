@@ -7,11 +7,11 @@
    - geopandas>=0.9.0
    - ipython
    - jupyter
-   - libpysal>=4.4
+   - libpysal
    - matplotlib
    - nb_conda_kernels
-   - numpy>=1.21
-   - pandas>=1.2
+   - numpy
+   - pandas
    - pip
    - pre-commit
    - scipy
