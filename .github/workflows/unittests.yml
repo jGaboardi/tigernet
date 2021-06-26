@@ -17,34 +17,30 @@
        matrix:
          environment-file: [.ci/38.yaml, .ci/39.yaml]
          os: ['macos-latest', 'ubuntu-latest', 'windows-latest']
-     defaults:
-       run:
-         shell: bash -l {0}
+     
      steps:
-       - uses: actions/cache@v2.1.6
-         env:
-           CACHE_NUMBER: 0
+       - name: checkout repo
+         uses: actions/checkout@v2
+       
+       - name: setup micromamba
+         uses: mamba-org/provision-with-micromamba@main
          with:
-           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(matrix.environment-file) }}
-           path: ~/conda_pkgs_dir
-       - uses: actions/checkout@v2.3.4
-       - uses: conda-incubator/setup-miniconda@v2.1.1
+           environment-file: ${{ matrix.environment-file }}
+           micromamba-version: 'latest'
+       
+       - name: run tests - bash
+         shell: bash -l {0}
+         run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
+         if: matrix.os != 'windows-latest'
+       
+       - name: run tests - powershell
+         shell: powershell
+         run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
+         if: matrix.os == 'windows-latest'
+       
+       - name: codecov
+         uses: codecov/codecov-action@v1
          with:
-            auto-activate-base: false
-            channels: conda-forge
-            environment-file: ${{ matrix.environment-file }}
-            mamba-version: '*'
-            miniforge-variant: Mambaforge
-            miniforge-version: latest
-            use-mamba: true
-            use-only-tar-bz2: true
-       - run: mamba info --all
-       - run: mamba list
-       - run: python -m black . --check
-       - run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
-       - name: codecov (${{ matrix.os }}, ${{ matrix.environment-file }})
-         uses: codecov/codecov-action@v1.5.0
-         with:
+           token: ${{ secrets.CODECOV_TOKEN }}
            file: ./coverage.xml
            name: tigernet-codecov
-           token: ${{ secrets.CODECOV_TOKEN }}
