@@ -342,7 +342,7 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
             numpy.array(observed_dist_a), known_dist_a
         )
 
-        known_dist_a_mean = 162.86733327554214
+        known_dist_a_mean = 163.49368966710074
         observed_dist_a_mean = self.net_obs.snapped_points["dist_a"].mean()
         self.assertAlmostEqual(observed_dist_a_mean, known_dist_a_mean)
 
@@ -361,7 +361,7 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
             numpy.array(observed_dist_b), known_dist_b
         )
 
-        known_dist_b_mean = 160.27760517425125
+        known_dist_b_mean = 159.75442932794624
         observed_dist_b_mean = self.net_obs.snapped_points["dist_b"].mean()
         self.assertAlmostEqual(observed_dist_b_mean, known_dist_b_mean)
 
@@ -390,7 +390,7 @@ class TestSyntheticObservationsSegmentRandomEmpirical(unittest.TestCase):
             numpy.array(observed_dist2line), known_dist2line
         )
 
-        known_dist2line_mean = 70.59763576248946
+        known_dist2line_mean = 70.14736252699115
         observed_dist2ine_mean = self.net_obs.snapped_points["dist2line"].mean()
         self.assertAlmostEqual(observed_dist2ine_mean, known_dist2line_mean)
 
@@ -443,7 +443,7 @@ class TestSyntheticObservationsNodeRandomEmpirical(unittest.TestCase):
             numpy.array(numpy.array(observed_dist2node)), known_dist2node
         )
 
-        known_dist2node_mean = 117.472303170989
+        known_dist2node_mean = 117.00153682103445
         observed_dist2node_mean = self.net_obs.snapped_points["dist2node"].mean()
         self.assertAlmostEqual(observed_dist2node_mean, known_dist2node_mean)
 
@@ -501,7 +501,7 @@ class TestSyntheticObservationsSegmentRandomEmpiricalRestricted(unittest.TestCas
             numpy.array(observed_dist_a), known_dist_a
         )
 
-        known_dist_a_mean = 146.60758975492064
+        known_dist_a_mean = 147.23394614647037
         observed_dist_a_mean = self.net_obs.snapped_points["dist_a"].mean()
         self.assertAlmostEqual(observed_dist_a_mean, known_dist_a_mean)
 
@@ -520,7 +520,7 @@ class TestSyntheticObservationsSegmentRandomEmpiricalRestricted(unittest.TestCas
             numpy.array(observed_dist_b), known_dist_b
         )
 
-        known_dist_b_mean = 148.69925721548688
+        known_dist_b_mean = 148.17608136919543
         observed_dist_b_mean = self.net_obs.snapped_points["dist_b"].mean()
         self.assertAlmostEqual(observed_dist_b_mean, known_dist_b_mean)
 
@@ -549,7 +549,7 @@ class TestSyntheticObservationsSegmentRandomEmpiricalRestricted(unittest.TestCas
             numpy.array(observed_dist2line), known_dist2line
         )
 
-        known_dist2line_mean = 72.73827833640962
+        known_dist2line_mean = 72.28800510090015
         observed_dist2ine_mean = self.net_obs.snapped_points["dist2line"].mean()
         self.assertAlmostEqual(observed_dist2ine_mean, known_dist2line_mean)
 
@@ -604,7 +604,7 @@ class TestSyntheticObservationsNodeRandomEmpiricalRestricted(unittest.TestCase):
             numpy.array(numpy.array(observed_dist2node)), known_dist2node
         )
 
-        known_dist2node_mean = 118.43742907248337
+        known_dist2node_mean = 117.96666272251426
         observed_dist2node_mean = self.net_obs.snapped_points["dist2node"].mean()
         self.assertAlmostEqual(observed_dist2node_mean, known_dist2node_mean)
 

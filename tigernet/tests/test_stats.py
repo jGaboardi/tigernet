@@ -401,11 +401,11 @@ class TestNetworkStatsEmpirical(unittest.TestCase):
         observed_min = self.network.min_sinuosity
         self.assertEqual(observed_min, known_min)
 
-        known_mean = 1.1300036198574728
+        known_mean = 1.1299466052460159
         observed_mean = self.network.mean_sinuosity
         self.assertAlmostEqual(observed_mean, known_mean)
 
-        known_std = 0.48197915355062204
+        known_std = 0.48128129460638497
         observed_std = self.network.std_sinuosity
         self.assertAlmostEqual(observed_std, known_std)
 
@@ -418,11 +418,11 @@ class TestNetworkStatsEmpirical(unittest.TestCase):
         observed_min = self.network.min_node_degree
         self.assertEqual(observed_min, known_min)
 
-        known_mean = 2.4125874125874125
+        known_mean = 2.4111498257839723
         observed_mean = self.network.mean_node_degree
         self.assertAlmostEqual(observed_mean, known_mean)
 
-        known_std = 1.0650997569862783
+        known_std = 1.0700701247485327
         observed_std = self.network.std_node_degree
         self.assertAlmostEqual(observed_std, known_std)
 
@@ -434,19 +434,19 @@ class TestNetworkConnectivityEmpirical(unittest.TestCase):
             self.network.calc_net_stats(conn_stat="all")
 
     def test_lattice_network_wcomps_connectivity(self):
-        known_alpha = 0.10582010582010581
+        known_alpha = 0.1054481546572935
         observed_alpha = self.network.alpha
         self.assertAlmostEqual(observed_alpha, known_alpha)
 
-        known_beta = 1.2062937062937062
+        known_beta = 1.2055749128919862
         observed_beta = self.network.beta
         self.assertAlmostEqual(observed_beta, known_beta)
 
-        known_gamma = 0.40492957746478875
+        known_gamma = 0.4046783625730994
         observed_gamma = self.network.gamma
         self.assertAlmostEqual(observed_gamma, known_gamma)
 
-        known_eta = 217.00458598445144
+        known_eta = 217.21277372826233
         observed_eta = self.network.eta
         self.assertAlmostEqual(observed_eta, known_eta)
 
@@ -459,32 +459,32 @@ class TestNetworkEntropyEmpirical(unittest.TestCase):
 
     def test_network_entropy_variation(self):
         known_entropies = {
-            "S1630": -0.15869726894257252,
-            "S1100": -0.08968927494169666,
-            "S1400": -0.2700938933248304,
-            "S1200": -0.42847006925102654,
+            "S1630": -0.15842111056322364,
+            "S1100": -0.08952151237132852,
+            "S1400": -0.2695238366713601,
+            "S1200": -0.4280012797828908,
         }
         observed_entropies = self.network.mtfcc_entropies
         for mtfcc_type, known_entropy_val in known_entropies.items():
             self.assertAlmostEqual(observed_entropies[mtfcc_type], known_entropy_val)
 
-        known_entropy = 0.9469505064601262
+        known_entropy = 0.945467739388803
         observed_entropy = self.network.network_mtfcc_entropy
         self.assertAlmostEqual(observed_entropy, known_entropy)
 
     def test_network_node_entropy(self):
         known_entropies = {
-            3: -0.5144720846413561,
-            5: -0.024261331884622785,
-            4: -0.2796123512080418,
-            1: -0.5148474076720833,
-            2: -0.4433974870650428,
+            3: -0.515830432697898,
+            5: -0.024203676865930238,
+            4: -0.28564264913824344,
+            1: -0.5156301834007857,
+            2: -0.4428624320372842,
         }
         observed_entropies = self.network.degree_entropies
         for k, v in known_entropies.items():
             self.assertAlmostEqual(observed_entropies[k], v)
 
-        known_entropy = 1.7765906624711467
+        known_entropy = 1.7841693741401417
         observed_entropy = self.network.network_degree_entropy
         self.assertAlmostEqual(observed_entropy, known_entropy)
 
@@ -501,23 +501,23 @@ class TestNetworkDistanceMetricsEmpiricalGDF(unittest.TestCase):
         self.assertAlmostEqual(observed_radius, known_radius, 3)
 
     def test_network_diameter(self):
-        known_pair, known_diameter = [(120, 11), 7519.207911226202]
+        known_pair, known_diameter = [(11, 120), 7519.207911226202]
         observed_pair, observed_diameter = self.network.diameter
         self.assertEqual(observed_pair, known_pair)
         self.assertAlmostEqual(observed_diameter, known_diameter, 3)
 
     def test_network_total_network_distance(self):
-        known_distance = 223504355.29578546
+        known_distance = 225000262.02529418
         observed_distance = self.network.d_net
         self.assertAlmostEqual(observed_distance, known_distance, 3)
 
     def test_network_total_euclidean_distance(self):
-        known_distance = 143326889.90408167
+        known_distance = 144136954.44048578
         observed_distance = self.network.d_euc
         self.assertAlmostEqual(observed_distance, known_distance, 3)
 
     def test_network_circuity(self):
-        known_circuity = 1.5594028130057156
+        known_circuity = 1.5610171791037593
         observed_circuity = self.network.circuity
         self.assertAlmostEqual(observed_circuity, known_circuity, 3)
 

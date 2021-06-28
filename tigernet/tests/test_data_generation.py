@@ -127,7 +127,9 @@ class TestObservationDataGenerationEmpirical(unittest.TestCase):
             ]
         )
         observed_coords = numpy.array([(p.x, p.y) for p in obs.geometry])[:5]
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=1
+        )
 
     def test_generate_observations_inbuffer(self):
         n_obs = 500
@@ -146,7 +148,9 @@ class TestObservationDataGenerationEmpirical(unittest.TestCase):
             ]
         )
         observed_coords = numpy.array([(p.x, p.y) for p in obs.geometry])[:5]
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=1
+        )
 
     def test_generate_observations_inbuffer_restrict(self):
         n_obs = 500
@@ -167,7 +171,9 @@ class TestObservationDataGenerationEmpirical(unittest.TestCase):
             ]
         )
         observed_coords = numpy.array([(p.x, p.y) for p in obs.geometry])[:5]
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=1
+        )
 
 
 if __name__ == "__main__":
