@@ -8,6 +8,7 @@ dependencies:
   - libpysal
   - numpy
   - pandas
+  - pygeos>=0.8
   - shapely>=1.7.1
   # testing
   - black
