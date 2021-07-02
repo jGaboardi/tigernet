@@ -16,7 +16,7 @@
      strategy:
        matrix:
          environment-file: [.ci/38.yaml, .ci/39.yaml]
-         os: ['macos-latest', 'ubuntu-latest', 'windows-latest']
+         os: ['macos-latest']#, 'ubuntu-latest', 'windows-latest']
      
      steps:
        - name: checkout repo
