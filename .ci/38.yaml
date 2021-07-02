@@ -9,6 +9,7 @@ dependencies:
   - numpy
   - pandas
   - pygeos>=0.8
+  - scipy<=1.6.3
   - shapely>=1.7.1
   # testing
   - black
