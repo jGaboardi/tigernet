@@ -8,6 +8,16 @@ import numpy
 import tigernet
 from .network_objects import network_empirical_simplified_wcm
 
+import platform
+
+os = platform.platform()[:7].lower()
+if os == "windows":
+    WINDOWS = True
+    DECIMAL = -1
+else:
+    WINDOWS = False
+    DECIMAL = 1
+
 
 ####################################################################################
 ############################# ORIG-XXXX--Segments ##################################
@@ -43,7 +53,7 @@ class TestEmpiricalObservationsOrigToXXXXSegments(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 22099816.17479256
@@ -67,7 +77,7 @@ class TestEmpiricalObservationsOrigToXXXXSegments(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 23230504.28050229
@@ -109,7 +119,7 @@ class TestEmpiricalObservationsOrigToXXXXNodes(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 22077455.792563077
@@ -133,7 +143,7 @@ class TestEmpiricalObservationsOrigToXXXXNodes(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 23904433.77183481
@@ -182,7 +192,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 469638820.3745194
@@ -206,7 +216,7 @@ class TestEmpiricalObservationsOrigToDestSegments(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_mtx_sum = 489306860.5320058
@@ -255,7 +265,7 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_shape = (92, 1969)
@@ -283,7 +293,7 @@ class TestEmpiricalObservationsOrigToDestNodes(unittest.TestCase):
         }
         observed_mtx = tigernet.obs2obs_cost_matrix(*args, **kwargs)
         numpy.testing.assert_array_almost_equal(
-            observed_mtx[:4, :4], known_mtx, decimal=1
+            observed_mtx[:4, :4], known_mtx, decimal=DECIMAL
         )
 
         known_shape = (92, 1969)
