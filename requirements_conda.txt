@@ -1,8 +1,11 @@
 black
+gdal>=3.3.0
 geopandas>=0.9.0
+libgdal>=3.3.0
 libpysal
 numpy
 pandas
 pre-commit
+pygeos>=0.8
 shapely>=1.7.1
 spaghetti
