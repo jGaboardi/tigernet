@@ -503,6 +503,7 @@ class TestSyntheticObservationsSegmentRandomEmpiricalRestricted(unittest.TestCas
         observed_obs2segm = list(self.net_obs.obs2segm.items())[-5:]
         self.assertEqual(observed_obs2segm, known_obs2segm)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_snapped_points_df_dist_a(self):
         known_dist_a = numpy.array(
             [
@@ -522,6 +523,7 @@ class TestSyntheticObservationsSegmentRandomEmpiricalRestricted(unittest.TestCas
         observed_dist_a_mean = self.net_obs.snapped_points["dist_a"].mean()
         self.assertAlmostEqual(observed_dist_a_mean, known_dist_a_mean)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_snapped_points_df_dist_b(self):
         known_dist_b = numpy.array(
             [
