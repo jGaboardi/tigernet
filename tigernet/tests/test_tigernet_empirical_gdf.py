@@ -104,6 +104,7 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
             observed_xyid, known_xyid, decimal=DECIMAL
         )
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_node2xyid(self):
         known_id_xyid = {363: ["x622213.7739825583y166384.29556895603"]}
         known_id = list(known_id_xyid.keys())[0]
@@ -445,6 +446,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         observed_ccs = self.graph.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm2len(self):
         known_id, known_len = 344, 67.00665887424545
         observed_len = self.graph.segm2len[known_id]
@@ -559,6 +561,7 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         for k, v in known_elements.items():
             self.assertEqual(observed_elements[k], v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_node_cc(self):
         known_root, known_ccs = 29, [282, 283, 284, 285, 286]
         observed_ccs = self.network.node_cc[known_root]
