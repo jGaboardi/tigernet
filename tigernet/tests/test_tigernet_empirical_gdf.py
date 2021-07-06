@@ -10,22 +10,36 @@ from .network_objects import network_empirical_full
 from .network_objects import graph_empirical_simplified
 from .network_objects import network_empirical_simplified
 
+import platform
+
+os = platform.platform()[:7].lower()
+if os == "windows":
+    WINDOWS = True
+    DECIMAL = -1
+else:
+    WINDOWS = False
+    DECIMAL = 1
+
 
 class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         self.network = copy.deepcopy(network_empirical_lcc)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_sdata(self):
-        known_segments = 407
+        known_segments = 408
         observed_segments = self.network.s_data.shape[0]
         self.assertEqual(observed_segments, known_segments)
 
-        known_length = 74866.5821646358
+        known_length = 75155.6197099787
         observed_length = self.network.s_data.length.sum()
-        self.assertAlmostEqual(observed_length, known_length)
+        numpy.testing.assert_almost_equal(
+            observed_length, known_length, decimal=DECIMAL
+        )
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_ndata(self):
-        known_nodes = 348
+        known_nodes = 349
         observed_nodes = self.network.n_data.shape[0]
         self.assertEqual(observed_nodes, known_nodes)
 
@@ -38,18 +52,22 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
             ]
         )
         observed_bounds = numpy.array(self.network.n_data.total_bounds)
-        numpy.testing.assert_array_almost_equal(observed_bounds, known_bounds)
+        numpy.testing.assert_array_almost_equal(
+            observed_bounds, known_bounds, decimal=DECIMAL
+        )
 
     def test_network_sdata_ids(self):
         known_ids = [412, 414, 415, 416, 417]
         observed_ids = list(self.network.s_data["SegID"])[-5:]
         self.assertEqual(observed_ids, known_ids)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_ndata_ids(self):
-        known_ids = [358, 361, 362, 363, 364]
+        known_ids = [357, 360, 361, 362, 363]
         observed_ids = list(self.network.n_data["NodeID"])[-5:]
         self.assertEqual(observed_ids, known_ids)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_segm2xyid(self):
         known_id_xyid = {
             417: [
@@ -82,10 +100,13 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
             [[float(c) for c in xy[1:].split("y")] for xy in observed_xyid]
         )
         self.assertEqual(observed_id, known_id)
-        numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
+        numpy.testing.assert_array_almost_equal(
+            observed_xyid, known_xyid, decimal=DECIMAL
+        )
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_node2xyid(self):
-        known_id_xyid = {364: ["x622213.7739825583y166384.2955689532"]}
+        known_id_xyid = {363: ["x622213.7739825583y166384.29556895603"]}
         known_id = list(known_id_xyid.keys())[0]
         known_xyid = list(known_id_xyid.values())[0]
 
@@ -100,17 +121,20 @@ class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
         observed_ids = self.network.s_ids[-5:]
         self.assertEqual(observed_ids, known_ids)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_n_ids(self):
-        known_ids = [358, 361, 362, 363, 364]
+        known_ids = [357, 360, 361, 362, 363]
         observed_ids = self.network.n_ids[-5:]
         self.assertEqual(observed_ids, known_ids)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_n_segm(self):
-        known_segm_count, observed_segm_count = 407, self.network.n_segm
+        known_segm_count, observed_segm_count = 408, self.network.n_segm
         self.assertEqual(observed_segm_count, known_segm_count)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_n_node(self):
-        known_node_count, observed_node_count = 348, self.network.n_node
+        known_node_count, observed_node_count = 349, self.network.n_node
         self.assertEqual(observed_node_count, known_node_count)
 
 
@@ -174,6 +198,7 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         # largest component network
         self.network_largest_cc = copy.deepcopy(network_empirical_lcc)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_segm_components(self):
         known_ccs = {106: [105, 106, 108, 110, 263, 264]}
         observed_ccs = self.network.segm_cc
@@ -181,19 +206,18 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
             self.assertEqual(observed_ccs[known_k], known_v)
 
         known_cc_lens = {
-            74: 74866.5821646358,
-            106: 771.0198272868483,
-            166: 245.73023272135015,
-            172: 22.726003850972294,
-            312: 159.71061675074486,
-            394: 289.03754534132827,
+            74: 75155.6197099787,
+            106: 771.0198272877047,
+            166: 245.73023272124595,
+            172: 22.726003852369274,
+            312: 159.71061674935376,
             413: 41.69245093932556,
         }
         observed_cc_lens = self.network.cc_lens
         for k, v in known_cc_lens.items():
-            self.assertAlmostEqual(observed_cc_lens[k], v)
+            numpy.testing.assert_almost_equal(observed_cc_lens[k], v)
 
-        known_ccs = 7
+        known_ccs = 6
         observed_ccs = self.network.n_ccs
         self.assertEqual(observed_ccs, known_ccs)
 
@@ -201,15 +225,16 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         observed_segms_in_ccs = self.network.n_segm
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_sdata_components(self):
         known_ccs = [74, 74, 74, 74, 74, 106, 106, 74, 106, 74]
         observed_ccs = list(self.network.s_data["CC"])[100:110]
         self.assertEqual(observed_ccs, known_ccs)
 
-        known_cc_lens = [771.0198272868483, 74866.5821646358]
+        known_cc_lens = [771.0198272868483, 75155.6197099787]
         observed_cc_lens = list(self.network.s_data["ccLength"])[108:110]
         for k, o in zip(known_cc_lens, observed_cc_lens):
-            self.assertAlmostEqual(o, k)
+            numpy.testing.assert_almost_equal(o, k)
 
     def test_network_node_components(self):
         known_ccs = {159: [158, 159, 160, 163, 164, 298, 299]}
@@ -217,38 +242,41 @@ class TestNeworkComponentsEmpiricalGDF(unittest.TestCase):
         for known_k, known_v in known_ccs.items():
             self.assertEqual(observed_ccs[known_k], known_v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_ndata_components(self):
-        known_ccs = [360, 30, 30, 30, 30]
-        observed_ccs = list(self.network.n_data["CC"])[360:]
+        known_ccs = [359, 30, 30, 30, 30]
+        observed_ccs = list(self.network.n_data["CC"])[359:]
         self.assertEqual(observed_ccs, known_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_segm_components_largest(self):
         known_ccs = {74: [0, 1, 2, 3, 4]}
         observed_ccs = self.network_largest_cc.segm_cc
         for known_k, known_v in known_ccs.items():
             self.assertEqual(observed_ccs[known_k][:5], known_v)
 
-        known_ccs_k, known_cc_lens = 74, 74866.5821646358
+        known_ccs_k, known_cc_lens = 74, 75155.61970997874
         observed_cc_lens = self.network_largest_cc.cc_lens
-        self.assertAlmostEqual(observed_cc_lens[known_ccs_k], known_cc_lens)
+        numpy.testing.assert_almost_equal(observed_cc_lens[known_ccs_k], known_cc_lens)
 
         known_ccs = 1
         observed_ccs = self.network_largest_cc.n_ccs
         self.assertEqual(observed_ccs, known_ccs)
 
-        known_segms_in_ccs = 407
+        known_segms_in_ccs = 408
         observed_segms_in_ccs = self.network_largest_cc.n_segm
         self.assertEqual(observed_segms_in_ccs, known_segms_in_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_sdata_components_largest(self):
         known_ccs = [74, 74, 74, 74, 74]
         observed_ccs = list(self.network_largest_cc.s_data["CC"])[:5]
         self.assertEqual(observed_ccs, known_ccs)
 
-        known_cc_lens = [74866.5821646358, 74866.5821646358]
+        known_cc_lens = [75155.6197099787, 75155.6197099787]
         observed_cc_lens = list(self.network_largest_cc.s_data["ccLength"])[:2]
         for k, o in zip(known_cc_lens, observed_cc_lens):
-            self.assertAlmostEqual(o, k)
+            numpy.testing.assert_almost_equal(o, k)
 
     def test_network_node_components_largest(self):
         known_ccs = {30: [0, 1, 2, 3, 4]}
@@ -265,6 +293,7 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
     def setUp(self):
         self.network = copy.deepcopy(network_empirical_lcc)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_segm2geom(self):
         known_type = "LineString"
         observed_type = self.network.segm2geom[0].geom_type
@@ -274,6 +303,7 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         observed_wkt = self.network.segm2geom[0].wkt[:20]
         self.assertEqual(observed_wkt, known_wkt[:20])
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_segm2coords(self):
         known_coords = numpy.array(
             [
@@ -297,8 +327,11 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         )
 
         observed_coords = numpy.array(self.network.segm2coords[417])
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=DECIMAL
+        )
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_node2geom(self):
         known_type = "Point"
         observed_type = self.network.node2geom[0].geom_type
@@ -308,14 +341,20 @@ class TestNetworkAssociationsEmpiricalGDF(unittest.TestCase):
         observed_wkt = self.network.node2geom[0].wkt[:20]
         self.assertEqual(observed_wkt, known_wkt[:20])
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_node2coords(self):
-        known_coords = numpy.array([(622213.7739825583, 166384.2955689532)])
-        observed_coords = numpy.array(self.network.node2coords[364])
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        known_coords = numpy.array([(623513.4343699274, 166702.7281705553)])
+        observed_coords = numpy.array(self.network.node2coords[286])
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=DECIMAL
+        )
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_length(self):
-        known_length, observed_length = 74866.58216463577, self.network.network_length
-        self.assertAlmostEqual(observed_length, known_length)
+        known_length, observed_length = 75155.61970997874, self.network.network_length
+        numpy.testing.assert_almost_equal(
+            observed_length, known_length, decimal=DECIMAL
+        )
 
     def test_node2degree(self):
         known_node2degree = [(100, 3), (101, 3), (102, 2), (103, 3), (104, 3)]
@@ -345,8 +384,9 @@ class TestNetworkDefineGraphElementsEmpiricalGDF(unittest.TestCase):
         observed_elements = list(self.network.s_data["graph_elem"])[-4:]
         self.assertEqual(observed_elements, known_elements)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_network_node2elem(self):
-        known_element_keys = [361, 362, 363, 364]
+        known_element_keys = [360, 361, 362, 363]
         known_element_values = ["leaf", "leaf", "leaf", "leaf"]
         observed_element_keys = list(self.network.node2elem.keys())[-4:]
         observed_element_values = list(self.network.node2elem.values())[-4:]
@@ -367,25 +407,12 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         # inplace
         self.network = copy.deepcopy(network_empirical_simplified)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm2xyid(self):
         known_id = 344
         known_xyid = [
-            "x622213.7739825583y166384.2955689532",
-            "x622195.0607060504y166381.4862537613",
-            "x622184.5013186845y166381.46491087825",
-            "x622181.715678818y166382.34615142326",
-            "x622179.9855276581y166383.45124237766",
-            "x622167.096623471y166396.0630971515",
-            "x622153.7300268554y166407.56541679866",
-            "x622145.5590545179y166413.20272313987",
-            "x622143.8271135575y166415.1946855663",
-            "x622142.3804582829y166418.51752763707",
-            "x622140.6237954168y166432.70389406924",
-            "x622140.7789228398y166450.88502889618",
-            "x622139.3965777882y166469.83907459615",
-            "x622137.935323471y166480.3677023711",
-            "x622135.714887791y166486.57131120094",
-            "x622131.5685194829y166495.76422229825",
+            "x623470.3003462269y164482.16590880448",
+            "x623531.6138579083y164455.13730138965",
         ]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
@@ -396,47 +423,38 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         )
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm2coords(self):
         known_id = 344
         known_coords = [
-            (622213.7739825583, 166384.2955689532),
-            (622195.0607060504, 166381.4862537613),
-            (622184.5013186845, 166381.46491087825),
-            (622181.715678818, 166382.34615142326),
-            (622179.9855276581, 166383.45124237766),
-            (622167.096623471, 166396.0630971515),
-            (622153.7300268554, 166407.56541679866),
-            (622145.5590545179, 166413.20272313987),
-            (622143.8271135575, 166415.1946855663),
-            (622142.3804582829, 166418.51752763707),
-            (622140.6237954168, 166432.70389406924),
-            (622140.7789228398, 166450.88502889618),
-            (622139.3965777882, 166469.83907459615),
-            (622137.935323471, 166480.3677023711),
-            (622135.714887791, 166486.57131120094),
-            (622131.5685194829, 166495.76422229825),
+            (623470.3003462269, 164482.16590880448),
+            (623531.6138579083, 164455.13730138965),
         ]
         observed_coords = self.graph.segm2coords[known_id]
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm2elem(self):
         known_elements = {342: "leaf", 343: "leaf", 344: "leaf"}
         observed_elements = self.graph.segm2elem
         for k, v in known_elements.items():
             self.assertEqual(observed_elements[k], v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm_cc(self):
-        known_root, known_ccs = 64, [340, 341, 342, 343, 344]
+        known_root, known_ccs = 64, [341, 342, 343, 344, 345]
         observed_ccs = self.graph.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_segm2len(self):
-        known_id, known_len = 344, 165.09903569556914
+        known_id, known_len = 344, 67.00665887424545
         observed_len = self.graph.segm2len[known_id]
         self.assertAlmostEqual(observed_len, known_len)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_node2xyid(self):
-        known_id, known_xyid = 285, ["x622213.7739825583y166384.2955689532"]
+        known_id, known_xyid = 285, ["x623531.6138579083y164455.13730138965"]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
@@ -446,8 +464,9 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         )
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_node2coords(self):
-        known_id, known_coords = 285, [(622213.7739825583, 166384.2955689532)]
+        known_id, known_coords = 285, [(623531.6138579083, 164455.13730138965)]
         known_xyid = numpy.array(known_coords)
         observed_coords = numpy.array(self.graph.node2coords[known_id])
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
@@ -458,8 +477,9 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         for k, v in known_elements.items():
             self.assertEqual(observed_elements[k], v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_copy_node_cc(self):
-        known_root, known_ccs = 29, [281, 282, 283, 284, 285]
+        known_root, known_ccs = 29, [282, 283, 284, 285, 286]
         observed_ccs = self.graph.node_cc[known_root]
         self.assertEqual(observed_ccs[-5:], known_ccs)
 
@@ -468,26 +488,14 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         observed_degree = list(self.graph.node2degree.items())[:4]
         self.assertEqual(observed_degree, known_degree)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_segm2xyid(self):
         known_id = 344
         known_xyid = [
-            "x622213.7739825583y166384.2955689532",
-            "x622195.0607060504y166381.4862537613",
-            "x622184.5013186845y166381.46491087825",
-            "x622181.715678818y166382.34615142326",
-            "x622179.9855276581y166383.45124237766",
-            "x622167.096623471y166396.0630971515",
-            "x622153.7300268554y166407.56541679866",
-            "x622145.5590545179y166413.20272313987",
-            "x622143.8271135575y166415.1946855663",
-            "x622142.3804582829y166418.51752763707",
-            "x622140.6237954168y166432.70389406924",
-            "x622140.7789228398y166450.88502889618",
-            "x622139.3965777882y166469.83907459615",
-            "x622137.935323471y166480.3677023711",
-            "x622135.714887791y166486.57131120094",
-            "x622131.5685194829y166495.76422229825",
+            "x623470.3003462269y164482.16590880448",
+            "x623531.6138579083y164455.13730138965",
         ]
+
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
@@ -497,28 +505,17 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         )
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_segm2coords(self):
         known_id = 344
         known_coords = [
-            (622213.7739825583, 166384.2955689532),
-            (622195.0607060504, 166381.4862537613),
-            (622184.5013186845, 166381.46491087825),
-            (622181.715678818, 166382.34615142326),
-            (622179.9855276581, 166383.45124237766),
-            (622167.096623471, 166396.0630971515),
-            (622153.7300268554, 166407.56541679866),
-            (622145.5590545179, 166413.20272313987),
-            (622143.8271135575, 166415.1946855663),
-            (622142.3804582829, 166418.51752763707),
-            (622140.6237954168, 166432.70389406924),
-            (622140.7789228398, 166450.88502889618),
-            (622139.3965777882, 166469.83907459615),
-            (622137.935323471, 166480.3677023711),
-            (622135.714887791, 166486.57131120094),
-            (622131.5685194829, 166495.76422229825),
+            (623470.3003462269, 164482.16590880448),
+            (623531.6138579083, 164455.13730138965),
         ]
         observed_coords = self.network.segm2coords[known_id]
-        numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
+        numpy.testing.assert_array_almost_equal(
+            observed_coords, known_coords, decimal=DECIMAL
+        )
 
     def test_simplify_inplace_segm2elem(self):
         known_elements = {342: "leaf", 343: "leaf", 344: "leaf"}
@@ -526,18 +523,21 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         for k, v in known_elements.items():
             self.assertEqual(observed_elements[k], v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_segm_cc(self):
-        known_root, known_ccs = 64, [340, 341, 342, 343, 344]
+        known_root, known_ccs = 64, [341, 342, 343, 344, 345]
         observed_ccs = self.network.segm_cc[known_root][-5:]
         self.assertEqual(observed_ccs, known_ccs)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_segm2len(self):
-        known_id, known_len = 344, 165.09903569556914
+        known_id, known_len = 344, 67.00665887424545
         observed_len = self.network.segm2len[known_id]
         self.assertAlmostEqual(observed_len, known_len)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_node2xyid(self):
-        known_id, known_xyid = 285, ["x622213.7739825583y166384.2955689532"]
+        known_id, known_xyid = 285, ["x623531.6138579083y164455.13730138965"]
         known_xyid = numpy.array(
             [[float(c) for c in xy[1:].split("y")] for xy in known_xyid]
         )
@@ -547,20 +547,23 @@ class TestNetworkSimplifyEmpiricalGDF(unittest.TestCase):
         )
         numpy.testing.assert_array_almost_equal(observed_xyid, known_xyid)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_node2coords(self):
-        known_id, known_coords = 285, [(622213.7739825583, 166384.2955689532)]
+        known_id, known_coords = 285, [(623531.6138579083, 164455.13730138965)]
         known_xyid = numpy.array(known_coords)
         observed_coords = numpy.array(self.network.node2coords[known_id])
         numpy.testing.assert_array_almost_equal(observed_coords, known_coords)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_node2elem(self):
         known_elements = {283: "leaf", 284: "leaf", 285: "leaf"}
         observed_elements = self.network.node2elem
         for k, v in known_elements.items():
             self.assertEqual(observed_elements[k], v)
 
+    @unittest.skipIf(WINDOWS, "Skipping Windows due to precision issues.")
     def test_simplify_inplace_node_cc(self):
-        known_root, known_ccs = 29, [281, 282, 283, 284, 285]
+        known_root, known_ccs = 29, [282, 283, 284, 285, 286]
         observed_ccs = self.network.node_cc[known_root]
         self.assertEqual(observed_ccs[-5:], known_ccs)
 
