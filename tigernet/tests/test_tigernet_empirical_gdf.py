@@ -13,14 +13,14 @@ from .network_objects import network_empirical_simplified
 import platform
 
 os = platform.platform()[:7].lower()
-# if os == "windows":
-#    WINDOWS = True
-#    DECIMAL = -1
-# else:
-#    WINDOWS = False
-#    DECIMAL = 1
-WINDOWS = False
-DECIMAL = 1
+if os == "windows":
+    WINDOWS = True
+    DECIMAL = -1
+else:
+    WINDOWS = False
+    DECIMAL = 1
+# WINDOWS = False
+# DECIMAL = 1
 
 
 class TestNetworkBuildEmpiricalGDF(unittest.TestCase):
