@@ -17,6 +17,8 @@ if os == "windows":
 else:
     WINDOWS = False
     DECIMAL = 1
+# WINDOWS = False
+# DECIMAL = 1
 
 
 ####################################################################################
