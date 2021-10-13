@@ -24,3 +24,7 @@ __pycache__
 
 .log
 
+*setup.py
+*versioneer.py
+*_version.py
+
