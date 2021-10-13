@@ -1,1 +1,2 @@
 *.ipynb linguist-language=Python
+tigernet/_version.py export-subst

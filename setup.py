@@ -1,11 +1,8 @@
 from distutils.command.build_py import build_py
 from setuptools import setup, find_packages
+import versioneer
 
 package = "tigernet"
-
-# Get __version__ from package/__init__.py
-with open(package + "/__init__.py", "r") as f:
-    exec(f.readline())
 
 description = "Network Topology via TIGER/Line Edges"
 
@@ -48,7 +45,8 @@ def setup_package():
 
     setup(
         name=package,
-        version=__version__,
+        version=versioneer.get_version(),
+        cmdclass=versioneer.get_cmdclass({"build_py": build_py}),
         description=description,
         long_description=long_description,
         long_description_content_type="text/markdown",
@@ -74,7 +72,6 @@ def setup_package():
         py_modules=[package],
         install_requires=reqs,
         zip_safe=False,
-        cmdclass={"build.py": build_py},
         python_requires=">=3.8",
     )
 

@@ -1,1 +1,3 @@
 include LICENSE.txt MANIFEST.in requirements_conda.txt requirements_testing.txt
+include versioneer.py
+include tigernet/_version.py
