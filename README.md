@@ -73,6 +73,7 @@ The project is licensed under the [BSD 3-Clause license](https://github.com/jGab
 * [`sanet`](http://sanet.csis.u-tokyo.ac.jp)
 * [`snkit`](https://github.com/tomalrussell/snkit)
 * [`spaghetti`](https://github.com/pysal/spaghetti)
+* [`momepy`](https://github.com/pysal/momepy)
 
 
 ## References
