@@ -41,18 +41,28 @@ jobs:
       #    path: ./tools/changelog.md
       #  env:
       #    TEXT: ${{ steps.changetxt.outputs.text }}
+      #
+      #- name: Get the tag name
+      #  run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      #
+      #- name: Release
+      #  uses: softprops/action-gh-release@v1
+      #  with:
+      #    #body: ${{ steps.changetxt.outputs.text }}
+      #    #body_path: ${{ steps.changetxt.outputs.path }}
+      #    name: Release ${{ env.TAG }}
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Get the tag name
-        run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Create Release Notes
+        uses: actions/github-script@v4.0.2
         with:
-          #body: ${{ steps.changetxt.outputs.text }}
-          #body_path: ${{ steps.changetxt.outputs.path }}
-          name: Release ${{ env.TAG }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            await github.request(`POST /repos/${{ github.repository }}/releases`, {
+              tag_name: "${{ github.ref }}",
+              generate_release_notes: true
+            });
       
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@master
