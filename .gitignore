@@ -23,8 +23,3 @@ lib64
 __pycache__
 
 .log
-
-*setup.py
-*versioneer.py
-*_version.py
-
