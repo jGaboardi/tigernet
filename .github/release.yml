@@ -13,7 +13,7 @@ changelog:
          - enhancement
      - title: Tiger Edges
        labels:
-         - tiger-edges
+         - tiger_edges
      - title: Observations
        labels:
          - observations
