@@ -49,8 +49,10 @@ class Network:
         def_graph_elems=False,
     ):
         """
+
         Parameters
         ----------
+
         s_data : geopandas.GeoDataFrame
             Segments dataframe.
         from_raw : bool
@@ -122,6 +124,7 @@ class Network:
 
         Attributes
         ----------
+
         segm2xyid : dict
             Segment to xyID lookup.
         node2xyid : dict
@@ -316,11 +319,14 @@ class Network:
         largest_component=False,
         def_graph_elems=False,
     ):
-        """Top-level method for full network object creation from a
+        """
+
+        Top-level method for full network object creation from a
         geopandas.GeoDataFrame of lines.
 
         Parameters
         ----------
+
         s_data : geopandas.GeoDataFrame
             Segments data.
         record_components : bool
@@ -349,11 +355,14 @@ class Network:
             self.define_graph_elements()
 
     def build_base(self, s_data):
-        """Extract nodes from segment endpoints and relate
+        """
+
+        Extract nodes from segment endpoints and relate
         segments and nodes to a location ID (``xyid``).
 
         Parameters
         ----------
+
         s_data : geopandas.GeoDataFrame
             Segments data.
 
@@ -426,12 +435,15 @@ class Network:
         self.n_data = utils.fill_frame(self.n_data, self.node2node, **_nkws)
 
     def build_components(self, largest_cc=False):
-        """Find the rooted connected components of the graph (either largest or longest).
+        """
+
+        Find the rooted connected components of the graph (either largest or longest).
         *** Must choose either largest or longest. If both ``largest_cc`` and
         ``longest_cc`` are ``True``, ``largest_cc`` will be selected by default. ***
 
         Parameters
         ----------
+
         largest_cc : bool
             Keep only the largest connected component (the most
             edges/nodes) in the graph. Default is ``False``.
@@ -476,11 +488,14 @@ class Network:
         self.n_ccs = len(self.cc_lens.keys())
 
     def build_associations(self, record_geom=False):
-        """Associate graph elements with geometries, coordinates,
+        """
+
+        Associate graph elements with geometries, coordinates,
         segment lengths, node degrees, and other information.
 
         Parameters
         ----------
+
         record_geom : bool
             Create an ID-to-geometry lookup (``True``). Default is ``False``.
 
@@ -526,10 +541,13 @@ class Network:
         def_graph_elems=False,
         inplace=False,
     ):
-        """Remove all non-articulation points in the network.
+        """
+
+        Remove all non-articulation points in the network.
 
         Parameters
         ----------
+
         record_components : bool
             Record connected components in graph. This is used for teasing out the
             largest connected component. Default is ``False``.
@@ -544,6 +562,7 @@ class Network:
 
         Returns
         -------
+
         simp_net : geopandas.GeoDataFrame
             The simplified network (if ``inplace`` is set to ``False``).
 
@@ -582,10 +601,13 @@ class Network:
             return simp_net
 
     def calc_net_stats(self, conn_stat=None):
-        """Calculate network analyis descriptive statistics.
+        """
+
+        Calculate network analyis descriptive statistics.
 
         Parameters
         ----------
+
         conn_stat : {None, str}
             Either ``'alpha'``, ``'beta'``, ``'gamma'``, ``'eta'``.
             Set to ``'all'`` toc calculate all available statistics.
@@ -649,10 +671,13 @@ class Network:
             stats.circuity(self)
 
     def calc_entropy(self, ent_col, frame_name):
-        """Network entropy statistics. For descriptions see ``stats.entropies()``.
+        """
+
+        Network entropy statistics. For descriptions see ``stats.entropies()``.
 
         Parameters
         ----------
+
         ent_col : str
             The column name in ``frame_name`` to calculate entropy on.
         frame_name : str
@@ -678,12 +703,15 @@ class Network:
         setattr(self, attr_name, network_entropy)
 
     def cost_matrix(self, wpaths=False, asattr=True):
-        """Network node-to-node cost matrix calculation with options for generating
+        """
+
+        Network node-to-node cost matrix calculation with options for generating
         shortest paths along tree. For best results the network should be simplified
         prior to running this method.
 
         Parameters
         ----------
+
         wpaths : bool
             Generate shortest paths tree. Default is ``False``.
         asattr : bool
@@ -723,10 +751,13 @@ class Network:
                 return n2n_matrix
 
     def nodes_kdtree(self, only_coords=False):
-        """Build a kdtree from the network node coords for observations lookup.
+        """
+
+        Build a kdtree from the network node coords for observations lookup.
 
         Parameters
         ----------
+
         only_coords : bool
             Flag for only coordinated being passed in.
 
