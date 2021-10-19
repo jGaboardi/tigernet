@@ -780,10 +780,13 @@ class Network:
 
 
 class Observations:
-    """Near-network observations.
+    """
+
+    Near-network observations.
 
     Parameters
     ----------
+
     net : tigernet.Network
         Network object.
     df : geopandas.GeoDataFrame
@@ -809,6 +812,7 @@ class Observations:
 
     Attributes
     ----------
+
     study_area : str
         Study area within county.
     sid_name : str
@@ -911,10 +915,13 @@ def obs2obs_cost_matrix(
     snap_dist=True,
     distance_type="network",
 ):
-    """Calculate a cost matrix from (n) observations to (m) observations.
+    """
+
+    Calculate a cost matrix from (n) observations to (m) observations.
 
     Parameters
     ----------
+
     origin_observations : tigernet.Observations
     network : tigernet.Network
     destination_observations : tigernet.Observations
@@ -927,6 +934,7 @@ def obs2obs_cost_matrix(
 
     Returns
     -------
+
     n2m_matrix : numpy.ndarray
         'nXm' cost matrix.
 
