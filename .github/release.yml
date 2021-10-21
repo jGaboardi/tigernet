@@ -17,12 +17,6 @@ changelog:
      - title: Observations
        labels:
          - observations
-     - title: B Changes
-       labels:
-         - B
-     - title: A Changes
-       labels:
-         - A
      - title: Other Changes
        labels:
          - "*"
