@@ -18,9 +18,9 @@
          environment-file: [.ci/38.yaml, .ci/39.yaml, .ci/310.yaml]
          os: ['ubuntu-latest']
          include:
-           - environment-file: ci/310.yaml
+           - environment-file: .ci/310.yaml
              os: macos-latest
-           - environment-file: ci/310.yaml
+           - environment-file: .ci/310.yaml
              os: windows-latest
      
      steps:
