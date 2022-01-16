@@ -13,6 +13,8 @@
      name: conda (${{ matrix.os }}, ${{ matrix.environment-file }})
      runs-on: ${{ matrix.os }}
      timeout-minutes: 45
+     env:
+       RUN_TEST: pytest tigernet --cov tigernet -v -n auto --doctest-modules --cov-config .coveragerc --cov-report xml --color yes --cov-append --cov-report term-missing
      strategy:
        matrix:
          environment-file: [.ci/38.yaml, .ci/39.yaml, .ci/310.yaml]
@@ -35,12 +37,12 @@
        
        - name: run tests - bash
          shell: bash -l {0}
-         run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
+         run: ${{ RUN_TEST }}
          if: matrix.os != 'windows-latest'
        
        - name: run tests - powershell
          shell: powershell
-         run: pytest -v tigernet --cov=tigernet --doctest-modules --cov-config=.coveragerc --cov-report=xml
+         run: ${{ RUN_TEST }}
          if: matrix.os == 'windows-latest'
        
        - name: codecov
