@@ -147,53 +147,55 @@ class TestNetworkStatsSineLine(unittest.TestCase):
             self.graph.calc_net_stats()
 
     def test_sine_network_sinuosity(self):
-        known_sinuosity = [
-            1.1913994275103448,
-            1.0377484765201541,
-            1.0714252226602858,
-            1.1885699897294775,
-        ]
-        observed_sinuosity = list(self.network.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
+        known_sinuosity = numpy.array(
+            [
+                1.1913994275103448,
+                1.0377484765201541,
+                1.0714252226602858,
+                1.1885699897294775,
+            ]
+        )
+        observed_sinuosity = self.network.s_data["sinuosity"]
+        numpy.testing.assert_array_almost_equal(observed_sinuosity, known_sinuosity)
 
     def test_sine_network_sinuosity_stats(self):
         known_max = 1.1913994275103448
         observed_max = self.network.max_sinuosity
-        self.assertEqual(observed_max, known_max)
+        self.assertAlmostEqual(observed_max, known_max)
 
         known_min = 1.0377484765201541
         observed_min = self.network.min_sinuosity
-        self.assertEqual(observed_min, known_min)
+        self.assertAlmostEqual(observed_min, known_min)
 
         known_mean = 1.1222857791050656
         observed_mean = self.network.mean_sinuosity
-        self.assertEqual(observed_mean, known_mean)
+        self.assertAlmostEqual(observed_mean, known_mean)
 
         known_std = 0.07938019212245889
         observed_std = self.network.std_sinuosity
-        self.assertEqual(observed_std, known_std)
+        self.assertAlmostEqual(observed_std, known_std)
 
     def test_sine_graph_sinuosity(self):
-        known_sinuosity = [1.2105497715794307, 1.2105497715794304]
-        observed_sinuosity = list(self.graph.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
+        known_sinuosity = numpy.array([1.2105497715794307, 1.2105497715794304])
+        observed_sinuosity = self.graph.s_data["sinuosity"]
+        numpy.testing.assert_array_almost_equal(observed_sinuosity, known_sinuosity)
 
     def test_sine_graph_sinuosity_stats(self):
         known_max = 1.2105497715794307
         observed_max = self.graph.max_sinuosity
-        self.assertEqual(observed_max, known_max)
+        self.assertAlmostEqual(observed_max, known_max)
 
         known_min = 1.2105497715794304
         observed_min = self.graph.min_sinuosity
-        self.assertEqual(observed_min, known_min)
+        self.assertAlmostEqual(observed_min, known_min)
 
         known_mean = 1.2105497715794304
         observed_mean = self.graph.mean_sinuosity
-        self.assertEqual(observed_mean, known_mean)
+        self.assertAlmostEqual(observed_mean, known_mean)
 
         known_std = 2.220446049250313e-16
         observed_std = self.graph.std_sinuosity
-        self.assertEqual(observed_std, known_std)
+        self.assertAlmostEqual(observed_std, known_std)
 
     def test_sine_network_node_degree_stats(self):
         known_max = 2
