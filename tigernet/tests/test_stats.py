@@ -154,12 +154,12 @@ class TestNetworkStatsSineLine(unittest.TestCase):
             1.1885699897294775,
         ]
         observed_sinuosity = list(self.network.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
+        self.assertAlmostEqual(observed_sinuosity, known_sinuosity)
 
     def test_sine_network_sinuosity_stats(self):
         known_max = 1.1913994275103448
         observed_max = self.network.max_sinuosity
-        self.assertEqual(observed_max, known_max)
+        self.assertAlmostEqual(observed_max, known_max)
 
         known_min = 1.0377484765201541
         observed_min = self.network.min_sinuosity
@@ -176,12 +176,12 @@ class TestNetworkStatsSineLine(unittest.TestCase):
     def test_sine_graph_sinuosity(self):
         known_sinuosity = [1.2105497715794307, 1.2105497715794304]
         observed_sinuosity = list(self.graph.s_data["sinuosity"])
-        self.assertEqual(observed_sinuosity, known_sinuosity)
+        self.assertAlmostEqual(observed_sinuosity, known_sinuosity)
 
     def test_sine_graph_sinuosity_stats(self):
         known_max = 1.2105497715794307
         observed_max = self.graph.max_sinuosity
-        self.assertEqual(observed_max, known_max)
+        self.assertAlmostEqual(observed_max, known_max)
 
         known_min = 1.2105497715794304
         observed_min = self.graph.min_sinuosity
