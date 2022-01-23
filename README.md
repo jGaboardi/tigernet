@@ -30,7 +30,15 @@ After some consideration, this repo will serve as a stub for the `tigernet` impl
 
 ## Installation
 
-![Pypi python versions](https://img.shields.io/pypi/pyversions/tigernet.svg) Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/) and [3.9](https://docs.python.org/3.9/).
+![Pypi python versions](https://img.shields.io/pypi/pyversions/tigernet.svg) Currently `tigernet` officially supports [3.8](https://docs.python.org/3.8/), [3.9](https://docs.python.org/3.9/), and [3.10](https://docs.python.org/3.10/).
+
+
+(*Recommended*) Install the current release via [`conda-forge`](https://github.com/conda-forge/tigernet-feedstock) by running:
+
+```
+$ conda install tigernet
+```
+
 
 Install the current release from [`PyPI`](https://pypi.org/project/tigernet/) by running:
 
